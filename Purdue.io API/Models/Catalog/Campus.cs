@@ -8,35 +8,33 @@ using System.Web;
 namespace PurdueIo.Models.Catalog
 {
 	/// <summary>
-	/// Subject model, representing a subject such as 'CS' or 'MA'.
+	/// Campus model, representing physical location of a school. Collection of buildings.
 	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	/// !! DO NOT MODIFY THIS CLASS UNLESS YOU ARE FAMILIAR WITH MIGRATIONS !!
 	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	/// </summary>
-	public class Instructor
+	public class Campus
 	{
 		/// <summary>
-		/// Unique ID with which to reference an instructor internally.
+		/// Unique ID with which to reference this campus internally.
 		/// </summary>
-		public Guid InstructorId { get; set; }
+		public Guid CampusId { get; set; }
 
 		/// <summary>
-		/// Instructor's full name as listed in MyPurdue.
-		/// TODO: Additional parsing for first, last, etc.
+		/// Friendly name of this campus. e.g. "Purdue University West Lafayette".
 		/// </summary>
 		public string Name { get; set; }
 
 		/// <summary>
-		/// Instructor's e-mail address
+		/// Zip Code of the campus location.
 		/// </summary>
-		[Index]
-		[StringLength(254)]
-		public string Email { get; set; }
+		[StringLength(5)]
+		public string ZipCode { get; set; }
 
 		/// <summary>
-		/// The sections that this instructor is teaching.
+		/// Buildings that belong on this campus.
 		/// </summary>
-		[InverseProperty("Instructor")]
-		public virtual ICollection<Section> Sections { get; set; }
+		[InverseProperty("Campus")]
+		public virtual ICollection<Building> Buildings { get; set; }
 	}
 }

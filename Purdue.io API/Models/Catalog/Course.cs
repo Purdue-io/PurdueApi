@@ -44,7 +44,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// The number of credit hours offered by taking this course.
 		/// </summary>
-		public int CreditHours { get; set; }
+		public double CreditHours { get; set; }
 
 		/// <summary>
 		/// Short blurb describing the course.
@@ -54,6 +54,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Queryable list of classes that belong to this course.
 		/// </summary>
-		public virtual IQueryable<Class> Classes { get; set; }
+		[InverseProperty("Course")]
+		public virtual ICollection<Class> Classes { get; set; }
 	}
 }

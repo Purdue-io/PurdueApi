@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
@@ -8,35 +7,32 @@ using System.Web;
 namespace PurdueIo.Models.Catalog
 {
 	/// <summary>
-	/// Subject model, representing a subject such as 'CS' or 'MA'.
+	/// Room model, representing a room in a building where sections can take place.
 	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	/// !! DO NOT MODIFY THIS CLASS UNLESS YOU ARE FAMILIAR WITH MIGRATIONS !!
 	/// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	/// </summary>
-	public class Instructor
+	public class Room
 	{
 		/// <summary>
-		/// Unique ID with which to reference an instructor internally.
+		/// A unique ID with which to refer to this room internally.
 		/// </summary>
-		public Guid InstructorId { get; set; }
+		public Guid RoomId { get; set; }
 
 		/// <summary>
-		/// Instructor's full name as listed in MyPurdue.
-		/// TODO: Additional parsing for first, last, etc.
+		/// The room number. e.g. B156, 1142.
 		/// </summary>
-		public string Name { get; set; }
+		public string Number { get; set; }
 
 		/// <summary>
-		/// Instructor's e-mail address
+		/// The building to which this room belongs.
 		/// </summary>
-		[Index]
-		[StringLength(254)]
-		public string Email { get; set; }
+		public virtual Building Building { get; set; }
 
 		/// <summary>
-		/// The sections that this instructor is teaching.
+		/// Queryable list of class sections that take place in this room.
 		/// </summary>
-		[InverseProperty("Instructor")]
+		[InverseProperty("Room")]
 		public virtual ICollection<Section> Sections { get; set; }
 	}
 }
