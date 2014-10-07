@@ -40,11 +40,13 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// The class to which this section belongs.
 		/// </summary>
+		[InverseProperty("Sections")]
 		public virtual Class Class { get; set; }
 
 		/// <summary>
 		/// The instructor who teaches this section.
 		/// </summary>
+		[InverseProperty("Sections")]
 		public virtual Instructor Instructor { get; set; }
 
 		/// <summary>
@@ -85,6 +87,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// The room in which this section meets.
 		/// </summary>
+		[InverseProperty("Sections")]
 		public virtual Room Room { get; set; }
 
 		/// <summary>
@@ -119,5 +122,55 @@ namespace PurdueIo.Models.Catalog
 
 		// TODO: Requisites. These have complicated rules (AND/OR).
 		//public virtual ICollection<Course> Requisites { get; set; }
+
+		public SectionViewModel ToViewModel()
+		{
+			return new SectionViewModel()
+			{
+				SectionId = this.SectionId,
+				CRN = this.CRN,
+				Class = this.Class.ToViewModel(),
+				Instructor = this.Instructor.ToViewModel(),
+				RegistrationStatus = (int)this.RegistrationStatus,
+				Type = this.Type,
+				StartDate = this.StartDate,
+				EndDate = this.EndDate,
+				DaysOfWeek = this.DaysOfWeek.Select(x => (int)x).ToList(),
+				StartTime = this.StartTime,
+				Duration = this.Duration,
+				Room = this.Room.ToViewModel(),
+				Capacity = this.Capacity,
+				Enrolled = this.Enrolled,
+				RemainingSpace = this.RemainingSpace,
+				WaitlistCapacity = this.WaitlistCapacity,
+				WaitlistCount = this.WaitlistCount,
+				WaitlistSpace = this.WaitlistSpace
+			};
+		}
+	}
+
+	/// <summary>
+	/// ViewModel for Section model.
+	/// </summary>
+	public class SectionViewModel
+	{
+		public Guid SectionId { get; set; }
+		public string CRN { get; set; }
+		public ClassViewModel Class { get; set; }
+		public InstructorViewModel Instructor { get; set; }
+		public int RegistrationStatus { get; set; }
+		public string Type { get; set; }
+		public DateTime StartDate { get; set; }
+		public DateTime EndDate { get; set; }
+		public ICollection<int> DaysOfWeek { get; set; }
+		public DateTimeOffset StartTime { get; set; }
+		public TimeSpan Duration { get; set; }
+		public RoomViewModel Room { get; set; }
+		public int Capacity { get; set; }
+		public int Enrolled { get; set; }
+		public int RemainingSpace { get; set; }
+		public int WaitlistCapacity { get; set; }
+		public int WaitlistCount { get; set; }
+		public int WaitlistSpace { get; set; }
 	}
 }

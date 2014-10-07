@@ -37,5 +37,24 @@ namespace PurdueIo.Models.Catalog
 		/// </summary>
 		[InverseProperty("Subject")]
 		public virtual ICollection<Course> Courses { get; set; }
+
+		public SubjectViewModel ToViewModel() {
+			return new SubjectViewModel()
+			{
+				SubjectId = this.SubjectId,
+				Abbreviation = this.Abbreviation,
+				Name = this.Name
+			};
+		}
+	}
+
+	/// <summary>
+	/// ViewModel for the Subject model.
+	/// </summary>
+	public class SubjectViewModel
+	{
+		public Guid SubjectId { get; set; }
+		public string Name { get; set; }
+		public string Abbreviation { get; set; }
 	}
 }

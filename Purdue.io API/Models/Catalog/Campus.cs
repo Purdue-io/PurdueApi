@@ -36,5 +36,25 @@ namespace PurdueIo.Models.Catalog
 		/// </summary>
 		[InverseProperty("Campus")]
 		public virtual ICollection<Building> Buildings { get; set; }
+
+		public CampusViewModel ToViewModel()
+		{
+			return new CampusViewModel()
+			{
+				CampusId = this.CampusId,
+				Name = this.Name,
+				ZipCode = this.ZipCode
+			};
+		}
+	}
+
+	/// <summary>
+	/// ViewModel for the Campus model.
+	/// </summary>
+	public class CampusViewModel
+	{
+		public Guid CampusId { get; set; }
+		public string Name { get; set; }
+		public string ZipCode { get; set; }
 	}
 }

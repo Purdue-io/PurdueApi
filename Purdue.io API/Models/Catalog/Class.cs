@@ -23,11 +23,13 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// The course to which this class belongs.
 		/// </summary>
+		[InverseProperty("Classes")]
 		public virtual Course Course { get; set; }
 
 		/// <summary>
 		/// The term (e.g. semester) that this class belongs to.
 		/// </summary>
+		[InverseProperty("Classes")]
 		public virtual Term Term { get; set; }
 
 		/// <summary>
@@ -40,5 +42,27 @@ namespace PurdueIo.Models.Catalog
 		/// </summary>
 		[InverseProperty("Class")]
 		public virtual ICollection<Section> Sections { get; set; }
+
+		public ClassViewModel ToViewModel()
+		{
+			return new ClassViewModel()
+			{
+				ClassId = this.ClassId,
+				Course = this.Course.ToViewModel(),
+				Term = this.Term.ToViewModel(),
+				Campus = this.Campus.ToViewModel()
+			};
+		}
+	}
+
+	/// <summary>
+	/// ViewModel for the Class model.
+	/// </summary>
+	public class ClassViewModel
+	{
+		public Guid ClassId { get; set; }
+		public CourseViewModel Course { get; set; }
+		public TermViewModel Term { get; set; }
+		public CampusViewModel Campus { get; set; }
 	}
 }

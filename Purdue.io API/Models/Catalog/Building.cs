@@ -23,6 +23,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// The campus on which this building is located.
 		/// </summary>
+		[InverseProperty("Buildings")]
 		public virtual Campus Campus { get; set; }
 
 		/// <summary>
@@ -42,5 +43,27 @@ namespace PurdueIo.Models.Catalog
 		/// </summary>
 		[InverseProperty("Building")]
 		public virtual ICollection<Room> Rooms { get; set; }
+
+		public BuildingViewModel ToViewModel()
+		{
+			return new BuildingViewModel()
+			{
+				BuildingId = this.BuildingId,
+				Campus = this.Campus.ToViewModel(),
+				Name = this.Name,
+				ShortCode = this.ShortCode
+			};
+		}
+	}
+
+	/// <summary>
+	/// ViewModel for the Building model.
+	/// </summary>
+	public class BuildingViewModel
+	{
+		public Guid BuildingId { get; set; }
+		public CampusViewModel Campus { get; set; }
+		public string Name { get; set; }
+		public string ShortCode { get; set; }
 	}
 }

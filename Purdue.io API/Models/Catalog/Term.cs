@@ -43,5 +43,27 @@ namespace PurdueIo.Models.Catalog
 		/// </summary>
 		[InverseProperty("Term")]
 		public virtual ICollection<Class> Classes { get; set; }
+
+		public TermViewModel ToViewModel()
+		{
+			return new TermViewModel()
+			{
+				TermId = this.TermId,
+				TermCode = this.TermCode,
+				StartDate = this.StartDate,
+				EndDate = this.EndDate
+			};
+		}
+	}
+
+	/// <summary>
+	/// ViewModel for the Term model.
+	/// </summary>
+	public class TermViewModel
+	{
+		public Guid TermId { get; set; }
+		public string TermCode { get; set; }
+		public DateTime StartDate { get; set; }
+		public DateTime EndDate { get; set; }
 	}
 }

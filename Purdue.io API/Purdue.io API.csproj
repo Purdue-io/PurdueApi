@@ -205,15 +205,16 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\CatalogController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
     <Compile Include="Controllers\MeController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201410070657163_InitialCourseCatalog.cs" />
-    <Compile Include="Migrations\201410070657163_InitialCourseCatalog.Designer.cs">
-      <DependentUpon>201410070657163_InitialCourseCatalog.cs</DependentUpon>
+    <Compile Include="Migrations\201410070900486_InitialCourseCatalog.cs" />
+    <Compile Include="Migrations\201410070900486_InitialCourseCatalog.Designer.cs">
+      <DependentUpon>201410070900486_InitialCourseCatalog.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -337,8 +338,8 @@
     <None Include="Project_Readme.html" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201410070657163_InitialCourseCatalog.resx">
-      <DependentUpon>201410070657163_InitialCourseCatalog.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201410070900486_InitialCourseCatalog.resx">
+      <DependentUpon>201410070900486_InitialCourseCatalog.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

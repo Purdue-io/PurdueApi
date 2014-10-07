@@ -27,6 +27,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// The building to which this room belongs.
 		/// </summary>
+		[InverseProperty("Rooms")]
 		public virtual Building Building { get; set; }
 
 		/// <summary>
@@ -34,5 +35,24 @@ namespace PurdueIo.Models.Catalog
 		/// </summary>
 		[InverseProperty("Room")]
 		public virtual ICollection<Section> Sections { get; set; }
+
+		public RoomViewModel ToViewModel() {
+			return new RoomViewModel()
+			{
+				RoomId = this.RoomId,
+				Number = this.Number,
+				Building = this.Building.ToViewModel()
+			};
+		}
+	}
+
+	/// <summary>
+	/// ViewModel for Room model.
+	/// </summary>
+	public class RoomViewModel
+	{
+		public Guid RoomId { get; set; }
+		public string Number { get; set; }
+		public BuildingViewModel Building { get; set; }
 	}
 }

@@ -223,8 +223,8 @@ namespace PurdueIo.Migrations
             DropForeignKey("dbo.Sections", "Instructor_InstructorId", "dbo.Instructors");
             DropForeignKey("dbo.Classes", "Term_TermId", "dbo.Terms");
             DropForeignKey("dbo.Sections", "Class_ClassId", "dbo.Classes");
-            DropForeignKey("dbo.Courses", "Subject_SubjectId", "dbo.Subjects");
             DropForeignKey("dbo.Classes", "Course_CourseId", "dbo.Courses");
+            DropForeignKey("dbo.Courses", "Subject_SubjectId", "dbo.Subjects");
             DropForeignKey("dbo.Classes", "Campus_CampusId", "dbo.Campus");
             DropForeignKey("dbo.Buildings", "Campus_CampusId", "dbo.Campus");
             DropIndex("dbo.AspNetUserLogins", new[] { "UserId" });

@@ -33,6 +33,7 @@ namespace PurdueIo.Models.Catalog
 		/// Reference to the subject to which this course belongs.
 		/// e.g. MA or CS subjects.
 		/// </summary>
+		[InverseProperty("Courses")]
 		public virtual Subject Subject { get; set; }
 
 		/// <summary>
@@ -56,5 +57,31 @@ namespace PurdueIo.Models.Catalog
 		/// </summary>
 		[InverseProperty("Course")]
 		public virtual ICollection<Class> Classes { get; set; }
+
+		public CourseViewModel ToViewModel()
+		{
+			return new CourseViewModel()
+			{
+				CourseId = this.CourseId,
+				Number = this.Number,
+				Subject = this.Subject != null ? this.Subject.ToViewModel() : null,
+				Title = this.Title,
+				CreditHours = this.CreditHours,
+				Description = this.Description
+			};
+		}
+	}
+
+	/// <summary>
+	/// ViewModel for the Course model.
+	/// </summary>
+	public class CourseViewModel
+	{
+		public Guid CourseId { get; set; }
+		public SubjectViewModel Subject { get; set; }
+		public string Number { get; set; }
+		public string Title { get; set; }
+		public double CreditHours { get; set; }
+		public string Description { get; set; }
 	}
 }

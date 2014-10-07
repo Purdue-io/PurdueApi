@@ -13,7 +13,7 @@ namespace PurdueIo.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "201410070657163_InitialCourseCatalog"; }
+            get { return "201410070900486_InitialCourseCatalog"; }
         }
         
         string IMigrationMetadata.Source
