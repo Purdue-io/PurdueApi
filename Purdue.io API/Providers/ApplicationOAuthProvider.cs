@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Owin.Security.OAuth;
 
-namespace Purdue.io_API.Providers
+namespace PurdueIo.Providers
 {
 	public class ApplicationOAuthProvider : OAuthAuthorizationServerProvider
 	{

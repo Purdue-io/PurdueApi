@@ -10,9 +10,9 @@ using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using Owin;
-using Purdue.io_API.Models;
+using PurdueIo.Models;
 
-namespace Purdue.io_API.Controllers
+namespace PurdueIo.Controllers
 {
 	[Authorize]
 	public class MeController : ApiController

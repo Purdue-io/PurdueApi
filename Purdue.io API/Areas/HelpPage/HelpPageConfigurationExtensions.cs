@@ -11,10 +11,10 @@ using System.Net.Http.Headers;
 using System.Web.Http;
 using System.Web.Http.Controllers;
 using System.Web.Http.Description;
-using Purdue.io_API.Areas.HelpPage.ModelDescriptions;
-using Purdue.io_API.Areas.HelpPage.Models;
+using PurdueIo.Areas.HelpPage.ModelDescriptions;
+using PurdueIo.Areas.HelpPage.Models;
 
-namespace Purdue.io_API.Areas.HelpPage
+namespace PurdueIo.Areas.HelpPage
 {
     public static class HelpPageConfigurationExtensions
     {

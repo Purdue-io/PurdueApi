@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
 
-namespace Purdue.io_API.Models.Catalog
+namespace PurdueIo.Models.Catalog
 {
 	/// <summary>
 	/// Course model, representing the highest order of class representation.

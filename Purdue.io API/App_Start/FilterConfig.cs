@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Mvc;
 
-namespace Purdue.io_API
+namespace PurdueIo
 {
 	public class FilterConfig
 	{

@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
 
-namespace Purdue.io_API.Results
+namespace PurdueIo.Results
 {
 	public class ChallengeResult : IHttpActionResult
 	{

@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Web.Http.Controllers;
 using System.Web.Http.Description;
 using System.Xml.XPath;
-using Purdue.io_API.Areas.HelpPage.ModelDescriptions;
+using PurdueIo.Areas.HelpPage.ModelDescriptions;
 
-namespace Purdue.io_API.Areas.HelpPage
+namespace PurdueIo.Areas.HelpPage
 {
     /// <summary>
     /// A custom <see cref="IDocumentationProvider"/> that reads the API documentation from an XML documentation file.

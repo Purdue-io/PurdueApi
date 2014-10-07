@@ -1,7 +1,7 @@
 using System.Web.Http;
 using System.Web.Mvc;
 
-namespace Purdue.io_API.Areas.HelpPage
+namespace PurdueIo.Areas.HelpPage
 {
     public class HelpPageAreaRegistration : AreaRegistration
     {

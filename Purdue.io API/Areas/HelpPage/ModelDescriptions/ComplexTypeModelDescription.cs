@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace Purdue.io_API.Areas.HelpPage.ModelDescriptions
+namespace PurdueIo.Areas.HelpPage.ModelDescriptions
 {
     public class ComplexTypeModelDescription : ModelDescription
     {

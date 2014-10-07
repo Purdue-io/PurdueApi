@@ -4,9 +4,9 @@ using System.Linq;
 using Microsoft.Owin;
 using Owin;
 
-[assembly: OwinStartup(typeof(Purdue.io_API.Startup))]
+[assembly: OwinStartup(typeof(PurdueIo.Startup))]
 
-namespace Purdue.io_API
+namespace PurdueIo
 {
 	public partial class Startup
 	{

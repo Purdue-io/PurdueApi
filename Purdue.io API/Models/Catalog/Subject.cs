@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
 
-namespace Purdue.io_API.Models
+namespace PurdueIo.Models
 {
 	/// <summary>
 	/// Subject model, representing a subject such as 'CS' or 'MA'.

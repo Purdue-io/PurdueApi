@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Purdue.io_API.Models
+namespace PurdueIo.Models
 {
 	// Models returned by AccountController actions.
 	public class ExternalLoginConfirmationViewModel

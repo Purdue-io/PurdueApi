@@ -1,10 +1,10 @@
 using System;
 using System.Web.Http;
 using System.Web.Mvc;
-using Purdue.io_API.Areas.HelpPage.ModelDescriptions;
-using Purdue.io_API.Areas.HelpPage.Models;
+using PurdueIo.Areas.HelpPage.ModelDescriptions;
+using PurdueIo.Areas.HelpPage.Models;
 
-namespace Purdue.io_API.Areas.HelpPage.Controllers
+namespace PurdueIo.Areas.HelpPage.Controllers
 {
     /// <summary>
     /// The controller that will handle requests for the help page.

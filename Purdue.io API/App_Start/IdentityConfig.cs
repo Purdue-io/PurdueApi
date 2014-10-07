@@ -10,9 +10,9 @@ using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security;
-using Purdue.io_API.Models;
+using PurdueIo.Models;
 
-namespace Purdue.io_API
+namespace PurdueIo
 {
 	public class EmailService : IIdentityMessageService
 	{

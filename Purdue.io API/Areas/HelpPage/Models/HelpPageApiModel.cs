@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http.Headers;
 using System.Web.Http.Description;
-using Purdue.io_API.Areas.HelpPage.ModelDescriptions;
+using PurdueIo.Areas.HelpPage.ModelDescriptions;
 
-namespace Purdue.io_API.Areas.HelpPage.Models
+namespace PurdueIo.Areas.HelpPage.Models
 {
     /// <summary>
     /// The model that represents an API displayed on the help page.

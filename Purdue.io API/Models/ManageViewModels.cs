@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNet.Identity;
 using Microsoft.Owin.Security;
 
-namespace Purdue.io_API.Models
+namespace PurdueIo.Models
 {
 	public class IndexViewModel
 	{

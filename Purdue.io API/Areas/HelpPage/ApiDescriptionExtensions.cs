@@ -3,7 +3,7 @@ using System.Text;
 using System.Web;
 using System.Web.Http.Description;
 
-namespace Purdue.io_API.Areas.HelpPage
+namespace PurdueIo.Areas.HelpPage
 {
     public static class ApiDescriptionExtensions
     {

@@ -6,9 +6,9 @@ using System.Web.Mvc;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
-using Purdue.io_API.Models;
+using PurdueIo.Models;
 
-namespace Purdue.io_API.Controllers
+namespace PurdueIo.Controllers
 {
 	[Authorize]
 	public class ManageController : Controller

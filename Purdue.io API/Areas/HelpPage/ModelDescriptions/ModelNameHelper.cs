@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
-namespace Purdue.io_API.Areas.HelpPage.ModelDescriptions
+namespace PurdueIo.Areas.HelpPage.ModelDescriptions
 {
     internal static class ModelNameHelper
     {

@@ -6,7 +6,7 @@ using System.Web.Http;
 using Microsoft.Owin.Security.OAuth;
 using Newtonsoft.Json.Serialization;
 
-namespace Purdue.io_API
+namespace PurdueIo
 {
 	public static class WebApiConfig
 	{

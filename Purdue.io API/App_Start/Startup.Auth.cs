@@ -8,10 +8,10 @@ using Microsoft.Owin.Security.DataProtection;
 using Microsoft.Owin.Security.Google;
 using Microsoft.Owin.Security.OAuth;
 using Owin;
-using Purdue.io_API.Models;
-using Purdue.io_API.Providers;
+using PurdueIo.Models;
+using PurdueIo.Providers;
 
-namespace Purdue.io_API
+namespace PurdueIo
 {
 	public partial class Startup
 	{

@@ -1,4 +1,4 @@
-namespace Purdue.io_API.Areas.HelpPage.ModelDescriptions
+namespace PurdueIo.Areas.HelpPage.ModelDescriptions
 {
     public class SimpleTypeModelDescription : ModelDescription
     {
