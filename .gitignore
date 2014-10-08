@@ -92,6 +92,9 @@ DocProject/Help/html
 # Click-Once directory
 publish/
 
+# XML documentation output
+*PurdueIo.xml
+
 # Publish Web Output
 *.Publish.xml
 
