@@ -23,12 +23,12 @@ namespace PurdueIo.Controllers
 		private const string COURSE_SUBJECT_NUMBER_REGEX		= @"\A(?<" + COURSE_SUBJECT_CAPTURE_GROUP_NAME + @">[A-Za-z]+)(?<" + COURSE_NUMBER_CAPTURE_GROUP_NAME + @">\d{3}(?:00)?)\z";
 
 		// This DB really should be instantiated on its own in each method... but that causes disposed problems.
-		private ApplicationDbContext _Db = new ApplicationDbContext(); 
+		private ApplicationDbContext _Db = new ApplicationDbContext();
 
-        // GET: Catalog
-		[Route("")]
+		// GET: Catalog/Courses
+		[Route("Courses")]
 		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
-		public IHttpActionResult Get()
+		public IHttpActionResult GetAllCourses()
         {
 			// Get all of the courses, convert to viewmodel.
 			IEnumerable<CourseViewModel> allcourses = _Db.Courses.ToList().Select(x => x.ToViewModel());
@@ -37,10 +37,10 @@ namespace PurdueIo.Controllers
 			return Ok<IEnumerable<CourseViewModel>>(allcourses);
         }
 
-        // GET: Catalog/[CourseSubject][CourseNumber] (ex. Catalog/MA261)
-		[Route("{course}")]
+		// GET: Catalog/Courses/[CourseSubject][CourseNumber] (ex. Catalog/MA261)
+		[Route("Courses/{course}")]
 		[ResponseType(typeof (IEnumerable<CourseViewModel>))]
-		public IHttpActionResult Get(String course)
+		public IHttpActionResult GetCourses(String course)
         {
 			//Use regex to parse course input
 			Tuple<String, String> courseTuple = this.ParseCourse(course);
@@ -66,10 +66,10 @@ namespace PurdueIo.Controllers
 			return Ok<IEnumerable<CourseViewModel>>(selectedCourses);
         }
 
-		//GET: Catalog/[CourseSubject][CourseNumber]/[ClassGUID] 
-		[Route("{course}/{classGUID}")]
+		//GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID] 
+		[Route("Courses/{course}/{classGUID}")]
 		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
-		public IHttpActionResult Get(String course, String classGUID)
+		public IHttpActionResult GetClasses(String course, String classGUID)
 		{
 			//Use regex to parse course input
 			Tuple<String, String> courseTuple = this.ParseCourse(course);
@@ -107,10 +107,10 @@ namespace PurdueIo.Controllers
 			return Ok<IEnumerable<ClassViewModel>>(selectedClasses);
 		}
 
-		//GET: Catalog/[CourseSubject][CourseNumber]/[ClassGUID]/[SectionGUID]
-		[Route("{course}/{classGUID}/{sectionGUID}")]
+		//GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID]/[SectionGUID]
+		[Route("Courses/{course}/{classGUID}/{sectionGUID}")]
 		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
-		public IHttpActionResult Get(String course, String classGUID, String sectionGUID)
+		public IHttpActionResult GetSections(String course, String classGUID, String sectionGUID)
 		{
 			//Use regex to parse course input
 			Tuple<String, String> courseTuple = this.ParseCourse(course);
@@ -158,6 +158,124 @@ namespace PurdueIo.Controllers
 					);
 			
 			return Ok<IEnumerable<SectionViewModel>>(selectedSections);
+		}
+
+		// GET: Catalog/Subjects
+		[Route("Subjects")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetAllSubjects()
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Subjects/[Subject] (ex. Catalog/Subjects/MA)
+		[Route("Subjects/{subject}")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetSubjects(String subject)
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Terms
+		[Route("Terms")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetAllTerms()
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Terms/[Term] (ex. Catalog/Terms/Fall14)
+		[Route("Terms/{term}")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetTerms(String term)
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Campuses
+		[Route("Campuses")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetAllCampuses()
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Campuses/[Campus] (ex. Catalog/Campuses/Purdue%20University%20West%20Lafayette)
+		[Route("Campuses/{campus}")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetCampuses(String campus)
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Buildings
+		[Route("Buildings")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetAllBuildings()
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Buildings/[building] (ex. Catalog/Buildings/LWSN)
+		[Route("Buildings/{building}")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetBuildings(String building)
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Rooms
+		[Route("Rooms")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetAllRooms()
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Rooms/[room] (ex. Catalog/Rooms/B160)
+		[Route("Rooms/{room}")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetRooms(String room)
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Instructors
+		[Route("Instructors")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetAllInstructors()
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/Instructors/[instructor] (ex. Catalog/Instructors/Hubert%20E%20Dunsmore)
+		[Route("Instructors/{instructor}")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetInstructors(String instructor)
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/RegistrationStatuses
+		[Route("RegistrationStatuses")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetAllRegistrationStatuses()
+		{
+			return Ok();
+		}
+
+		// GET: Catalog/RegistrationStatuses/[status] (ex. Catalog/RegistrationStatuses/Open)
+		[Route("RegistrationStatuses/{status}")]
+		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		public IHttpActionResult GetRegistrationStatuses(String status)
+		{
+			return Ok();
+		}
+
+		//Imcomplete Skeleton
+		public IHttpActionResult Post()
+		{
+			return null;
 		}
 
 		/// <summary>

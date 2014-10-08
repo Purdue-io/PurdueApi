@@ -219,6 +219,7 @@
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\ApplicationDbContext.cs" />
+    <Compile Include="Models\Binding\CourseSearchBindingModel.cs" />
     <Compile Include="Models\Catalog\Building.cs" />
     <Compile Include="Models\Catalog\Campus.cs" />
     <Compile Include="Models\Catalog\Class.cs" />
