@@ -124,7 +124,7 @@ namespace PurdueIo.Tests
 				SectionId = Guid.NewGuid(),
 				Class = csclass,
 				Type = "Lecture",
-				Instructor = dunsmore,
+				Instructors = new List<Instructor>() { dunsmore },
 				DaysOfWeek = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday },
 				StartDate = new DateTime(2014, 8, 25),
 				EndDate = new DateTime(2014, 12, 19),

@@ -216,6 +216,10 @@
     <Compile Include="Migrations\201410070900486_InitialCourseCatalog.Designer.cs">
       <DependentUpon>201410070900486_InitialCourseCatalog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201410080717394_MultipleInstructorsPerSection.cs" />
+    <Compile Include="Migrations\201410080717394_MultipleInstructorsPerSection.Designer.cs">
+      <DependentUpon>201410080717394_MultipleInstructorsPerSection.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\ApplicationDbContext.cs" />
@@ -267,6 +271,7 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
     <Content Include="ClassDiagram1.cd" />
+    <Content Include="Properties\webjobs-list.json" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
     <Content Include="Scripts\jquery-1.10.2.min.js" />
@@ -341,6 +346,9 @@
     <EmbeddedResource Include="Migrations\201410070900486_InitialCourseCatalog.resx">
       <DependentUpon>201410070900486_InitialCourseCatalog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201410080717394_MultipleInstructorsPerSection.resx">
+      <DependentUpon>201410080717394_MultipleInstructorsPerSection.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -370,6 +378,7 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
+  <Import Project="..\packages\Microsoft.Web.WebJobs.Publish.1.0.0\tools\webjobs.targets" Condition="Exists('..\packages\Microsoft.Web.WebJobs.Publish.1.0.0\tools\webjobs.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

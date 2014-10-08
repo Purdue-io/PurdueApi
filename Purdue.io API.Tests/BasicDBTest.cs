@@ -39,7 +39,7 @@ namespace PurdueIo.Tests
 
 					foreach (var section in cclass.Sections)
 					{
-						System.Diagnostics.Debug.WriteLine("\t\t\t" + section.CRN + ": " + section.Type + " by " + section.Instructor.Name);
+						System.Diagnostics.Debug.WriteLine("\t\t\t" + section.CRN + ": " + section.Type + " by " + section.Instructors.First().Name);
 						System.Diagnostics.Debug.WriteLine("\t\t\t" + section.Room.Building.ShortCode + section.Room.Number + " @ " + section.StartTime.ToString("t"));
 					}
 				}

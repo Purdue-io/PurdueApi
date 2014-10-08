@@ -47,7 +47,7 @@ namespace PurdueIo.Models.Catalog
 		/// The instructor who teaches this section.
 		/// </summary>
 		[InverseProperty("Sections")]
-		public virtual Instructor Instructor { get; set; }
+		public virtual ICollection<Instructor> Instructors { get; set; }
 
 		/// <summary>
 		/// Indicates whether this section is available for registration.
@@ -130,7 +130,7 @@ namespace PurdueIo.Models.Catalog
 				SectionId = this.SectionId,
 				CRN = this.CRN,
 				Class = this.Class.ToViewModel(),
-				Instructor = this.Instructor.ToViewModel(),
+				Instructors = this.Instructors.ToList().Select(i => i.ToViewModel()).ToList(),
 				RegistrationStatus = (int)this.RegistrationStatus,
 				Type = this.Type,
 				StartDate = this.StartDate,
@@ -157,7 +157,7 @@ namespace PurdueIo.Models.Catalog
 		public Guid SectionId { get; set; }
 		public string CRN { get; set; }
 		public ClassViewModel Class { get; set; }
-		public InstructorViewModel Instructor { get; set; }
+		public ICollection<InstructorViewModel> Instructors { get; set; }
 		public int RegistrationStatus { get; set; }
 		public string Type { get; set; }
 		public DateTime StartDate { get; set; }
