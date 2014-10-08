@@ -109,7 +109,7 @@ namespace PurdueIo.Controllers
 
 		//GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID]/[SectionGUID]
 		[Route("Courses/{course}/{classGUID}/{sectionGUID}")]
-		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
+		[ResponseType(typeof(IEnumerable<SectionViewModel>))]
 		public IHttpActionResult GetSections(String course, String classGUID, String sectionGUID)
 		{
 			//Use regex to parse course input
@@ -162,7 +162,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Subjects
 		[Route("Subjects")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<SubjectViewModel>))]
 		public IHttpActionResult GetAllSubjects()
 		{
 			return Ok();
@@ -170,7 +170,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Subjects/[Subject] (ex. Catalog/Subjects/MA)
 		[Route("Subjects/{subject}")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<SubjectViewModel>))]
 		public IHttpActionResult GetSubjects(String subject)
 		{
 			return Ok();
@@ -178,7 +178,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Terms
 		[Route("Terms")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<TermViewModel>))]
 		public IHttpActionResult GetAllTerms()
 		{
 			return Ok();
@@ -186,7 +186,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Terms/[Term] (ex. Catalog/Terms/Fall14)
 		[Route("Terms/{term}")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<TermViewModel>))]
 		public IHttpActionResult GetTerms(String term)
 		{
 			return Ok();
@@ -194,7 +194,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Campuses
 		[Route("Campuses")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<CampusViewModel>))]
 		public IHttpActionResult GetAllCampuses()
 		{
 			return Ok();
@@ -202,7 +202,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Campuses/[Campus] (ex. Catalog/Campuses/Purdue%20University%20West%20Lafayette)
 		[Route("Campuses/{campus}")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<CampusViewModel>))]
 		public IHttpActionResult GetCampuses(String campus)
 		{
 			return Ok();
@@ -210,7 +210,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Buildings
 		[Route("Buildings")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<BuildingViewModel>))]
 		public IHttpActionResult GetAllBuildings()
 		{
 			return Ok();
@@ -218,7 +218,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Buildings/[building] (ex. Catalog/Buildings/LWSN)
 		[Route("Buildings/{building}")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<BuildingViewModel>))]
 		public IHttpActionResult GetBuildings(String building)
 		{
 			return Ok();
@@ -226,7 +226,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Rooms
 		[Route("Rooms")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<RoomViewModel>))]
 		public IHttpActionResult GetAllRooms()
 		{
 			return Ok();
@@ -234,7 +234,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Rooms/[room] (ex. Catalog/Rooms/B160)
 		[Route("Rooms/{room}")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<RoomViewModel>))]
 		public IHttpActionResult GetRooms(String room)
 		{
 			return Ok();
@@ -242,7 +242,7 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Instructors
 		[Route("Instructors")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<InstructorViewModel>))]
 		public IHttpActionResult GetAllInstructors()
 		{
 			return Ok();
@@ -250,32 +250,34 @@ namespace PurdueIo.Controllers
 
 		// GET: Catalog/Instructors/[instructor] (ex. Catalog/Instructors/Hubert%20E%20Dunsmore)
 		[Route("Instructors/{instructor}")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof(IEnumerable<InstructorViewModel>))]
 		public IHttpActionResult GetInstructors(String instructor)
 		{
 			return Ok();
 		}
 
-		// GET: Catalog/RegistrationStatuses
-		[Route("RegistrationStatuses")]
+		// POST: Catalog/Search/Courses
+		[Route("Search/Courses")]
 		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
-		public IHttpActionResult GetAllRegistrationStatuses()
+		public IHttpActionResult PostSearchCourses()
 		{
 			return Ok();
 		}
 
-		// GET: Catalog/RegistrationStatuses/[status] (ex. Catalog/RegistrationStatuses/Open)
-		[Route("RegistrationStatuses/{status}")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
-		public IHttpActionResult GetRegistrationStatuses(String status)
+		// POST: Catalog/Search/Classes
+		[Route("Search/Classes")]
+		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
+		public IHttpActionResult PostSearchClasses()
 		{
 			return Ok();
 		}
 
-		//Imcomplete Skeleton
-		public IHttpActionResult Post()
+		// POST: Catalog/Search/Sections
+		[Route("Search/Sections")]
+		[ResponseType(typeof(IEnumerable<SectionViewModel>))]
+		public IHttpActionResult PostSearchSections()
 		{
-			return null;
+			return Ok();
 		}
 
 		/// <summary>
