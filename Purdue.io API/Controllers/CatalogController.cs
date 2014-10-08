@@ -37,53 +37,158 @@ namespace PurdueIo.Controllers
 			return Ok<IEnumerable<CourseViewModel>>(allcourses);
         }
 
-        // GET: Catalog/MA261
+        // GET: Catalog/[CourseSubject][CourseNumber] (ex. Catalog/MA261)
 		[Route("{course}")]
 		[ResponseType(typeof (IEnumerable<CourseViewModel>))]
 		public IHttpActionResult Get(String course)
         {
+			//Use regex to parse course input
+			Tuple<String, String> courseTuple = this.ParseCourse(course);
+
+			//If there are no matches, exit with error
+			if(courseTuple == null)
+			{
+				//error, invalid format
+				return BadRequest("Invalid course format.  Course should be subject abbrivation followed by the course number (ex. PHYS172 or PHYS172000).");
+			}
+			
+			IEnumerable<CourseViewModel> selectedCourses = _Db.Courses
+				.Where(
+					x => 
+						x.Number == courseTuple.Item2 && 
+						x.Subject.Abbreviation == courseTuple.Item1
+					).ToList()
+					.Select(
+						x => 
+							x.ToViewModel()
+					);
+
+			return Ok<IEnumerable<CourseViewModel>>(selectedCourses);
+        }
+
+		//GET: Catalog/[CourseSubject][CourseNumber]/[ClassGUID] 
+		[Route("{course}/{classGUID}")]
+		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
+		public IHttpActionResult Get(String course, String classGUID)
+		{
+			//Use regex to parse course input
+			Tuple<String, String> courseTuple = this.ParseCourse(course);
+			Guid classID;
+
+			//If there are no matches, exit with error
+			if (courseTuple == null)
+			{
+				//error, invalid format
+				return BadRequest("Invalid course format.  Course should be subject abbrivation followed by the course number (ex. PHYS172 or PHYS172000).");
+			}
+
+			//If class GUID format is invalid, exit with error
+			try
+			{
+				classID = Guid.Parse(classGUID);
+			}
+			catch
+			{
+				return BadRequest("Invalid class GUID format.");
+			}
+
+			IEnumerable <ClassViewModel> selectedClasses = _Db.Classes
+				.Where(
+					x => 
+						x.Course.Number == courseTuple.Item2 && 
+						x.Course.Subject.Abbreviation == courseTuple.Item1 && 
+						x.ClassId == classID
+					).ToList()
+					.Select(
+						x => 
+							x.ToViewModel()
+					);
+
+			return Ok<IEnumerable<ClassViewModel>>(selectedClasses);
+		}
+
+		//GET: Catalog/[CourseSubject][CourseNumber]/[ClassGUID]/[SectionGUID]
+		[Route("{course}/{classGUID}/{sectionGUID}")]
+		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
+		public IHttpActionResult Get(String course, String classGUID, String sectionGUID)
+		{
+			//Use regex to parse course input
+			Tuple<String, String> courseTuple = this.ParseCourse(course);
+			Guid classID;
+			Guid sectionID;
+
+			//If course format is invalid, exit with error
+			if (courseTuple == null)
+			{
+				//error, invalid format
+				return BadRequest("Invalid course format.  Course should be subject abbrivation followed by the course number (ex. PHYS172 or PHYS172000).");
+			}
+
+			//If class GUID format is invalid, exit with error
+			try
+			{
+				classID = Guid.Parse(classGUID);
+			}
+			catch
+			{
+				return BadRequest("Invalid class GUID format.");
+			}
+
+			//If section GUID format is invalid, exit with error
+			try
+			{
+				sectionID = Guid.Parse(sectionGUID);
+			}
+			catch
+			{
+				return BadRequest("Invalid section GUID format.");
+			}
+
+			IEnumerable<SectionViewModel> selectedSections = _Db.Sections
+				.Where(
+					x =>
+						x.Class.Course.Number == courseTuple.Item2 &&
+						x.Class.Course.Subject.Abbreviation == courseTuple.Item1 &&
+						x.Class.ClassId == classID &&
+						x.SectionId == sectionID
+					).ToList()
+					.Select(
+						x => 
+							x.ToViewModel()
+					);
+			
+			return Ok<IEnumerable<SectionViewModel>>(selectedSections);
+		}
+
+		/// <summary>
+		/// Helper function used to parse course input in the format of [CourseSubject][CourseNumber] (ex. MA261).  Returns null if the input is not in the format.
+		/// </summary>
+		/// <param name="course"></param>
+		/// <returns></returns>
+		private Tuple<String, String> ParseCourse(String course)
+		{
 			//Init regex
 			Regex regex = new Regex(COURSE_SUBJECT_NUMBER_REGEX);
 			Match match = regex.Match(course);
-			
+
 			//If there are no matches, exit with error
-			if(!match.Success)
+			if (!match.Success)
 			{
 				//error, invalid format
-				return BadRequest("Invalid course format.  Course should be subject abbrivation followed by the course number (ex. PHYS172 or PHYS172000)");
+				return null;
 			}
 
 			//Capture subject and number group from the string
 			String courseSubject = match.Groups[COURSE_SUBJECT_CAPTURE_GROUP_NAME].Value;
 			String courseNumber = match.Groups[COURSE_NUMBER_CAPTURE_GROUP_NAME].Value;
-			
+
 			//Add zeros to number if number is only 3 characters (ex. 390 -> 39000)
-			if(courseNumber.Length == 3)
+			if (courseNumber.Length == 3)
 			{
 				courseNumber += "00";
 			}
 
-			IEnumerable<CourseViewModel> selectedCourses = _Db.Courses.Where(x => x.Number == courseNumber && x.Subject.Abbreviation == courseSubject).ToList().Select(x => x.ToViewModel());
-
-			return Ok<IEnumerable<CourseViewModel>>(selectedCourses);
-        }
-
-		//GET: Catalog/MA261/[ClassGUID]
-		[Route("{course}/{classGUID}")]
-		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
-		public IHttpActionResult Get(String course, String classGUID)
-		{
-			//TODO: Implenment
-			return Ok();
-		}
-
-		//GET: Catalog/MA261/[ClassGUID]/[SectionGUID]
-		[Route("{course}/{classGUID}/{sectionGUID}")]
-		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
-		public IHttpActionResult Get(String course, String classGUID, String sectionGUID)
-		{
-			//TODO: Implenment
-			return Ok();
+			return new Tuple<string, string>(courseSubject, courseNumber);
 		}
     }
 }

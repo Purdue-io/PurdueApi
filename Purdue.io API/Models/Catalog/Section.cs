@@ -135,7 +135,7 @@ namespace PurdueIo.Models.Catalog
 				Type = this.Type,
 				StartDate = this.StartDate,
 				EndDate = this.EndDate,
-				DaysOfWeek = this.DaysOfWeek.Select(x => (int)x).ToList(),
+				//DaysOfWeek = this.DaysOfWeek.Select(x => (int)x).ToList(),
 				StartTime = this.StartTime,
 				Duration = this.Duration,
 				Room = this.Room.ToViewModel(),

@@ -87,5 +87,92 @@ namespace PurdueIo.Tests.Controllers
 			badResponse = controller.Get("111");
 			Assert.IsInstanceOfType(badResponse, typeof(BadRequestErrorMessageResult), "111 is not an valid course");
 		}
+
+		[TestMethod]
+		public void TestFetchSpecifiedClasses()
+		{
+			//Ignoring checks on course since is it checked in TestFetchSpecifiedCourses()
+			GenerateTestSchool();
+
+			Guid testClassId = this.Db.Classes
+				.Where(
+					x =>
+						x.Course.Number == "30700" &&
+						x.Course.Subject.Abbreviation == "CS"
+						).First().ClassId;
+
+			//Using vars cause it looks prettier :D
+			//Correct input: CS30700/ClassGUID
+			var controller = new CatalogController();
+			var response = controller.Get("CS30700", testClassId.ToString()) as OkNegotiatedContentResult<IEnumerable<ClassViewModel>>;
+			var classes = response.Content.ToList();
+
+			Assert.IsTrue(classes.Count > 0, "Class request returned no classes, CS30700/" + testClassId.ToString() + " should exist in the catalog.");
+			Assert.IsTrue(classes
+				.Where(
+					x => 
+						x.Course.Subject.Abbreviation == "CS" && 
+						x.Course.Number == "30700" &&
+						x.ClassId == testClassId
+					).Count() > 0, "CS30700/" + testClassId.ToString() +" classes wasn't returned.");
+
+			//Incorrect input: CS30700/0
+			var badResponse = controller.Get("CS30700", "0");
+			Assert.IsInstanceOfType(badResponse, typeof(BadRequestErrorMessageResult), "0 is not an valid class id");
+
+			//Incorrect input: CS30700/d
+			badResponse = controller.Get("CS30700", "d");
+			Assert.IsInstanceOfType(badResponse, typeof(BadRequestErrorMessageResult), "d is not an valid class id");
+
+		}
+
+		[TestMethod]
+		public void TestFetchSpecifiedSections()
+		{
+			//Ignoring checks on course since is it checked in TestFetchSpecifiedCourses()
+			//Ignoring checks on class since is it checked in TestFetchSpecifiedClasses()
+
+			//Ignoring checks on course since is it checked in TestFetchSpecifiedCourses()
+			GenerateTestSchool();
+
+			Guid testClassId = this.Db.Classes
+				.Where(
+					x =>
+						x.Course.Number == "30700" &&
+						x.Course.Subject.Abbreviation == "CS"
+						).First().ClassId;
+
+			Guid testSectionId = this.Db.Sections
+				.Where(
+					x =>
+						x.Class.Course.Number == "30700" &&
+						x.Class.Course.Subject.Abbreviation == "CS" &&
+						x.Class.ClassId == testClassId
+						).First().SectionId;
+
+			//Using vars cause it looks prettier :D
+			//Correct input: CS30700/ClassGUID/SectionGUID
+			var controller = new CatalogController();
+			var response = controller.Get("CS30700", testClassId.ToString(), testSectionId.ToString()) as OkNegotiatedContentResult<IEnumerable<SectionViewModel>>;
+			var sections = response.Content.ToList();
+
+			Assert.IsTrue(sections.Count > 0, "Class request returned no sections, CS30700/" + testClassId.ToString() + "/" + testSectionId.ToString() + " should exist in the catalog.");
+			Assert.IsTrue(sections
+				.Where(
+					x =>
+						x.Class.Course.Subject.Abbreviation == "CS" &&
+						x.Class.Course.Number == "30700" &&
+						x.Class.ClassId == testClassId &&
+						x.SectionId == testSectionId
+					).Count() > 0, "CS30700/" + testClassId.ToString() + "/" + testSectionId.ToString() + " sections wasn't returned.");
+
+			//Incorrect input: CS30700/ClassGUID/0
+			var badResponse = controller.Get("CS30700", testClassId.ToString(), "0");
+			Assert.IsInstanceOfType(badResponse, typeof(BadRequestErrorMessageResult), "0 is not an valid section id");
+
+			//Incorrect input: CS30700/ClassGUID/d
+			badResponse = controller.Get("CS30700", testClassId.ToString(), "d");
+			Assert.IsInstanceOfType(badResponse, typeof(BadRequestErrorMessageResult), "d is not an valid section id");
+		}
 	}
 }
