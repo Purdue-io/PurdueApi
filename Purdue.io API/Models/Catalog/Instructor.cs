@@ -55,8 +55,17 @@ namespace PurdueIo.Models.Catalog
 	/// </summary>
 	public class InstructorViewModel
 	{
+        /// <summary>
+        /// GUID with which to reference an instructor internally.
+        /// </summary>
 		public Guid InstructorId { get; set; }
+        /// <summary>
+        /// Instructor's full name as listed in MyPurdue.
+        /// </summary>
 		public string Name { get; set; }
+        /// <summary>
+        /// Instructor's e-mail address.
+        /// </summary>
 		public string Email { get; set; }
 	}
 }

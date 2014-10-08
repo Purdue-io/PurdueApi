@@ -53,8 +53,17 @@ namespace PurdueIo.Models.Catalog
 	/// </summary>
 	public class SubjectViewModel
 	{
+        /// <summary>
+        /// GUID with which to reference a subject internally.
+        /// </summary>
 		public Guid SubjectId { get; set; }
+        /// <summary>
+        /// The full name of the subject.
+        /// </summary>
 		public string Name { get; set; }
+        /// <summary>
+        /// The 2-4 character abbreviation of the subject, e.g. "CS" or "ENGL".
+        /// </summary>
 		public string Abbreviation { get; set; }
 	}
 }

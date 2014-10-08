@@ -61,9 +61,21 @@ namespace PurdueIo.Models.Catalog
 	/// </summary>
 	public class TermViewModel
 	{
+        /// <summary>
+        /// GUID with which to reference the term internally.
+        /// </summary>
 		public Guid TermId { get; set; }
+        /// <summary>
+        /// Short term code such as "Fall14" referred to by course catalog.
+        /// </summary>
 		public string TermCode { get; set; }
+        /// <summary>
+        /// The date on which the term starts.
+        /// </summary>
 		public DateTime StartDate { get; set; }
+        /// <summary>
+        /// The date on which the term ends.
+        /// </summary>
 		public DateTime EndDate { get; set; }
 	}
 }

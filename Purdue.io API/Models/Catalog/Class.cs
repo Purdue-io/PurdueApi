@@ -60,9 +60,21 @@ namespace PurdueIo.Models.Catalog
 	/// </summary>
 	public class ClassViewModel
 	{
+        /// <summary>
+        /// GUID with which to reference this class internally.
+        /// </summary>
 		public Guid ClassId { get; set; }
+        /// <summary>
+        /// Object containing information about the course this class is part of.
+        /// </summary>
 		public CourseViewModel Course { get; set; }
+        /// <summary>
+        /// Object containing information about the term this course is offered in.
+        /// </summary>
 		public TermViewModel Term { get; set; }
+        /// <summary>
+        /// Object containing information about the campus this course is located at.
+        /// </summary>
 		public CampusViewModel Campus { get; set; }
 	}
 }

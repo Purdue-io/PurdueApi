@@ -61,9 +61,21 @@ namespace PurdueIo.Models.Catalog
 	/// </summary>
 	public class BuildingViewModel
 	{
+        /// <summary>
+        /// GUID with which to reference this building internally.
+        /// </summary>
 		public Guid BuildingId { get; set; }
+        /// <summary>
+        /// Object containing information about the campus this building is located at.
+        /// </summary>
 		public CampusViewModel Campus { get; set; }
+        /// <summary>
+        /// The official name of this building
+        /// </summary>
 		public string Name { get; set; }
+        /// <summary>
+        /// The shortened code name of this building.
+        /// </summary>
 		public string ShortCode { get; set; }
 	}
 }

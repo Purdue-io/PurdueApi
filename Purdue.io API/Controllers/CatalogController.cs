@@ -26,6 +26,9 @@ namespace PurdueIo.Controllers
 		private ApplicationDbContext _Db = new ApplicationDbContext();
 
 		// GET: Catalog/Courses
+        /// <summary>
+        /// Returns all offered courses.
+        /// </summary>
 		[Route("Courses")]
 		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
 		public IHttpActionResult GetAllCourses()
@@ -38,6 +41,10 @@ namespace PurdueIo.Controllers
         }
 
 		// GET: Catalog/Courses/[CourseSubject][CourseNumber] (ex. Catalog/MA261)
+        /// <summary>
+        /// Returns data for a specific course.
+        /// </summary>
+        /// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
 		[Route("Courses/{course}")]
 		[ResponseType(typeof (IEnumerable<CourseViewModel>))]
 		public IHttpActionResult GetCourses(String course)
@@ -66,7 +73,12 @@ namespace PurdueIo.Controllers
 			return Ok<IEnumerable<CourseViewModel>>(selectedCourses);
         }
 
-		//GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID] 
+        //GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID] 
+        /// <summary>
+        /// Returns data for a specific class in a specific course.
+        /// </summary>
+        /// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
+        /// <param name="classGUID"> The class specific GUID.</param>
 		[Route("Courses/{course}/{classGUID}")]
 		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
 		public IHttpActionResult GetClasses(String course, String classGUID)
@@ -108,6 +120,12 @@ namespace PurdueIo.Controllers
 		}
 
 		//GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID]/[SectionGUID]
+        /// <summary>
+        /// Returns data for a specific section of a specific class in a specific course.
+        /// </summary>
+        /// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
+        /// <param name="classGUID"> The class specific GUID.</param>
+        /// <param name="sectionGUID"> The section specific GUID.</param>
 		[Route("Courses/{course}/{classGUID}/{sectionGUID}")]
 		[ResponseType(typeof(IEnumerable<SectionViewModel>))]
 		public IHttpActionResult GetSections(String course, String classGUID, String sectionGUID)
@@ -161,6 +179,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Subjects
+        /// <summary>
+        /// Returns all offered subjects.
+        /// </summary>
 		[Route("Subjects")]
 		[ResponseType(typeof(IEnumerable<SubjectViewModel>))]
 		public IHttpActionResult GetAllSubjects()
@@ -169,6 +190,10 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Subjects/[Subject] (ex. Catalog/Subjects/MA)
+        /// <summary>
+        /// Returns data for a specific subject.
+        /// </summary>
+        /// <param name="subject"> The desired subject to examine - for example, MA or ENGL.</param>
 		[Route("Subjects/{subject}")]
 		[ResponseType(typeof(IEnumerable<SubjectViewModel>))]
 		public IHttpActionResult GetSubjects(String subject)
@@ -177,6 +202,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Terms
+        /// <summary>
+        /// Returns all terms Purdue offers classes.
+        /// </summary>
 		[Route("Terms")]
 		[ResponseType(typeof(IEnumerable<TermViewModel>))]
 		public IHttpActionResult GetAllTerms()
@@ -185,6 +213,10 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Terms/[Term] (ex. Catalog/Terms/Fall14)
+        /// <summary>
+        /// Returns data for a specific term.
+        /// </summary>
+        /// <param name="term"> The desired term to examine - for example, Fall14 or Spring15.</param>
 		[Route("Terms/{term}")]
 		[ResponseType(typeof(IEnumerable<TermViewModel>))]
 		public IHttpActionResult GetTerms(String term)
@@ -193,6 +225,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Campuses
+        /// <summary>
+        /// Returns information about all Purdue campuses.
+        /// </summary>
 		[Route("Campuses")]
 		[ResponseType(typeof(IEnumerable<CampusViewModel>))]
 		public IHttpActionResult GetAllCampuses()
@@ -201,6 +236,10 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Campuses/[Campus] (ex. Catalog/Campuses/Purdue%20University%20West%20Lafayette)
+        /// <summary>
+        /// Returns data for a specific Purdue campus.
+        /// </summary>
+        /// <param name="campus"> The desired campus to examine - for example, Purdue University West Lafayette.</param>
 		[Route("Campuses/{campus}")]
 		[ResponseType(typeof(IEnumerable<CampusViewModel>))]
 		public IHttpActionResult GetCampuses(String campus)
@@ -209,6 +248,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Buildings
+        /// <summary>
+        /// Returns information about all Purdue affiliated buildings.
+        /// </summary>
 		[Route("Buildings")]
 		[ResponseType(typeof(IEnumerable<BuildingViewModel>))]
 		public IHttpActionResult GetAllBuildings()
@@ -217,6 +259,10 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Buildings/[building] (ex. Catalog/Buildings/LWSN)
+        /// <summary>
+        /// Returns data for a specific building.
+        /// </summary>
+        /// <param name="building"> The desired building shortcode to examine - for example, LWSN.</param>
 		[Route("Buildings/{building}")]
 		[ResponseType(typeof(IEnumerable<BuildingViewModel>))]
 		public IHttpActionResult GetBuildings(String building)
@@ -225,6 +271,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Rooms
+        /// <summary>
+        /// Returns information about all rooms.
+        /// </summary>
 		[Route("Rooms")]
 		[ResponseType(typeof(IEnumerable<RoomViewModel>))]
 		public IHttpActionResult GetAllRooms()
@@ -233,6 +282,10 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Rooms/[room] (ex. Catalog/Rooms/B160)
+        /// <summary>
+        /// Returns data for a specific room.
+        /// </summary>
+        /// <param name="building"> The desired room to examine - for example, B160.</param>
 		[Route("Rooms/{room}")]
 		[ResponseType(typeof(IEnumerable<RoomViewModel>))]
 		public IHttpActionResult GetRooms(String room)
@@ -241,6 +294,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Instructors
+        /// <summary>
+        /// Returns information about all instructors.
+        /// </summary>
 		[Route("Instructors")]
 		[ResponseType(typeof(IEnumerable<InstructorViewModel>))]
 		public IHttpActionResult GetAllInstructors()
@@ -249,6 +305,10 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Instructors/[instructor] (ex. Catalog/Instructors/Hubert%20E%20Dunsmore)
+        /// <summary>
+        /// Returns data for a specific instructor.
+        /// </summary>
+        /// <param name="instructor"> The desired instructor to examine - for example, Hubert E Dunsmore.</param>
 		[Route("Instructors/{instructor}")]
 		[ResponseType(typeof(IEnumerable<InstructorViewModel>))]
 		public IHttpActionResult GetInstructors(String instructor)
@@ -257,6 +317,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// POST: Catalog/Search/Courses
+        /// <summary>
+        /// Search for courses with matching information, such as courses with 3 credit hours.
+        /// </summary>
 		[Route("Search/Courses")]
 		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
 		public IHttpActionResult PostSearchCourses()

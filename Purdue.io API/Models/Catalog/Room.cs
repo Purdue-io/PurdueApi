@@ -51,8 +51,17 @@ namespace PurdueIo.Models.Catalog
 	/// </summary>
 	public class RoomViewModel
 	{
+        /// <summary>
+        /// GUID with which to refer to this room internally.
+        /// </summary>
 		public Guid RoomId { get; set; }
+        /// <summary>
+        /// The room number.
+        /// </summary>
 		public string Number { get; set; }
+        /// <summary>
+        /// Object containing information about the building this room is located in.
+        /// </summary>
 		public BuildingViewModel Building { get; set; }
 	}
 }

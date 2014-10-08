@@ -77,11 +77,29 @@ namespace PurdueIo.Models.Catalog
 	/// </summary>
 	public class CourseViewModel
 	{
-		public Guid CourseId { get; set; }
+		/// <summary>
+        /// GUID to reference this course internally.
+		/// </summary>
+        public Guid CourseId { get; set; }
+        /// <summary>
+        /// Object containing information about the subject this course belongs to.
+        /// </summary>
 		public SubjectViewModel Subject { get; set; }
-		public string Number { get; set; }
+		/// <summary>
+        /// 6 digit code used to identify this course inside of a subject.
+		/// </summary>
+        public string Number { get; set; }
+        /// <summary>
+        /// The title of this particular course.
+        /// </summary>
 		public string Title { get; set; }
+        /// <summary>
+        /// The number of credit hours offered by taking this course.
+        /// </summary>
 		public double CreditHours { get; set; }
+        /// <summary>
+        /// Short blurb describing the course.
+        /// </summary>
 		public string Description { get; set; }
 	}
 }

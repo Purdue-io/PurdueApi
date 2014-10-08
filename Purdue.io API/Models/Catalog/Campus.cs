@@ -53,8 +53,17 @@ namespace PurdueIo.Models.Catalog
 	/// </summary>
 	public class CampusViewModel
 	{
+        /// <summary>
+        /// GUID with which to reference this campus internally.
+        /// </summary>
 		public Guid CampusId { get; set; }
+        /// <summary>
+        /// Official name of this campus.
+        /// </summary>
 		public string Name { get; set; }
+        /// <summary>
+        /// Zip Code of the campus location.
+        /// </summary>
 		public string ZipCode { get; set; }
 	}
 }
