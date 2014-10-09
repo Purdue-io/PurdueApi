@@ -40,7 +40,7 @@ namespace PurdueIo.Migrations
 				RoomId = Guid.NewGuid(),
 				Building = lawson,
 				Number = "B160",
-				Sections = new List<Section>()
+				Meetings = new List<Meeting>()
 			};
 			lawson.Rooms.Add(windowsLab);
 
@@ -49,7 +49,7 @@ namespace PurdueIo.Migrations
 				RoomId = Guid.NewGuid(),
 				Building = lawson,
 				Number = "B146",
-				Sections = new List<Section>()
+				Meetings = new List<Meeting>()
 			};
 			lawson.Rooms.Add(linuxLab);
 
@@ -80,7 +80,7 @@ namespace PurdueIo.Migrations
 				InstructorId = Guid.NewGuid(),
 				Name = "Hubert E Dunsmore",
 				Email = "bxd@purdue.edu",
-				Sections = new List<Section>()
+				Meetings = new List<Meeting>()
 			};
 
 			var course = new Course()
@@ -111,21 +111,29 @@ namespace PurdueIo.Migrations
 				SectionId = Guid.NewGuid(),
 				Class = csclass,
 				Type = "Lecture",
-				Instructors = new List<Instructor>() { dunsmore },
-				DaysOfWeek = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday },
+				Meetings = new List<Meeting>(),
 				StartDate = new DateTime(2014, 8, 25),
 				EndDate = new DateTime(2014, 12, 19),
-				StartTime = new DateTimeOffset(2000, 1, 1, 12, 0, 0, TimeZoneInfo.Local.BaseUtcOffset),
-				Duration = new TimeSpan(0, 50, 0),
 				CRN = "12345",
 				Capacity = 30,
 				Enrolled = 20,
 				RemainingSpace = 10,
 				WaitlistCapacity = 0,
 				WaitlistCount = 0,
-				WaitlistSpace = 0,
-				Room = windowsLab
+				WaitlistSpace = 0
 			};
+			section.Meetings.Add(new Meeting()
+			{
+				MeetingId = Guid.NewGuid(),
+				Section = section,
+				Instructors = new List<Instructor>() { dunsmore },
+				StartDate = new DateTime(2014, 8, 25),
+				EndDate = new DateTime(2014, 12, 19),
+				DaysOfWeek = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday },
+				StartTime = new DateTimeOffset(2000, 1, 1, 12, 0, 0, TimeZoneInfo.Local.BaseUtcOffset),
+				Duration = new TimeSpan(0, 50, 0),
+				Room = windowsLab
+			});
 			csclass.Sections.Add(section);
 
 			context.Courses.Add(course);

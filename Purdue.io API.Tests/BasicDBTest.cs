@@ -39,8 +39,12 @@ namespace PurdueIo.Tests
 
 					foreach (var section in cclass.Sections)
 					{
-						System.Diagnostics.Debug.WriteLine("\t\t\t" + section.CRN + ": " + section.Type + " by " + section.Instructors.First().Name);
-						System.Diagnostics.Debug.WriteLine("\t\t\t" + section.Room.Building.ShortCode + section.Room.Number + " @ " + section.StartTime.ToString("t"));
+						System.Diagnostics.Debug.WriteLine("\t\t\t" + section.CRN + ": " + section.Type + " by " + section.Meetings.First().Instructors.First().Name);
+
+						foreach (var meeting in section.Meetings)
+						{
+							System.Diagnostics.Debug.WriteLine("\t\t\t\t" + meeting.Room.Building.ShortCode + meeting.Room.Number + " @ " + section.Meetings.First().StartTime.ToString("t") + " w/ " + string.Join(", ", meeting.Instructors.Select(i => i.Name).ToArray()) );
+						}
 					}
 				}
 			}

@@ -44,15 +44,10 @@ namespace PurdueIo.Models.Catalog
 		public virtual Class Class { get; set; }
 
 		/// <summary>
-		/// The instructor who teaches this section.
+		/// The meetings that this section requires (time, place, instructor, etc.).
 		/// </summary>
-		[InverseProperty("Sections")]
-		public virtual ICollection<Instructor> Instructors { get; set; }
-
-		/// <summary>
-		/// Indicates whether this section is available for registration.
-		/// </summary>
-		public RegistrationStatus RegistrationStatus { get; set; }
+		[InverseProperty("Section")]
+		public virtual ICollection<Meeting> Meetings { get; set; }
 
 		/// <summary>
 		/// Type of section. e.g. Lecture, Laboratory, etc.
@@ -60,35 +55,19 @@ namespace PurdueIo.Models.Catalog
 		public string Type { get; set; }
 
 		/// <summary>
-		/// Date this section begins.
+		/// Indicates whether this section is available for registration.
+		/// </summary>
+		public RegistrationStatus RegistrationStatus { get; set; }
+		
+		/// <summary>
+		/// Date this section begins (earliest meeting date).
 		/// </summary>
 		public DateTime StartDate { get; set; }
 
 		/// <summary>
-		/// Date this section ends.
+		/// Date this section ends (latest meeting date).
 		/// </summary>
 		public DateTime EndDate { get; set; }
-
-		/// <summary>
-		/// Days of the week on which this section occurs.
-		/// </summary>
-		public ICollection<DayOfWeek> DaysOfWeek { get; set; }
-
-		/// <summary>
-		/// The time this section meets
-		/// </summary>
-		public DateTimeOffset StartTime { get; set; }
-
-		/// <summary>
-		/// The time duration for which this section meets.
-		/// </summary>
-		public TimeSpan Duration { get; set; }
-
-		/// <summary>
-		/// The room in which this section meets.
-		/// </summary>
-		[InverseProperty("Sections")]
-		public virtual Room Room { get; set; }
 
 		/// <summary>
 		/// This section's attendance capacity.
@@ -130,15 +109,11 @@ namespace PurdueIo.Models.Catalog
 				SectionId = this.SectionId,
 				CRN = this.CRN,
 				Class = this.Class.ToViewModel(),
-				Instructors = this.Instructors.ToList().Select(i => i.ToViewModel()).ToList(),
+				Meetings = this.Meetings.ToList().Select(m => m.ToViewModel()).ToList(),
 				RegistrationStatus = (int)this.RegistrationStatus,
 				Type = this.Type,
 				StartDate = this.StartDate,
 				EndDate = this.EndDate,
-				//DaysOfWeek = this.DaysOfWeek.Select(x => (int)x).ToList(),
-				StartTime = this.StartTime,
-				Duration = this.Duration,
-				Room = this.Room.ToViewModel(),
 				Capacity = this.Capacity,
 				Enrolled = this.Enrolled,
 				RemainingSpace = this.RemainingSpace,
@@ -158,70 +133,67 @@ namespace PurdueIo.Models.Catalog
         /// GUID with which to identify this section internally.
         /// </summary>
 		public Guid SectionId { get; set; }
+
         /// <summary>
         /// Reference number used by Purdue to refer to sections.
         /// </summary>
 		public string CRN { get; set; }
+
         /// <summary>
-        /// Object containing information about the class this section is part of.
+        /// Id referring to the class this section is part of.
         /// </summary>
 		public ClassViewModel Class { get; set; }
-        /// <summary>
-        /// Object(s) containing information about all instructors this section is taught by.
-        /// </summary>
-		public ICollection<InstructorViewModel> Instructors { get; set; }
+
+		/// <summary>
+		/// The meetings that this section requires (time, place, instructor, etc.).
+		/// </summary>
+		public virtual ICollection<MeetingViewModel> Meetings { get; set; }
+
         /// <summary>
         /// Indicates whether this section is available for registration.
         /// </summary>
 		public int RegistrationStatus { get; set; }
+
         /// <summary>
         /// Type of section. e.g. Lecture, Laboratory, etc.
         /// </summary>
 		public string Type { get; set; }
+
         /// <summary>
-        /// Date this section begins.
+        /// Date this section begins (earliest meeting date).
         /// </summary>
 		public DateTime StartDate { get; set; }
+
         /// <summary>
-        /// Date this section ends.
+        /// Date this section ends (latest meeting date).
         /// </summary>
 		public DateTime EndDate { get; set; }
-        /// <summary>
-        /// Days of the week on which this section occurs.
-        /// </summary>
-		public ICollection<int> DaysOfWeek { get; set; }
-        /// <summary>
-        /// The time this section meets.
-        /// </summary>
-		public DateTimeOffset StartTime { get; set; }
-        /// <summary>
-        /// The time duration for which this section meets.
-        /// </summary>
-		public TimeSpan Duration { get; set; }
-        /// <summary>
-        /// Object containing information about the room this section is taught in.
-        /// </summary>
-		public RoomViewModel Room { get; set; }
+
         /// <summary>
         /// This section's attendance capacity.
         /// </summary>
 		public int Capacity { get; set; }
+
         /// <summary>
         /// How many students are enrolled - referred to as 'Actual' by MyPurdue.
         /// </summary>
 		public int Enrolled { get; set; }
+
         /// <summary>
         /// Remaining space for enrollment.
         /// </summary>
 		public int RemainingSpace { get; set; }
+
         /// <summary>
         /// Wait list capacity.
         /// </summary>
 		public int WaitlistCapacity { get; set; }
+
         /// <summary>
         /// How many students are on the wait list.
         /// </summary>
 		public int WaitlistCount { get; set; }
+
         /// <summary>
         /// How much space is available on the wait list.
         /// </summary>

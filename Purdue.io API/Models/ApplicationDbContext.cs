@@ -52,9 +52,14 @@ namespace PurdueIo.Models
 		public DbSet<Class> Classes { get; set; }
 
 		/// <summary>
-		/// All sections in the catalog - a specific time, place, and instructor. Part of a class.
+		/// All sections in the catalog - a subset of classes.
 		/// </summary>
 		public DbSet<Section> Sections { get; set; }
+
+		/// <summary>
+		/// All meetings in the catalog - a specific time, place, and instructor. Part of a class.
+		/// </summary>
+		public DbSet<Meeting> Meetings { get; set; }
 
 		/// <summary>
 		/// All subjects in the catalog. Each course belongs to a subject.

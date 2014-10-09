@@ -37,7 +37,7 @@ namespace PurdueIo.Models.Catalog
 		/// The sections that this instructor is teaching.
 		/// </summary>
 		[InverseProperty("Instructors")]
-		public virtual ICollection<Section> Sections { get; set; }
+		public virtual ICollection<Meeting> Meetings { get; set; }
 
 		public InstructorViewModel ToViewModel()
 		{

@@ -222,6 +222,10 @@
     <Compile Include="Migrations\201410080717394_MultipleInstructorsPerSection.Designer.cs">
       <DependentUpon>201410080717394_MultipleInstructorsPerSection.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201410090606259_MeetingsAdded.cs" />
+    <Compile Include="Migrations\201410090606259_MeetingsAdded.Designer.cs">
+      <DependentUpon>201410090606259_MeetingsAdded.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\ApplicationDbContext.cs" />
@@ -230,6 +234,7 @@
     <Compile Include="Models\Catalog\Campus.cs" />
     <Compile Include="Models\Catalog\Class.cs" />
     <Compile Include="Models\Catalog\Course.cs" />
+    <Compile Include="Models\Catalog\Meeting.cs" />
     <Compile Include="Models\Catalog\Room.cs" />
     <Compile Include="Models\Catalog\Section.cs" />
     <Compile Include="Models\Catalog\Term.cs" />
@@ -249,9 +254,9 @@
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\Site.css" />
-	<Content Include="App_Data\PurdueIo.xml">
-	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</Content>
+    <Content Include="App_Data\PurdueIo.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="favicon.ico" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
@@ -352,6 +357,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201410080717394_MultipleInstructorsPerSection.resx">
       <DependentUpon>201410080717394_MultipleInstructorsPerSection.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201410090606259_MeetingsAdded.resx">
+      <DependentUpon>201410090606259_MeetingsAdded.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

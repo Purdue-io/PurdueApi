@@ -34,7 +34,7 @@ namespace PurdueIo.Models.Catalog
 		/// Queryable list of class sections that take place in this room.
 		/// </summary>
 		[InverseProperty("Room")]
-		public virtual ICollection<Section> Sections { get; set; }
+		public virtual ICollection<Meeting> Meetings { get; set; }
 
 		public RoomViewModel ToViewModel() {
 			return new RoomViewModel()
