@@ -202,7 +202,19 @@ namespace PurdueIo.Controllers
 		[ResponseType(typeof(IEnumerable<SubjectViewModel>))]
 		public IHttpActionResult GetSubjects(String subject)
 		{
-			return Ok();
+			//TODO: error check
+			IEnumerable<SubjectViewModel> allSubjects = _Db.Subjects
+				.Where(
+					x => 
+						x.Abbreviation == subject
+					).ToList()
+					.Select(
+						x => 
+							x.ToViewModel()
+					);
+
+			// Return w/ Ok status code.
+			return Ok<IEnumerable<SubjectViewModel>>(allSubjects);
 		}
 
 		// GET: Catalog/Terms
@@ -229,7 +241,19 @@ namespace PurdueIo.Controllers
 		[ResponseType(typeof(IEnumerable<TermViewModel>))]
 		public IHttpActionResult GetTerms(String term)
 		{
-			return Ok();
+			//TODO: error check
+			IEnumerable<TermViewModel> allTerms = _Db.Terms
+				.Where(
+					x =>
+						x.TermCode == term
+					).ToList()
+					.Select(
+						x =>
+							x.ToViewModel()
+					);
+
+			// Return w/ Ok status code.
+			return Ok<IEnumerable<TermViewModel>>(allTerms);
 		}
 
 		// GET: Catalog/Campuses
@@ -256,7 +280,20 @@ namespace PurdueIo.Controllers
 		[ResponseType(typeof(IEnumerable<CampusViewModel>))]
 		public IHttpActionResult GetCampuses(String campus)
 		{
-			return Ok();
+			//TODO: make sure input is correct
+			//TODO: error check
+			IEnumerable<CampusViewModel> allCampuses = _Db.Campuses
+				.Where(
+					x =>
+						x.Name == campus
+					).ToList()
+					.Select(
+						x =>
+							x.ToViewModel()
+					);
+
+			// Return w/ Ok status code.
+			return Ok<IEnumerable<CampusViewModel>>(allCampuses);
 		}
 
 		// GET: Catalog/Buildings
@@ -283,7 +320,19 @@ namespace PurdueIo.Controllers
 		[ResponseType(typeof(IEnumerable<BuildingViewModel>))]
 		public IHttpActionResult GetBuildings(String building)
 		{
-			return Ok();
+			//TODO: error check
+			IEnumerable<BuildingViewModel> allBuildings = _Db.Buildings
+				.Where(
+					x =>
+						x.ShortCode == building
+					).ToList()
+					.Select(
+						x =>
+							x.ToViewModel()
+					);
+
+			// Return w/ Ok status code.
+			return Ok<IEnumerable<BuildingViewModel>>(allBuildings);
 		}
 
 		// GET: Catalog/Rooms
@@ -310,7 +359,19 @@ namespace PurdueIo.Controllers
 		[ResponseType(typeof(IEnumerable<RoomViewModel>))]
 		public IHttpActionResult GetRooms(String room)
 		{
-			return Ok();
+			//TODO: error check
+			IEnumerable<RoomViewModel> allRooms = _Db.Rooms
+				.Where(
+					x =>
+						x.Number == room
+					).ToList()
+					.Select(
+						x =>
+							x.ToViewModel()
+					);
+
+			// Return w/ Ok status code.
+			return Ok<IEnumerable<RoomViewModel>>(allRooms);
 		}
 
 		// GET: Catalog/Instructors
@@ -337,7 +398,19 @@ namespace PurdueIo.Controllers
 		[ResponseType(typeof(IEnumerable<InstructorViewModel>))]
 		public IHttpActionResult GetInstructors(String instructor)
 		{
-			return Ok();
+			//TODO: error check
+			IEnumerable<InstructorViewModel> allInstructors = _Db.Instructors
+				.Where(
+					x =>
+						x.Name == instructor
+					).ToList()
+					.Select(
+						x =>
+							x.ToViewModel()
+					);
+
+			// Return w/ Ok status code.
+			return Ok<IEnumerable<InstructorViewModel>>(allInstructors);
 		}
 
 		// POST: Catalog/Search/Courses
