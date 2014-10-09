@@ -93,7 +93,7 @@ DocProject/Help/html
 publish/
 
 # XML documentation output
-*PurdueIo.xml
+App_Data/PurdueIo.xml
 
 # Publish Web Output
 *.Publish.xml
@@ -159,6 +159,3 @@ $RECYCLE.BIN/
 .DS_Store
 *.mdf
 *.ldf
-
-# Ignore XMLdoc 
-Documentation/PurdueIo.xml
