@@ -159,3 +159,6 @@ $RECYCLE.BIN/
 .DS_Store
 *.mdf
 *.ldf
+
+# Ignore XMLdoc 
+Documentation/PurdueIo.xml
