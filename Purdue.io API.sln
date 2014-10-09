@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Purdue.io API", "Purdue.io API\Purdue.io API.csproj", "{276116F3-B640-4E8F-B99A-5353681796AB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "A Purdue.io API", "Purdue.io API\A Purdue.io API.csproj", "{276116F3-B640-4E8F-B99A-5353681796AB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Purdue.io API.Tests", "Purdue.io API.Tests\Purdue.io API.Tests.csproj", "{854E0DE0-717D-48BF-9D55-E01A3B5217A2}"
 EndProject

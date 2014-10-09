@@ -118,9 +118,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Purdue.io API\Purdue.io API.csproj">
+    <ProjectReference Include="..\Purdue.io API\A Purdue.io API.csproj">
       <Project>{276116F3-B640-4E8F-B99A-5353681796AB}</Project>
-      <Name>Purdue.io API</Name>
+      <Name>A Purdue.io API</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
