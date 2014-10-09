@@ -13,72 +13,72 @@ using System.Web.Http.Results;
 namespace PurdueIo.Controllers
 {
 	[RoutePrefix("Catalog")]
-	public class CatalogController : ApiController
-	{
+    public class CatalogController : ApiController
+    {
 		//Regex capture group names
-		private const string COURSE_SUBJECT_CAPTURE_GROUP_NAME = "subject";
-		private const string COURSE_NUMBER_CAPTURE_GROUP_NAME = "number";
+		private const string COURSE_SUBJECT_CAPTURE_GROUP_NAME	= "subject";
+		private const string COURSE_NUMBER_CAPTURE_GROUP_NAME	= "number";
 
 		//Regex strings
-		private const string COURSE_SUBJECT_NUMBER_REGEX = @"\A(?<" + COURSE_SUBJECT_CAPTURE_GROUP_NAME + @">[A-Za-z]+)(?<" + COURSE_NUMBER_CAPTURE_GROUP_NAME + @">\d{3}(?:00)?)\z";
+		private const string COURSE_SUBJECT_NUMBER_REGEX		= @"\A(?<" + COURSE_SUBJECT_CAPTURE_GROUP_NAME + @">[A-Za-z]+)(?<" + COURSE_NUMBER_CAPTURE_GROUP_NAME + @">\d{3}(?:00)?)\z";
 
 		// This DB really should be instantiated on its own in each method... but that causes disposed problems.
 		private ApplicationDbContext _Db = new ApplicationDbContext();
 
 		// GET: Catalog/Courses
-		/// <summary>
-		/// Returns all offered courses.
-		/// </summary>
+        /// <summary>
+        /// Returns all offered courses.
+        /// </summary>
 		[Route("Courses")]
 		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
 		public IHttpActionResult GetAllCourses()
-		{
+        {
 			// Get all of the courses, convert to viewmodel.
 			IEnumerable<CourseViewModel> allcourses = _Db.Courses.ToList().Select(x => x.ToViewModel());
 
 			// Return w/ Ok status code.
 			return Ok<IEnumerable<CourseViewModel>>(allcourses);
-		}
+        }
 
 		// GET: Catalog/Courses/[CourseSubject][CourseNumber] (ex. Catalog/MA261)
-		/// <summary>
-		/// Returns data for a specific course.
-		/// </summary>
-		/// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
+        /// <summary>
+        /// Returns data for a specific course.
+        /// </summary>
+        /// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
 		[Route("Courses/{course}")]
-		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
+		[ResponseType(typeof (IEnumerable<CourseViewModel>))]
 		public IHttpActionResult GetCourses(String course)
-		{
+        {
 			//Use regex to parse course input
 			Tuple<String, String> courseTuple = this.ParseCourse(course);
 
 			//If there are no matches, exit with error
-			if (courseTuple == null)
+			if(courseTuple == null)
 			{
 				//error, invalid format
 				return BadRequest("Invalid course format.  Course should be subject abbrivation followed by the course number (ex. PHYS172 or PHYS172000).");
 			}
-
+			
 			IEnumerable<CourseViewModel> selectedCourses = _Db.Courses
 				.Where(
-					x =>
-						x.Number == courseTuple.Item2 &&
+					x => 
+						x.Number == courseTuple.Item2 && 
 						x.Subject.Abbreviation == courseTuple.Item1
 					).ToList()
 					.Select(
-						x =>
+						x => 
 							x.ToViewModel()
 					);
 
 			return Ok<IEnumerable<CourseViewModel>>(selectedCourses);
-		}
+        }
 
-		//GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID] 
-		/// <summary>
-		/// Returns data for a specific class in a specific course.
-		/// </summary>
-		/// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
-		/// <param name="classGUID"> The class specific GUID.</param>
+        //GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID] 
+        /// <summary>
+        /// Returns data for a specific class in a specific course.
+        /// </summary>
+        /// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
+        /// <param name="classGUID"> The class specific GUID.</param>
 		[Route("Courses/{course}/{classGUID}")]
 		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
 		public IHttpActionResult GetClasses(String course, String classGUID)
@@ -104,15 +104,15 @@ namespace PurdueIo.Controllers
 				return BadRequest("Invalid class GUID format.");
 			}
 
-			IEnumerable<ClassViewModel> selectedClasses = _Db.Classes
+			IEnumerable <ClassViewModel> selectedClasses = _Db.Classes
 				.Where(
-					x =>
-						x.Course.Number == courseTuple.Item2 &&
-						x.Course.Subject.Abbreviation == courseTuple.Item1 &&
+					x => 
+						x.Course.Number == courseTuple.Item2 && 
+						x.Course.Subject.Abbreviation == courseTuple.Item1 && 
 						x.ClassId == classID
 					).ToList()
 					.Select(
-						x =>
+						x => 
 							x.ToViewModel()
 					);
 
@@ -120,12 +120,12 @@ namespace PurdueIo.Controllers
 		}
 
 		//GET: Catalog/Courses/[CourseSubject][CourseNumber]/[ClassGUID]/[SectionGUID]
-		/// <summary>
-		/// Returns data for a specific section of a specific class in a specific course.
-		/// </summary>
-		/// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
-		/// <param name="classGUID"> The class specific GUID.</param>
-		/// <param name="sectionGUID"> The section specific GUID.</param>
+        /// <summary>
+        /// Returns data for a specific section of a specific class in a specific course.
+        /// </summary>
+        /// <param name="course"> The desired course to examine - for example, MA261 or CS18000.</param>
+        /// <param name="classGUID"> The class specific GUID.</param>
+        /// <param name="sectionGUID"> The section specific GUID.</param>
 		[Route("Courses/{course}/{classGUID}/{sectionGUID}")]
 		[ResponseType(typeof(IEnumerable<SectionViewModel>))]
 		public IHttpActionResult GetSections(String course, String classGUID, String sectionGUID)
@@ -171,33 +171,29 @@ namespace PurdueIo.Controllers
 						x.SectionId == sectionID
 					).ToList()
 					.Select(
-						x =>
+						x => 
 							x.ToViewModel()
 					);
-
+			
 			return Ok<IEnumerable<SectionViewModel>>(selectedSections);
 		}
 
 		// GET: Catalog/Subjects
-		/// <summary>
-		/// Returns all offered subjects.
-		/// </summary>
+        /// <summary>
+        /// Returns all offered subjects.
+        /// </summary>
 		[Route("Subjects")]
 		[ResponseType(typeof(IEnumerable<SubjectViewModel>))]
 		public IHttpActionResult GetAllSubjects()
 		{
-			// Get all of the courses, convert to viewmodel.
-			IEnumerable<SubjectViewModel> allSubjects = _Db.Subjects.ToList().Select(x => x.ToViewModel());
-
-			// Return w/ Ok status code.
-			return Ok<IEnumerable<SubjectViewModel>>(allSubjects);
+			return Ok();
 		}
 
 		// GET: Catalog/Subjects/[Subject] (ex. Catalog/Subjects/MA)
-		/// <summary>
-		/// Returns data for a specific subject.
-		/// </summary>
-		/// <param name="subject"> The desired subject to examine - for example, MA or ENGL.</param>
+        /// <summary>
+        /// Returns data for a specific subject.
+        /// </summary>
+        /// <param name="subject"> The desired subject to examine - for example, MA or ENGL.</param>
 		[Route("Subjects/{subject}")]
 		[ResponseType(typeof(IEnumerable<SubjectViewModel>))]
 		public IHttpActionResult GetSubjects(String subject)
@@ -218,25 +214,21 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Terms
-		/// <summary>
-		/// Returns all terms Purdue offers classes.
-		/// </summary>
+        /// <summary>
+        /// Returns all terms Purdue offers classes.
+        /// </summary>
 		[Route("Terms")]
 		[ResponseType(typeof(IEnumerable<TermViewModel>))]
 		public IHttpActionResult GetAllTerms()
 		{
-			// Get all of the courses, convert to viewmodel.
-			IEnumerable<TermViewModel> allTerms = _Db.Terms.ToList().Select(x => x.ToViewModel());
-
-			// Return w/ Ok status code.
-			return Ok<IEnumerable<TermViewModel>>(allTerms);
+			return Ok();
 		}
 
 		// GET: Catalog/Terms/[Term] (ex. Catalog/Terms/Fall14)
-		/// <summary>
-		/// Returns data for a specific term.
-		/// </summary>
-		/// <param name="term"> The desired term to examine - for example, Fall14 or Spring15.</param>
+        /// <summary>
+        /// Returns data for a specific term.
+        /// </summary>
+        /// <param name="term"> The desired term to examine - for example, Fall14 or Spring15.</param>
 		[Route("Terms/{term}")]
 		[ResponseType(typeof(IEnumerable<TermViewModel>))]
 		public IHttpActionResult GetTerms(String term)
@@ -257,25 +249,21 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Campuses
-		/// <summary>
-		/// Returns information about all Purdue campuses.
-		/// </summary>
+        /// <summary>
+        /// Returns information about all Purdue campuses.
+        /// </summary>
 		[Route("Campuses")]
 		[ResponseType(typeof(IEnumerable<CampusViewModel>))]
 		public IHttpActionResult GetAllCampuses()
 		{
-			// Get all of the courses, convert to viewmodel.
-			IEnumerable<CampusViewModel> allCampuses = _Db.Campuses.ToList().Select(x => x.ToViewModel());
-
-			// Return w/ Ok status code.
-			return Ok<IEnumerable<CampusViewModel>>(allCampuses);
+			return Ok();
 		}
 
 		// GET: Catalog/Campuses/[Campus] (ex. Catalog/Campuses/Purdue%20University%20West%20Lafayette)
-		/// <summary>
-		/// Returns data for a specific Purdue campus.
-		/// </summary>
-		/// <param name="campus"> The desired campus to examine - for example, Purdue University West Lafayette.</param>
+        /// <summary>
+        /// Returns data for a specific Purdue campus.
+        /// </summary>
+        /// <param name="campus"> The desired campus to examine - for example, Purdue University West Lafayette.</param>
 		[Route("Campuses/{campus}")]
 		[ResponseType(typeof(IEnumerable<CampusViewModel>))]
 		public IHttpActionResult GetCampuses(String campus)
@@ -297,25 +285,21 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Buildings
-		/// <summary>
-		/// Returns information about all Purdue affiliated buildings.
-		/// </summary>
+        /// <summary>
+        /// Returns information about all Purdue affiliated buildings.
+        /// </summary>
 		[Route("Buildings")]
 		[ResponseType(typeof(IEnumerable<BuildingViewModel>))]
 		public IHttpActionResult GetAllBuildings()
 		{
-			// Get all of the courses, convert to viewmodel.
-			IEnumerable<BuildingViewModel> allBuildings = _Db.Buildings.ToList().Select(x => x.ToViewModel());
-
-			// Return w/ Ok status code.
-			return Ok<IEnumerable<BuildingViewModel>>(allBuildings);
+			return Ok();
 		}
 
 		// GET: Catalog/Buildings/[building] (ex. Catalog/Buildings/LWSN)
-		/// <summary>
-		/// Returns data for a specific building.
-		/// </summary>
-		/// <param name="building"> The desired building shortcode to examine - for example, LWSN.</param>
+        /// <summary>
+        /// Returns data for a specific building.
+        /// </summary>
+        /// <param name="building"> The desired building shortcode to examine - for example, LWSN.</param>
 		[Route("Buildings/{building}")]
 		[ResponseType(typeof(IEnumerable<BuildingViewModel>))]
 		public IHttpActionResult GetBuildings(String building)
@@ -336,25 +320,21 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Rooms
-		/// <summary>
-		/// Returns information about all rooms.
-		/// </summary>
+        /// <summary>
+        /// Returns information about all rooms.
+        /// </summary>
 		[Route("Rooms")]
 		[ResponseType(typeof(IEnumerable<RoomViewModel>))]
 		public IHttpActionResult GetAllRooms()
 		{
-			// Get all of the courses, convert to viewmodel.
-			IEnumerable<RoomViewModel> allRooms = _Db.Rooms.ToList().Select(x => x.ToViewModel());
-
-			// Return w/ Ok status code.
-			return Ok<IEnumerable<RoomViewModel>>(allRooms);
+			return Ok();
 		}
 
 		// GET: Catalog/Rooms/[room] (ex. Catalog/Rooms/B160)
-		/// <summary>
-		/// Returns data for a specific room.
-		/// </summary>
-		/// <param name="room"> The desired room to examine - for example, B160.</param>
+        /// <summary>
+        /// Returns data for a specific room.
+        /// </summary>
+        /// <param name="building"> The desired room to examine - for example, B160.</param>
 		[Route("Rooms/{room}")]
 		[ResponseType(typeof(IEnumerable<RoomViewModel>))]
 		public IHttpActionResult GetRooms(String room)
@@ -375,25 +355,21 @@ namespace PurdueIo.Controllers
 		}
 
 		// GET: Catalog/Instructors
-		/// <summary>
-		/// Returns information about all instructors.
-		/// </summary>
+        /// <summary>
+        /// Returns information about all instructors.
+        /// </summary>
 		[Route("Instructors")]
 		[ResponseType(typeof(IEnumerable<InstructorViewModel>))]
 		public IHttpActionResult GetAllInstructors()
 		{
-			// Get all of the courses, convert to viewmodel.
-			IEnumerable<InstructorViewModel> allInstructors = _Db.Instructors.ToList().Select(x => x.ToViewModel());
-
-			// Return w/ Ok status code.
-			return Ok<IEnumerable<InstructorViewModel>>(allInstructors);
+			return Ok();
 		}
 
 		// GET: Catalog/Instructors/[instructor] (ex. Catalog/Instructors/Hubert%20E%20Dunsmore)
-		/// <summary>
-		/// Returns data for a specific instructor.
-		/// </summary>
-		/// <param name="instructor"> The desired instructor to examine - for example, Hubert E Dunsmore.</param>
+        /// <summary>
+        /// Returns data for a specific instructor.
+        /// </summary>
+        /// <param name="instructor"> The desired instructor to examine - for example, Hubert E Dunsmore.</param>
 		[Route("Instructors/{instructor}")]
 		[ResponseType(typeof(IEnumerable<InstructorViewModel>))]
 		public IHttpActionResult GetInstructors(String instructor)
@@ -414,9 +390,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// POST: Catalog/Search/Courses
-		/// <summary>
-		/// Search for courses with matching information, such as courses with 3 credit hours.
-		/// </summary>
+        /// <summary>
+        /// Search for courses with matching information, such as courses with 3 credit hours.
+        /// </summary>
 		[Route("Search/Courses")]
 		[ResponseType(typeof(IEnumerable<CourseViewModel>))]
 		public IHttpActionResult PostSearchCourses()
@@ -425,9 +401,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// POST: Catalog/Search/Classes
-		/// <summary>
-		/// Search for classes with matching information, such as classes offered in Fall14.
-		/// </summary>
+        /// <summary>
+        /// Search for classes with matching information, such as classes offered in Fall14.
+        /// </summary>
 		[Route("Search/Classes")]
 		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
 		public IHttpActionResult PostSearchClasses()
@@ -436,9 +412,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// POST: Catalog/Search/Sections
-		/// <summary>
-		/// Search for sections with matching information, such as sections taught by Hubert E Dunsmore.
-		/// </summary>
+        /// <summary>
+        /// Search for sections with matching information, such as sections taught by Hubert E Dunsmore.
+        /// </summary>
 		[Route("Search/Sections")]
 		[ResponseType(typeof(IEnumerable<SectionViewModel>))]
 		public IHttpActionResult PostSearchSections()
@@ -476,5 +452,5 @@ namespace PurdueIo.Controllers
 
 			return new Tuple<string, string>(courseSubject, courseNumber);
 		}
-	}
+    }
 }
