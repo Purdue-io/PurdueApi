@@ -1,10 +1,12 @@
-﻿using HtmlAgilityPack;
+﻿using CatalogSync.Models;
+using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CatalogSync
@@ -78,7 +80,7 @@ namespace CatalogSync
 			return (result.Contains("Login Successful"));
 		}
 
-		public async Task FetchTermList()
+		public async Task<ICollection<MyPurdueTerm>> FetchTermList()
 		{
 			await Authenticate();
 			referrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
@@ -92,10 +94,158 @@ namespace CatalogSync
 			document.LoadHtml(sr);
 			HtmlNode root = document.DocumentNode;
 			HtmlNodeCollection termSelectNodes = root.SelectNodes("//select[@id='term_input_id'][1]/option");
+			var terms = new List<MyPurdueTerm>();
 			foreach (var node in termSelectNodes)
 			{
-				Console.WriteLine(node.Attributes["VALUE"].Value + ": " + node.NextSibling.InnerText);
+				terms.Add(new MyPurdueTerm() {
+					Id = node.Attributes["VALUE"].Value,
+					Name = node.NextSibling.InnerText
+				});
 			}
+			return terms;
+		}
+
+		public async Task<ICollection<MyPurdueSection>> FetchSectionList(string termCode, string subjectCode)
+		{
+			referrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
+			var request = await Request("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
+
+			FormUrlEncodedContent content = new FormUrlEncodedContent(new[] 
+            {
+				new KeyValuePair<string, string>("p_calling_proc", "bwckschd.p_disp_dyn_sched"),
+                new KeyValuePair<string, string>("term_in", termCode)
+			});
+
+			HttpResponseMessage r = await Request("https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", content);
+
+			// Construct our "query"
+			content = new FormUrlEncodedContent(new[] 
+            {
+                new KeyValuePair<string, string>("term_in", termCode),
+				new KeyValuePair<string, string>("sel_subj", "dummy"),
+				new KeyValuePair<string, string>("sel_day", "dummy"),
+				new KeyValuePair<string, string>("sel_schd", "dummy"),
+				new KeyValuePair<string, string>("sel_insm", "dummy"),
+				new KeyValuePair<string, string>("sel_camp", "dummy"),
+				new KeyValuePair<string, string>("sel_levl", "dummy"),
+				new KeyValuePair<string, string>("sel_sess", "dummy"),
+				new KeyValuePair<string, string>("sel_instr", "dummy"),
+				new KeyValuePair<string, string>("sel_ptrm", "dummy"),
+				new KeyValuePair<string, string>("sel_attr", "dummy"),
+				new KeyValuePair<string, string>("sel_subj", subjectCode),
+				new KeyValuePair<string, string>("sel_crse", "%"),
+				new KeyValuePair<string, string>("sel_title", ""),
+				new KeyValuePair<string, string>("sel_schd", "%"),
+				new KeyValuePair<string, string>("sel_from_cred", ""),
+				new KeyValuePair<string, string>("sel_to_cred", ""),
+				new KeyValuePair<string, string>("sel_camp", "%"),
+				new KeyValuePair<string, string>("sel_ptrm", "%"),
+				new KeyValuePair<string, string>("sel_instr", "%"),
+				new KeyValuePair<string, string>("sel_sess", "%"),
+				new KeyValuePair<string, string>("sel_attr", "%"),
+				new KeyValuePair<string, string>("begin_hh", "0"),
+				new KeyValuePair<string, string>("begin_mi", "0"),
+				new KeyValuePair<string, string>("begin_ap", "a"),
+				new KeyValuePair<string, string>("end_hh", "0"),
+				new KeyValuePair<string, string>("end_mi", "0"),
+				new KeyValuePair<string, string>("end_ap", "a"),
+			});
+
+			HttpResponseMessage rClasses = await Request("https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec", content);
+			string rClassesContent = await rClasses.Content.ReadAsStringAsync();
+			HtmlDocument document = new HtmlDocument();
+			document.LoadHtml(rClassesContent);
+			HtmlNode docRoot = document.DocumentNode;
+
+			// This will return a table of sections.
+			// Every *two* rows is a section.
+			HtmlNodeCollection termSelectNodes = docRoot.SelectNodes("/html/body/div[@class='pagebodydiv'][1]/table[@class='datadisplaytable'][1]/tr");
+
+			// Prepare regex to parse title
+			string strRegex = @"^(?<title>.*) - (?<crn>\d{5}) - (?<subj>[A-Z]{2,5}) (?<number>\d{5}) - (?<section>\w{3})(&nbsp;&nbsp;Link Id: (?<selflink>\w{0,12})&nbsp;&nbsp;Linked Sections Required\((?<otherlink>\w{0,12})\))?";
+			var regexTitle = new Regex(strRegex);
+
+			// Prepare section list
+			var sections = new List<MyPurdueSection>();
+
+			// Loop through each listing and parse it out
+			for (var i = 0; i < termSelectNodes.Count; i+=2) // NOTE +=2 HERE
+			{
+				var title = termSelectNodes[i].SelectSingleNode("th").InnerText;
+				var titleParse = regexTitle.Match(title);
+				if (!titleParse.Success)
+				{
+					continue;
+				}
+
+				// Create new section object
+				var section = new MyPurdueSection();
+
+				// Grab relevant info from title regex
+				section.Title = titleParse.Groups["title"].Value;
+				section.Crn = titleParse.Groups["crn"].Value;
+				section.SubjectCode = titleParse.Groups["subj"].Value;
+				section.Number = titleParse.Groups["number"].Value;
+				section.LinkSelf = titleParse.Groups["selflink"].Value;
+				section.LinkOther = titleParse.Groups["otherlink"].Value;
+
+				var info = termSelectNodes[i + 1].SelectSingleNode("td");
+				section.Description = info.FirstChild.InnerText.Trim(); // TODO: Deal with white space...
+
+				var meetingNodes = info.SelectNodes("table[@class='datadisplaytable'][1]/tr[ not( th ) ]");
+				foreach (var meetingNode in meetingNodes)
+				{
+					var meeting = new MyPurdueMeeting();
+
+					// Parse times
+					var times = meetingNode.SelectSingleNode("td[2]").InnerText.Split(new string[]{ " - " }, StringSplitOptions.None);
+					if (times.Count() != 2)
+					{
+						meeting.StartTime = DateTimeOffset.MinValue;
+						meeting.EndTime = DateTimeOffset.MinValue;
+					}
+					else
+					{
+						meeting.StartTime = DateTimeOffset.Parse(times[0]);
+						meeting.EndTime = DateTimeOffset.Parse(times[1]);
+					}
+
+					// Parse days of week
+					var daysOfWeek = meetingNode.SelectSingleNode("td[3]").InnerText.Replace("&nbsp;","");
+					if (daysOfWeek.Contains("M")) meeting.DaysOfWeek.Add(DayOfWeek.Monday);
+					if (daysOfWeek.Contains("T")) meeting.DaysOfWeek.Add(DayOfWeek.Tuesday);
+					if (daysOfWeek.Contains("W")) meeting.DaysOfWeek.Add(DayOfWeek.Wednesday);
+					if (daysOfWeek.Contains("R")) meeting.DaysOfWeek.Add(DayOfWeek.Thursday);
+					if (daysOfWeek.Contains("F")) meeting.DaysOfWeek.Add(DayOfWeek.Friday);
+					if (daysOfWeek.Contains("S")) meeting.DaysOfWeek.Add(DayOfWeek.Saturday);
+					if (daysOfWeek.Contains("U")) meeting.DaysOfWeek.Add(DayOfWeek.Sunday);
+
+
+					// Parse building / room
+					var room = meetingNode.SelectSingleNode("td[4]").InnerText;
+					if (room.Equals("TBA"))
+					{
+						meeting.RoomNumber = "TBA";
+						meeting.BuildingName = "TBA";
+					}
+					else
+					{
+						var index = room.LastIndexOf(" ");
+						meeting.BuildingName = room.Substring(0, index);
+						meeting.RoomNumber = room.Substring(index + 1, room.Length - index - 1);
+					}
+					section.Meetings.Add(meeting);
+				}
+
+				Console.WriteLine(section.Crn + " - " + section.SubjectCode + section.Number + " / " + section.Title);
+				foreach (var m in section.Meetings)
+				{
+					Console.WriteLine("\tin " + m.BuildingName + " / " + m.RoomNumber + " @ " + m.StartTime.ToString("t"));
+				}
+
+				sections.Add(section);
+			}
+			return sections;
 		}
 	}
 }

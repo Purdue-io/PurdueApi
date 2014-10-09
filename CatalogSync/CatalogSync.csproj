@@ -53,6 +53,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CatalogApi.cs" />
+    <Compile Include="Models\MyPurdueMeeting.cs" />
+    <Compile Include="Models\MyPurdueSection.cs" />
+    <Compile Include="Models\MyPurdueTerm.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -62,9 +65,9 @@
     <None Include="Properties\webjob-publish-settings.json" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Purdue.io API\Purdue.io API.csproj">
+    <ProjectReference Include="..\Purdue.io API\A Purdue.io API.csproj">
       <Project>{276116f3-b640-4e8f-b99a-5353681796ab}</Project>
-      <Name>Purdue.io API</Name>
+      <Name>A Purdue.io API</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
