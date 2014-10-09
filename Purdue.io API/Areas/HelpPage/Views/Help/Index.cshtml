@@ -6,7 +6,7 @@
 @model Collection<ApiDescription>
 
 @{
-    ViewBag.Title = "ASP.NET Web API Help Page";
+    ViewBag.Title = "Purdue.io Web API Help Page";
 
     // Group APIs by controller
     ILookup<HttpControllerDescriptor, ApiDescription> apiGroups = Model.ToLookup(api => api.ActionDescriptor.ControllerDescriptor);
@@ -25,8 +25,16 @@
         <div class="content-wrapper">
             <h2>Introduction</h2>
             <p>
-                Provide a general description of your APIs here.
+                This page lays out information about the different REST endpoints implemented in Purdue.io and the related details about each call.
             </p>
+            <p>
+                Special distinction should be given to the difference between a course, a class, and a section:
+            </p>
+            <ul>
+                <b><li>Course:</li></b> A course offered by Purdue:  CS18000
+                <b><li>Class:</li></b> A specific offering of the course:  CS18000 Lecture and its connected Recitations/PSOs in Fall14
+                <b><li>Section:</li></b> A specific instance of the class with a CRN:  CS18000 Lecture, with CRN 34295, taught by Antony L Hosking
+            </ul>
         </div>
     </section>
     <section class="content-wrapper main-content clear-fix">

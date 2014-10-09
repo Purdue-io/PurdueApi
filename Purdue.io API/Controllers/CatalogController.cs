@@ -328,6 +328,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// POST: Catalog/Search/Classes
+        /// <summary>
+        /// Search for classes with matching information, such as classes offered in Fall14.
+        /// </summary>
 		[Route("Search/Classes")]
 		[ResponseType(typeof(IEnumerable<ClassViewModel>))]
 		public IHttpActionResult PostSearchClasses()
@@ -336,6 +339,9 @@ namespace PurdueIo.Controllers
 		}
 
 		// POST: Catalog/Search/Sections
+        /// <summary>
+        /// Search for sections with matching information, such as sections taught by Hubert E Dunsmore.
+        /// </summary>
 		[Route("Search/Sections")]
 		[ResponseType(typeof(IEnumerable<SectionViewModel>))]
 		public IHttpActionResult PostSearchSections()
