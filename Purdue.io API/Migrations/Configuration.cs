@@ -1,9 +1,11 @@
 namespace PurdueIo.Migrations
 {
-    using System;
-    using System.Data.Entity;
-    using System.Data.Entity.Migrations;
-    using System.Linq;
+	using PurdueIo.Models.Catalog;
+	using System;
+	using System.Collections.Generic;
+	using System.Data.Entity;
+	using System.Data.Entity.Migrations;
+	using System.Linq;
 
     internal sealed class Configuration : DbMigrationsConfiguration<PurdueIo.Models.ApplicationDbContext>
     {
@@ -14,18 +16,121 @@ namespace PurdueIo.Migrations
 
         protected override void Seed(PurdueIo.Models.ApplicationDbContext context)
         {
-            //  This method will be called after migrating to the latest version.
+#if DEBUG
+			// Construct a basic Purdue University campus.
+			var campus = new Campus()
+			{
+				CampusId = Guid.NewGuid(),
+				Name = "Purdue University West Lafayette",
+				Buildings = new List<Building>(),
+				ZipCode = "47907"
+			};
 
-            //  You can use the DbSet<T>.AddOrUpdate() helper extension method 
-            //  to avoid creating duplicate seed data. E.g.
-            //
-            //    context.People.AddOrUpdate(
-            //      p => p.FullName,
-            //      new Person { FullName = "Andrew Peters" },
-            //      new Person { FullName = "Brice Lambson" },
-            //      new Person { FullName = "Rowan Miller" }
-            //    );
-            //
+			var lawson = new Building()
+			{
+				BuildingId = Guid.NewGuid(),
+				Campus = campus,
+				Name = "Lawson Computer Science Building",
+				Rooms = new List<Room>(),
+				ShortCode = "LWSN"
+			};
+
+			var windowsLab = new Room()
+			{
+				RoomId = Guid.NewGuid(),
+				Building = lawson,
+				Number = "B160",
+				Sections = new List<Section>()
+			};
+			lawson.Rooms.Add(windowsLab);
+
+			var linuxLab = new Room()
+			{
+				RoomId = Guid.NewGuid(),
+				Building = lawson,
+				Number = "B146",
+				Sections = new List<Section>()
+			};
+			lawson.Rooms.Add(linuxLab);
+
+			campus.Buildings.Add(lawson);
+
+			context.Campuses.Add(campus);
+			context.SaveChanges();
+
+			// Construct a course.
+			var term = new Term()
+			{
+				TermId = Guid.NewGuid(),
+				TermCode = "fall14",
+				StartDate = new DateTime(2014, 8, 25),
+				EndDate = new DateTime(2014, 12, 19),
+				Classes = new List<Class>()
+			};
+
+			var cs = new Subject()
+			{
+				SubjectId = Guid.NewGuid(),
+				Name = "Computer Science",
+				Abbreviation = "CS",
+				Courses = new List<Course>()
+			};
+			var dunsmore = new Instructor()
+			{
+				InstructorId = Guid.NewGuid(),
+				Name = "Hubert E Dunsmore",
+				Email = "bxd@purdue.edu",
+				Sections = new List<Section>()
+			};
+
+			var course = new Course()
+			{
+				CourseId = Guid.NewGuid(),
+				Title = "Software Engineering",
+				Subject = cs,
+				Number = "30700",
+				CreditHours = 3.000,
+				Description = "A pretty cool CS class.",
+				Classes = new List<Class>()
+			};
+			cs.Courses.Add(course);
+
+			var csclass = new Class()
+			{
+				ClassId = Guid.NewGuid(),
+				Campus = campus,
+				Course = course,
+				Term = term,
+				Sections = new List<Section>()
+			};
+			term.Classes.Add(csclass);
+			course.Classes.Add(csclass);
+
+			var section = new Section()
+			{
+				SectionId = Guid.NewGuid(),
+				Class = csclass,
+				Type = "Lecture",
+				Instructors = new List<Instructor>() { dunsmore },
+				DaysOfWeek = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday },
+				StartDate = new DateTime(2014, 8, 25),
+				EndDate = new DateTime(2014, 12, 19),
+				StartTime = new DateTimeOffset(2000, 1, 1, 12, 0, 0, TimeZoneInfo.Local.BaseUtcOffset),
+				Duration = new TimeSpan(0, 50, 0),
+				CRN = "12345",
+				Capacity = 30,
+				Enrolled = 20,
+				RemainingSpace = 10,
+				WaitlistCapacity = 0,
+				WaitlistCount = 0,
+				WaitlistSpace = 0,
+				Room = windowsLab
+			};
+			csclass.Sections.Add(section);
+
+			context.Courses.Add(course);
+			context.SaveChanges();
+#endif
         }
     }
 }
