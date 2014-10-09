@@ -93,7 +93,7 @@ DocProject/Help/html
 publish/
 
 # XML documentation output
-App_Data/PurdueIo.xml
+*/App_Data/PurdueIo.xml
 
 # Publish Web Output
 *.Publish.xml
