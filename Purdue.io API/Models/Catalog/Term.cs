@@ -31,12 +31,12 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// The date on which the term starts.
 		/// </summary>
-		public DateTime StartDate { get; set; }
+		public DateTimeOffset StartDate { get; set; }
 
 		/// <summary>
 		/// The date on which the term ends.
 		/// </summary>
-		public DateTime EndDate { get; set; }
+		public DateTimeOffset EndDate { get; set; }
 
 		/// <summary>
 		/// Queryable list of classes that occur in this term.
@@ -72,10 +72,10 @@ namespace PurdueIo.Models.Catalog
         /// <summary>
         /// The date on which the term starts.
         /// </summary>
-		public DateTime StartDate { get; set; }
+		public DateTimeOffset StartDate { get; set; }
         /// <summary>
         /// The date on which the term ends.
         /// </summary>
-		public DateTime EndDate { get; set; }
+		public DateTimeOffset EndDate { get; set; }
 	}
 }

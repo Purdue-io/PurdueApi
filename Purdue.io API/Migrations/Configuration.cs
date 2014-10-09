@@ -63,8 +63,8 @@ namespace PurdueIo.Migrations
 			{
 				TermId = Guid.NewGuid(),
 				TermCode = "fall14",
-				StartDate = new DateTime(2014, 8, 25),
-				EndDate = new DateTime(2014, 12, 19),
+				StartDate = new DateTimeOffset(new DateTime(2014, 8, 25), TimeZoneInfo.Local.BaseUtcOffset),
+				EndDate = new DateTimeOffset(new DateTime(2014, 12, 19), TimeZoneInfo.Local.BaseUtcOffset),
 				Classes = new List<Class>()
 			};
 
@@ -112,8 +112,8 @@ namespace PurdueIo.Migrations
 				Class = csclass,
 				Type = "Lecture",
 				Meetings = new List<Meeting>(),
-				StartDate = new DateTime(2014, 8, 25),
-				EndDate = new DateTime(2014, 12, 19),
+				StartDate = new DateTimeOffset(new DateTime(2014, 8, 25), TimeZoneInfo.Local.BaseUtcOffset),
+				EndDate = new DateTimeOffset(new DateTime(2014, 12, 19), TimeZoneInfo.Local.BaseUtcOffset),
 				CRN = "12345",
 				Capacity = 30,
 				Enrolled = 20,
@@ -127,8 +127,8 @@ namespace PurdueIo.Migrations
 				MeetingId = Guid.NewGuid(),
 				Section = section,
 				Instructors = new List<Instructor>() { dunsmore },
-				StartDate = new DateTime(2014, 8, 25),
-				EndDate = new DateTime(2014, 12, 19),
+				StartDate = new DateTimeOffset(new DateTime(2014, 8, 25), TimeZoneInfo.Local.BaseUtcOffset),
+				EndDate = new DateTimeOffset(new DateTime(2014, 12, 19), TimeZoneInfo.Local.BaseUtcOffset),
 				DaysOfWeek = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday },
 				StartTime = new DateTimeOffset(2000, 1, 1, 12, 0, 0, TimeZoneInfo.Local.BaseUtcOffset),
 				Duration = new TimeSpan(0, 50, 0),

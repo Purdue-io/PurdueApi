@@ -33,12 +33,12 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Date this meeting begins.
 		/// </summary>
-		public DateTime StartDate { get; set; }
+		public DateTimeOffset StartDate { get; set; }
 
 		/// <summary>
 		/// Date this meeting ends.
 		/// </summary>
-		public DateTime EndDate { get; set; }
+		public DateTimeOffset EndDate { get; set; }
 
 		/// <summary>
 		/// Days of the week on which this meeting occurs.
@@ -103,12 +103,12 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Date this meeting begins.
 		/// </summary>
-		public DateTime StartDate { get; set; }
+		public DateTimeOffset StartDate { get; set; }
 
 		/// <summary>
 		/// Date this meeting ends.
 		/// </summary>
-		public DateTime EndDate { get; set; }
+		public DateTimeOffset EndDate { get; set; }
 
 		/// <summary>
 		/// Days of the week on which this meeting occurs.

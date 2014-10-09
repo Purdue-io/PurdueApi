@@ -62,12 +62,12 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Date this section begins (earliest meeting date).
 		/// </summary>
-		public DateTime StartDate { get; set; }
+		public DateTimeOffset StartDate { get; set; }
 
 		/// <summary>
 		/// Date this section ends (latest meeting date).
 		/// </summary>
-		public DateTime EndDate { get; set; }
+		public DateTimeOffset EndDate { get; set; }
 
 		/// <summary>
 		/// This section's attendance capacity.
@@ -162,12 +162,12 @@ namespace PurdueIo.Models.Catalog
         /// <summary>
         /// Date this section begins (earliest meeting date).
         /// </summary>
-		public DateTime StartDate { get; set; }
+		public DateTimeOffset StartDate { get; set; }
 
         /// <summary>
         /// Date this section ends (latest meeting date).
         /// </summary>
-		public DateTime EndDate { get; set; }
+		public DateTimeOffset EndDate { get; set; }
 
         /// <summary>
         /// This section's attendance capacity.
