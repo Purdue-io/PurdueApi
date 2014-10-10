@@ -19,6 +19,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Unique ID with which to reference the term internally.
 		/// </summary>
+		[Key]
 		public Guid TermId { get; set; }
 
 		/// <summary>

@@ -18,6 +18,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Unique ID with which to reference this campus internally.
 		/// </summary>
+		[Key]
 		public Guid CampusId { get; set; }
 
 		/// <summary>

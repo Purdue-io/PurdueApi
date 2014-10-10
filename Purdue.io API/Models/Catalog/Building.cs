@@ -18,6 +18,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Unique ID with which to reference this building internally.
 		/// </summary>
+		[Key]
 		public Guid BuildingId { get; set; }
 
 		/// <summary>

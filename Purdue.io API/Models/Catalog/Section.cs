@@ -132,6 +132,7 @@ namespace PurdueIo.Models.Catalog
         /// <summary>
         /// GUID with which to identify this section internally.
         /// </summary>
+		[Key]
 		public Guid SectionId { get; set; }
 
         /// <summary>

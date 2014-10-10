@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
@@ -17,6 +18,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// A unique ID with which to refer to this room internally.
 		/// </summary>
+		[Key]
 		public Guid RoomId { get; set; }
 
 		/// <summary>

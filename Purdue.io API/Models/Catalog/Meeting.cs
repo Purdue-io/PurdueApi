@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
@@ -11,6 +12,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Unique ID with which to identify a meeting internally.
 		/// </summary>
+		[Key]
 		public Guid MeetingId { get; set; }
 
 		/// <summary>

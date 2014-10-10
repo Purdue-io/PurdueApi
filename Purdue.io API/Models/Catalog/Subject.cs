@@ -18,6 +18,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Unique ID with which to reference a subject internally.
 		/// </summary>
+		[Key]
 		public Guid SubjectId { get; set; }
 
 		/// <summary>

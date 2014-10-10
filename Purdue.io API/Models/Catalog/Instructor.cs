@@ -18,6 +18,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Unique ID with which to reference an instructor internally.
 		/// </summary>
+		[Key]
 		public Guid InstructorId { get; set; }
 
 		/// <summary>

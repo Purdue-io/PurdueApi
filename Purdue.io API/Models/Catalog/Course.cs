@@ -19,6 +19,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// GUID to reference this course internally.
 		/// </summary>
+		[Key]
 		public Guid CourseId { get; set; }
 
 		/// <summary>
