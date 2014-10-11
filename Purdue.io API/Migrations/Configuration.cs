@@ -62,7 +62,7 @@ namespace PurdueIo.Migrations
 			var term = new Term()
 			{
 				TermId = Guid.NewGuid(),
-				TermCode = "fall14",
+				TermCode = "201510",
 				StartDate = new DateTimeOffset(new DateTime(2014, 8, 25), TimeZoneInfo.Local.BaseUtcOffset),
 				EndDate = new DateTimeOffset(new DateTime(2014, 12, 19), TimeZoneInfo.Local.BaseUtcOffset),
 				Classes = new List<Class>()
