@@ -32,6 +32,7 @@ namespace PurdueIo
 				routeTemplate: "api/{controller}/{id}",
 				defaults: new { id = RouteParameter.Optional }
 			);
+
 			config.AddODataQueryFilter();
 			config.MapODataServiceRoute("odata", "odata", model: GetModel());
 		}
@@ -40,9 +41,9 @@ namespace PurdueIo
 			//OData
 			ODataConventionModelBuilder builder = new ODataConventionModelBuilder();
 
-			builder.ContainerName = "ApplicationDbContext";
+			//builder.ContainerName = "ApplicationDbContext";
 
-			builder.EntitySet<Course>("Courses");
+			EntitySetConfiguration<Course> courseEnt = builder.EntitySet<Course>("Courses");
 			builder.EntitySet<Class>("Classes");
 			builder.EntitySet<Section>("Sections");
 			builder.EntitySet<Term>("Terms");
@@ -52,6 +53,25 @@ namespace PurdueIo
 			builder.EntitySet<Instructor>("Instructors");
 			builder.EntitySet<Meeting>("Meetings");
 			builder.EntitySet<Subject>("Subjects");
+
+			//builder.name
+
+			//Course Functions
+			FunctionConfiguration courseByTermFunc;
+			courseByTermFunc = courseEnt.EntityType.Collection.Function("ByTerm");
+			courseByTermFunc.Parameter<String>("Term");
+			courseByTermFunc.ReturnsCollectionFromEntitySet<Course>("Courses");
+
+			FunctionConfiguration courseByNumberFunc;
+			courseByNumberFunc = courseEnt.EntityType.Collection.Function("ByNumber");
+			courseByNumberFunc.Parameter<String>("Number");
+			courseByNumberFunc.ReturnsCollectionFromEntitySet<Course>("Courses");
+
+			FunctionConfiguration courseByTermAndNumberFunc;
+			courseByTermAndNumberFunc = courseEnt.EntityType.Collection.Function("ByTermAndNumber");
+			courseByTermAndNumberFunc.Parameter<String>("Term");
+			courseByTermAndNumberFunc.Parameter<String>("Number");
+			courseByTermAndNumberFunc.ReturnsCollectionFromEntitySet<Course>("Courses");
 
 			return builder.GetEdmModel();
 		}
