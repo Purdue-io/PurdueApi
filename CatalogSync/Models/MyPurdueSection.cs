@@ -20,7 +20,7 @@ namespace CatalogSync.Models
 		/// <summary>
 		/// List of meetings that this section has.
 		/// </summary>
-		public ICollection<MyPurdueMeeting> Meetings { get; set; }
+		public List<MyPurdueMeeting> Meetings { get; set; }
 
 		/// <summary>
 		/// Subject code of the course. e.g., CS.
@@ -66,5 +66,35 @@ namespace CatalogSync.Models
 		/// The name of the campus this section meets on.
 		/// </summary>
 		public string CampusName { get; set; }
+
+		/// <summary>
+		/// This section's attendance capacity.
+		/// </summary>
+		public int Capacity { get; set; }
+
+		/// <summary>
+		/// How many students are enrolled - referred to as 'Actual' by MyPurdue.
+		/// </summary>
+		public int Enrolled { get; set; }
+
+		/// <summary>
+		/// Remaining space for enrollment.
+		/// </summary>
+		public int RemainingSpace { get; set; }
+
+		/// <summary>
+		/// Wait list capacity.
+		/// </summary>
+		public int WaitlistCapacity { get; set; }
+
+		/// <summary>
+		/// How many students are on the wait list.
+		/// </summary>
+		public int WaitlistCount { get; set; }
+
+		/// <summary>
+		/// How much space is available on the wait list.
+		/// </summary>
+		public int WaitlistSpace { get; set; }
 	}
 }

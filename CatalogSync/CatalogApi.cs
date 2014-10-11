@@ -105,8 +105,9 @@ namespace CatalogSync
 			return terms;
 		}
 
-		public async Task<ICollection<MyPurdueSection>> FetchSectionList(string termCode, string subjectCode)
+		public async Task<Dictionary<string,MyPurdueSection>> FetchSectionList(string termCode, string subjectCode)
 		{
+			await Authenticate();
 			referrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
 			var request = await Request("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
 
@@ -166,7 +167,8 @@ namespace CatalogSync
 			var regexTitle = new Regex(strRegex);
 
 			// Prepare section list
-			var sections = new List<MyPurdueSection>();
+			//var sections = new List<MyPurdueSection>();
+			var sections = new Dictionary<string, MyPurdueSection>();
 
 			// Loop through each listing and parse it out
 			for (var i = 0; i < termSelectNodes.Count; i+=2) // NOTE +=2 HERE
@@ -234,17 +236,137 @@ namespace CatalogSync
 						meeting.BuildingName = room.Substring(0, index);
 						meeting.RoomNumber = room.Substring(index + 1, room.Length - index - 1);
 					}
+
+					// Parse dates
+					var dates = meetingNode.SelectSingleNode("td[5]").InnerText.Replace("&nbsp;", " ");
+					if (dates.Equals("TBA"))
+					{
+						meeting.StartDate = DateTime.MinValue;
+						meeting.EndDate = DateTime.MinValue;
+					}
+					else
+					{
+						var dateArray = dates.Split(new string[] { " - " }, StringSplitOptions.None);
+						meeting.StartDate = DateTime.Parse(dateArray[0]);
+						meeting.EndDate = DateTime.Parse(dateArray[1]);
+					}
+
+					// Parse type
+					var type = meetingNode.SelectSingleNode("td[6]").InnerText.Replace("&nbsp;", " ");
+					meeting.Type = type;
+
+					// Parse instructors
+					var instructorNodes = meetingNode.SelectNodes("td[7]/a");
+					if (instructorNodes != null)
+					{
+						foreach (var instructorNode in instructorNodes)
+						{
+							var email = instructorNode.Attributes["href"].Value.Replace("mailto:", "");
+							var name = instructorNode.Attributes["target"].Value;
+							meeting.Instructors.Add(new Tuple<string, string>(name, email));
+						}
+					}
+
 					section.Meetings.Add(meeting);
 				}
 
-				Console.WriteLine(section.Crn + " - " + section.SubjectCode + section.Number + " / " + section.Title);
-				foreach (var m in section.Meetings)
+				sections.Add(section.Crn,section);
+			}
+			sections = await _FetchSectionDetails(termCode, subjectCode, sections);
+
+			return sections;
+		}
+
+		private async Task<Dictionary<string,MyPurdueSection>> _FetchSectionDetails(string termCode, string subjectCode, Dictionary<string, MyPurdueSection> sections)
+		{
+			await Authenticate();
+
+			// Now we have to fetch details (enrollment)
+			referrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS";
+			var loginRequest = await Request("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS");
+			var loginResponse = await loginRequest.Content.ReadAsStringAsync();
+
+			// Construct our "query"
+			var detailsContent = new FormUrlEncodedContent(new[] 
+            {
+                new KeyValuePair<string, string>("rsts", "dummy"),
+				new KeyValuePair<string, string>("crn", "dummy"),
+				new KeyValuePair<string, string>("term_in", termCode),
+				new KeyValuePair<string, string>("sel_subj", "dummy"),
+				new KeyValuePair<string, string>("sel_day", "dummy"),
+				new KeyValuePair<string, string>("sel_schd", "dummy"),
+				new KeyValuePair<string, string>("sel_insm", "dummy"),
+				new KeyValuePair<string, string>("sel_camp", "dummy"),
+				new KeyValuePair<string, string>("sel_levl", "dummy"),
+				new KeyValuePair<string, string>("sel_sess", "dummy"),
+				new KeyValuePair<string, string>("sel_instr", "dummy"),
+				new KeyValuePair<string, string>("sel_ptrm", "dummy"),
+				new KeyValuePair<string, string>("sel_attr", "dummy"),
+				new KeyValuePair<string, string>("sel_subj", subjectCode),
+				new KeyValuePair<string, string>("sel_crse", ""),
+				new KeyValuePair<string, string>("sel_title", ""),
+				new KeyValuePair<string, string>("sel_schd", "%"),
+				new KeyValuePair<string, string>("sel_from_cred", ""),
+				new KeyValuePair<string, string>("sel_to_cred", ""),
+				new KeyValuePair<string, string>("sel_camp", "%"),
+				new KeyValuePair<string, string>("sel_ptrm", "%"),
+				new KeyValuePair<string, string>("sel_instr", "%"),
+				new KeyValuePair<string, string>("sel_sess", "%"),
+				new KeyValuePair<string, string>("sel_attr", "%"),
+				new KeyValuePair<string, string>("begin_hh", "0"),
+				new KeyValuePair<string, string>("begin_mi", "0"),
+				new KeyValuePair<string, string>("begin_ap", "a"),
+				new KeyValuePair<string, string>("end_hh", "0"),
+				new KeyValuePair<string, string>("end_mi", "0"),
+				new KeyValuePair<string, string>("end_ap", "a"),
+				new KeyValuePair<string, string>("SUB_BTN", "Section Search"),
+				new KeyValuePair<string, string>("path", "1"),
+			});
+
+			referrer = "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse";
+			HttpResponseMessage rDetails = await Request("https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse_Advanced", detailsContent);
+			string rDetailsContent = await rDetails.Content.ReadAsStringAsync();
+			HtmlDocument document = new HtmlDocument();
+			document.LoadHtml(rDetailsContent);
+			HtmlNode docRoot = document.DocumentNode;
+
+			HtmlNodeCollection sectionNodes = docRoot.SelectNodes("/html/body/div[@class='pagebodydiv'][1]/table[@class='datadisplaytable'][1]/tr[ not ( th ) ]");
+			int meetingIndex = 0;
+			MyPurdueSection section = null;
+			for (var i=0; i < sectionNodes.Count; i++) {
+				var node = sectionNodes[i];
+				var crnNode = node.SelectSingleNode("td[2]");
+				if (crnNode == null) continue;
+				if (HtmlEntity.DeEntitize(crnNode.InnerText).Trim().Length > 0) {
+					// Section w/ primary meeting data
+					var crnNumber = HtmlEntity.DeEntitize(crnNode.InnerText).Trim();
+					meetingIndex = 0;
+					section = sections[crnNumber];
+					// Update attendance data for this section
+					section.Capacity = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[11]").InnerText).Trim());
+					section.Enrolled = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[12]").InnerText).Trim());
+					section.RemainingSpace = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[13]").InnerText).Trim());
+					section.WaitlistCapacity = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[14]").InnerText).Trim());
+					section.WaitlistCount = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[15]").InnerText).Trim());
+					section.WaitlistSpace = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[16]").InnerText).Trim());
+					// Update type
+					section.Type = HtmlEntity.DeEntitize(node.SelectSingleNode("td[23]").InnerText).Trim();
+				} 
+				// Update meeting data
+
+				// Update meeting location (building short name)
+				var loc = HtmlEntity.DeEntitize(node.SelectSingleNode("td[22]").InnerText).Trim();
+				if (loc != "TBA" && loc.Length > 0)
 				{
-					Console.WriteLine("\tin " + m.BuildingName + " / " + m.RoomNumber + " @ " + m.StartTime.ToString("t"));
+					section.Meetings[meetingIndex].BuildingCode = loc.Substring(0, loc.IndexOf(" "));
 				}
 
-				sections.Add(section);
+				// Updating meeting type
+				section.Meetings[meetingIndex].Type = HtmlEntity.DeEntitize(node.SelectSingleNode("td[23]").InnerText).Trim();
+
+				meetingIndex++;
 			}
+
 			return sections;
 		}
 	}

@@ -11,6 +11,7 @@ namespace CatalogSync.Models
 		public MyPurdueMeeting()
 		{
 			this.DaysOfWeek = new List<DayOfWeek>();
+			this.Instructors = new List<Tuple<string, string>>();
 		}
 		/// <summary>
 		/// Type of meeting. e.g. Lecture, Laboratory, etc.
@@ -18,7 +19,7 @@ namespace CatalogSync.Models
 		public string Type { get; set; }
 
 		/// <summary>
-		/// List of instructor tuples, in format <name, email>.
+		/// List of instructor tuples, in format [name, email].
 		/// </summary>
 		public List<Tuple<string, string>> Instructors { get; set; }
 
@@ -46,6 +47,11 @@ namespace CatalogSync.Models
 		/// The time int he day that this class ends.
 		/// </summary>
 		public DateTimeOffset EndTime { get; set; }
+
+		/// <summary>
+		/// The short name of the building this section meets in.
+		/// </summary>
+		public string BuildingCode { get; set; }
 
 		/// <summary>
 		/// Name of the building this section meets in.
