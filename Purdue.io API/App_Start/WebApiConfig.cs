@@ -8,6 +8,7 @@ using Newtonsoft.Json.Serialization;
 using System.Web.OData.Builder;
 using System.Web.OData.Extensions;
 using PurdueIo.Models.Catalog;
+using System.Web.OData.Batch;
 
 namespace PurdueIo
 {
@@ -31,20 +32,15 @@ namespace PurdueIo
 				routeTemplate: "api/{controller}/{id}",
 				defaults: new { id = RouteParameter.Optional }
 			);
+			config.AddODataQueryFilter();
 			config.MapODataServiceRoute("odata", "odata", model: GetModel());
-
 		}
 		public static Microsoft.OData.Edm.IEdmModel GetModel()
 		{
 			//OData
 			ODataConventionModelBuilder builder = new ODataConventionModelBuilder();
-			//EntityTypeConfiguration<Term> termType = builder.EntityType<Term>();
-			//EntityTypeConfiguration<Section> sectionType = builder.EntityType<Section>();
 
-			//termType.Ignore(c => c.StartDate);
-			//termType.Ignore(c => c.EndDate);
-			//sectionType.Ignore(c => c.StartDate);
-			//sectionType.Ignore(c => c.EndDate);
+			builder.ContainerName = "ApplicationDbContext";
 
 			builder.EntitySet<Course>("Courses");
 			builder.EntitySet<Class>("Classes");
@@ -54,13 +50,8 @@ namespace PurdueIo
 			builder.EntitySet<Building>("Buildings");
 			builder.EntitySet<Room>("Rooms");
 			builder.EntitySet<Instructor>("Instructors");
-
-
-			//EntitySetConfiguration<Course> courses = builder.EntitySet<Course>("Course");
-
-			//FunctionConfiguration myFirstFunction = courses.EntityType.Collection.Function("MyFirstFunction");
-			//myFirstFunction.ReturnsCollectionFromEntitySet<Course>("Course");
-
+			builder.EntitySet<Meeting>("Meetings");
+			builder.EntitySet<Subject>("Subjects");
 
 			return builder.GetEdmModel();
 		}
