@@ -23,21 +23,25 @@ namespace PurdueIo.Controllers.Odata
     {
         private ApplicationDbContext _Db = new ApplicationDbContext();
 
-		/*
-		 * Restful call
-		 */
-
         // GET: odata/Courses
+		/// <summary>
+		/// Returns all courses since the dawn of time
+		/// </summary>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
 		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
 		public IHttpActionResult GetCourses()
         {
-			IQueryable a;
 			return Ok(_Db.Courses.AsQueryable());
         }
 
         // GET: odata/Courses({GUID})
+		/// <summary>
+		/// Returns a course given a guid of the course
+		/// </summary>
+		/// <param name="courseKey">The guid of the course</param>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("({courseKey})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
@@ -47,6 +51,12 @@ namespace PurdueIo.Controllers.Odata
         }
 
 		// GET: odata/Courses/Default.ByNumber(Number={[subject][number]})
+		/// <summary>
+		/// Function to return a list of courses given the subject number
+		/// Ex. /Courses/Default.ByNumber(Number='CS30700')
+		/// </summary>
+		/// <param name="subjectAndNumber">The subject number</param>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByNumber(Number={subjectAndNumber})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
@@ -61,7 +71,6 @@ namespace PurdueIo.Controllers.Odata
 				return BadRequest("Invalid format: Course Number is not in the format [Subject][Number] (ex. CS30700)");
 			}
 
-			//It's course
 			IEnumerable<Course> selectedCourses = _Db.Courses
 			.Where(
 				x =>
@@ -73,6 +82,11 @@ namespace PurdueIo.Controllers.Odata
 		}
 
 		// GET: odata/Courses/Default.ByTerm({term})
+		/// <summary>
+		/// Function to return a list of courses given the term
+		/// </summary>
+		/// <param name="term">The term</param>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTerm(Term={term})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
@@ -98,6 +112,12 @@ namespace PurdueIo.Controllers.Odata
 		}
 
 		// GET: odata/Courses/Default.ByTermAndNumber(Term={term},Number={subjectAndNumber}
+		/// <summary>
+		/// Function to return a list of courses given subject number and term
+		/// </summary>
+		/// <param name="term">The term</param>
+		/// <param name="subjectAndNumber">The subject number</param>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTermAndNumber(Term={term},Number={subjectAndNumber})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 3)]

@@ -22,8 +22,12 @@ namespace PurdueIo.Controllers.Odata
     {
         private ApplicationDbContext _Db = new ApplicationDbContext();
 
-		//Disabled, we dont have users to have access to this
+		//Disabled, we dont want users to have access to this
         //GET: odata/Classes
+		/// <summary>
+		/// Returns 404, this call should never be used
+		/// </summary>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
@@ -34,6 +38,11 @@ namespace PurdueIo.Controllers.Odata
 		}
 
         // GET: odata/Classes({GUID})
+		/// <summary>
+		/// Returns a class given a guid of the class
+		/// </summary>
+		/// <param name="classKey"></param>
+		/// <returns>the guid of the class</returns>
 		[HttpGet]
 		[ODataRoute("({classKey})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
@@ -44,6 +53,11 @@ namespace PurdueIo.Controllers.Odata
         }
 
 		// GET: odata/Classes/Default.ByNumber(Number={[subject][number]})
+		/// <summary>
+		/// Function to return a list of classes given the subject number
+		/// </summary>
+		/// <param name="subjectAndNumber">The subject number</param>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByNumber(Number={subjectAndNumber})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
@@ -58,7 +72,6 @@ namespace PurdueIo.Controllers.Odata
 				return BadRequest("Invalid format: Course Number is not in the format [Subject][Number] (ex. CS30700)");
 			}
 
-			//It's course
 			IEnumerable<Class> selectedClasses = _Db.Classes
 			.Where(
 				x =>
@@ -70,6 +83,11 @@ namespace PurdueIo.Controllers.Odata
 		}
 
 		// GET: odata/Classes/Default.ByTerm({term})
+		/// <summary>
+		/// Function to return a list of classes given the term
+		/// </summary>
+		/// <param name="term">The term</param>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTerm(Term={term})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
@@ -93,6 +111,12 @@ namespace PurdueIo.Controllers.Odata
 		}
 
 		// GET: odata/Classes/Default.ByTermAndNumber(Term={term},Number={subjectAndNumber}
+		/// <summary>
+		/// Function to return a list of sections given subject number and term
+		/// </summary>
+		/// <param name="term">The term</param>
+		/// <param name="subjectAndNumber">The subject number</param>
+		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTermAndNumber(Term={term},Number={subjectAndNumber})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
