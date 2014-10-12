@@ -36,15 +36,14 @@ namespace PurdueIo
 			config.AddODataQueryFilter();
 			config.MapODataServiceRoute("odata", "odata", model: GetModel());
 		}
+
 		public static Microsoft.OData.Edm.IEdmModel GetModel()
 		{
 			//OData
 			ODataConventionModelBuilder builder = new ODataConventionModelBuilder();
 
-			//builder.ContainerName = "ApplicationDbContext";
-
 			EntitySetConfiguration<Course> courseEnt = builder.EntitySet<Course>("Courses");
-			builder.EntitySet<Class>("Classes");
+			EntitySetConfiguration<Class> classEnt =builder.EntitySet<Class>("Classes");
 			builder.EntitySet<Section>("Sections");
 			builder.EntitySet<Term>("Terms");
 			builder.EntitySet<Campus>("Campuses");
@@ -53,8 +52,6 @@ namespace PurdueIo
 			builder.EntitySet<Instructor>("Instructors");
 			builder.EntitySet<Meeting>("Meetings");
 			builder.EntitySet<Subject>("Subjects");
-
-			//builder.name
 
 			//Course Functions
 			FunctionConfiguration courseByTermFunc;
@@ -72,6 +69,25 @@ namespace PurdueIo
 			courseByTermAndNumberFunc.Parameter<String>("Term");
 			courseByTermAndNumberFunc.Parameter<String>("Number");
 			courseByTermAndNumberFunc.ReturnsCollectionFromEntitySet<Course>("Courses");
+
+			//Class Functions
+			FunctionConfiguration classByTermFunc;
+			classByTermFunc = classEnt.EntityType.Collection.Function("ByTerm");
+			classByTermFunc.Parameter<String>("Term");
+			classByTermFunc.ReturnsCollectionFromEntitySet<Class>("Classes");
+
+			FunctionConfiguration classByNumberFunc;
+			classByNumberFunc = classEnt.EntityType.Collection.Function("ByNumber");
+			classByNumberFunc.Parameter<String>("Number");
+			classByNumberFunc.ReturnsCollectionFromEntitySet<Class>("Classes");
+
+			FunctionConfiguration classByTermAndNumberFunc;
+			classByTermAndNumberFunc = classEnt.EntityType.Collection.Function("ByTermAndNumber");
+			classByTermAndNumberFunc.Parameter<String>("Term");
+			classByTermAndNumberFunc.Parameter<String>("Number");
+			classByTermAndNumberFunc.ReturnsCollectionFromEntitySet<Class>("Classes");
+
+			//Section Functions
 
 			return builder.GetEdmModel();
 		}
