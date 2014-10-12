@@ -236,6 +236,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
     <Compile Include="Controllers\MeController.cs" />
+    <Compile Include="Controllers\Odata\CampusesController.cs" />
     <Compile Include="Controllers\Odata\ClassesController.cs" />
     <Compile Include="Controllers\Odata\CoursesController.cs" />
     <Compile Include="Controllers\Odata\InstructorsController.cs" />

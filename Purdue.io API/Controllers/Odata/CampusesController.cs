@@ -16,36 +16,36 @@ using PurdueIo.Models.Catalog;
 
 namespace PurdueIo.Controllers.Odata
 {
-	[ODataRoutePrefix("Instructors")]
-    public class InstructorsController : ODataController
+	[ODataRoutePrefix("Campuses")]
+    public class CampusesController : ODataController
     {
         private ApplicationDbContext db = new ApplicationDbContext();
 
-        // GET: odata/Instructors
+        // GET: odata/Campuses
 		/// <summary>
-		/// Returns all instructors in exsistance
+		/// Returns all campuses in existance
 		/// </summary>
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
-		public IHttpActionResult GetInstructors()
+		public IHttpActionResult GetCampuses()
         {
-            return Ok(db.Instructors);
+            return Ok(db.Campuses);
         }
 
-        // GET: odata/Instructors({GUID})
+        // GET: odata/Campuses(5)
 		/// <summary>
-		/// Returns an instructor given the guid
+		/// Returns a campus given the guid
 		/// </summary>
-		/// <param name="instructorKey">The guid of the instructor</param>
+		/// <param name="campusKey"></param>
 		/// <returns></returns>
 		[HttpGet]
-		[ODataRoute("({instructorKey})")]
+		[ODataRoute("({campusKey})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
-		public IHttpActionResult GetInstructor([FromODataUri] Guid instructorKey)
+		public IHttpActionResult GetCampus([FromODataUri] Guid campusKey)
         {
-			return Ok(SingleResult.Create(db.Instructors.Where(instructor => instructor.InstructorId == instructorKey)));
+            return Ok(SingleResult.Create(db.Campuses.Where(campus => campus.CampusId == campusKey)));
         }
 
         protected override void Dispose(bool disposing)
@@ -57,9 +57,9 @@ namespace PurdueIo.Controllers.Odata
             base.Dispose(disposing);
         }
 
-        private bool InstructorExists(Guid key)
+        private bool CampusExists(Guid key)
         {
-            return db.Instructors.Count(e => e.InstructorId == key) > 0;
+            return db.Campuses.Count(e => e.CampusId == key) > 0;
         }
     }
 }
