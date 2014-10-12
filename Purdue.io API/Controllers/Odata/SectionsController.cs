@@ -17,37 +17,35 @@ using PurdueIo.Utils;
 
 namespace PurdueIo.Controllers.Odata
 {
-	[ODataRoutePrefix("Classes")]
-    public class ClassesController : ODataController
+	[ODataRoutePrefix("Sections")]
+    public class SectionsController : ODataController
     {
         private ApplicationDbContext _Db = new ApplicationDbContext();
 
-		//Disabled, we dont have users to have access to this
-        //GET: odata/Classes
+        // GET: odata/Sections
 		[HttpGet]
 		[ODataRoute]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
-		public IHttpActionResult GetClasses()
-		{
-			//return db.Classes;
-			return NotFound();
-		}
-
-        // GET: odata/Classes({GUID})
-		[HttpGet]
-		[ODataRoute("({classKey})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
-		public IHttpActionResult GetClass([FromODataUri] Guid classKey)
+		[EnableQuery(MaxAnyAllExpressionDepth = 1)]
+		public IHttpActionResult GetSections()
         {
-			//For those confused we use @class because class is a keyword
-            return Ok(SingleResult.Create(_Db.Classes.Where(@class => @class.ClassId == classKey)));
+            //return db.Sections;
+			return NotFound();
         }
 
-		// GET: odata/Classes/Default.ByNumber(Number={[subject][number]})
+        // GET: odata/Sections(5)
+		[HttpGet]
+		[ODataRoute("({classKey})")]
+		[EnableQuery(MaxAnyAllExpressionDepth = 1)]
+		public IHttpActionResult GetSection([FromODataUri] Guid key)
+        {
+            return Ok(SingleResult.Create(_Db.Sections.Where(section => section.SectionId == key)));
+        }
+
+		// GET: odata/Sections/Default.ByNumber(Number={[subject][number]})
 		[HttpGet]
 		[ODataRoute("Default.ByNumber(Number={subjectAndNumber})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
-		public IHttpActionResult GetClassesByNumber([FromODataUri] String subjectAndNumber)
+		public IHttpActionResult GetSectionsByNumber([FromODataUri] String subjectAndNumber)
 		{
 			System.Diagnostics.Debug.WriteLine("Inside GetCoursesByNumber");
 			Tuple<String, String> course = Utilities.ParseCourse(subjectAndNumber);
@@ -59,21 +57,21 @@ namespace PurdueIo.Controllers.Odata
 			}
 
 			//It's course
-			IEnumerable<Class> selectedClasses = _Db.Classes
+			IEnumerable<Section> selectedSections = _Db.Sections
 			.Where(
 				x =>
-					x.Course.Subject.Abbreviation == course.Item1 &&
-					x.Course.Number == course.Item2
+					x.Class.Course.Subject.Abbreviation == course.Item1 &&
+					x.Class.Course.Number == course.Item2
 				);
 
-			return Ok(selectedClasses);
+			return Ok(selectedSections);
 		}
 
-		// GET: odata/Classes/Default.ByTerm({term})
+		// GET: odata/Sections/Default.ByTerm({term})
 		[HttpGet]
 		[ODataRoute("Default.ByTerm(Term={term})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
-		public IHttpActionResult GetClassesByTerm([FromODataUri] String term)
+		public IHttpActionResult GetSectionsByTerm([FromODataUri] String term)
 		{
 			String match = Utilities.ParseTerm(term);
 
@@ -83,20 +81,20 @@ namespace PurdueIo.Controllers.Odata
 				return BadRequest("Invalid format: Term does not match term format (ex. 201510)");
 			}
 
-			IQueryable<Class> selectedClasses = _Db.Classes
+			IQueryable<Section> selectedSections = _Db.Sections
 				.Where(
 					x =>
-						x.Term.TermCode == match
+						x.Class.Term.TermCode == match
 					);
-			return Ok(selectedClasses);
+			return Ok(selectedSections);
 
 		}
 
-		// GET: odata/Classes/Default.ByTermAndNumber(Term={term},Number={subjectAndNumber}
+		// GET: odata/Sections/Default.ByTermAndNumber(Term={term},Number={subjectAndNumber}
 		[HttpGet]
 		[ODataRoute("Default.ByTermAndNumber(Term={term},Number={subjectAndNumber})")]
 		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
-		public IHttpActionResult GetClassesByTermAndNumber([FromODataUri] String term, [FromODataUri] String subjectAndNumber)
+		public IHttpActionResult GetSectionsByTermAndNumber([FromODataUri] String term, [FromODataUri] String subjectAndNumber)
 		{
 			Tuple<String, String> course = Utilities.ParseCourse(subjectAndNumber);
 			String match = Utilities.ParseTerm(term);
@@ -111,15 +109,15 @@ namespace PurdueIo.Controllers.Odata
 				return BadRequest("Invalid format: Term does not match term format (ex. 201510)");
 			}
 
-			IQueryable<Class> selectedCourses = _Db.Classes
+			IQueryable<Section> selectedSections = _Db.Sections
 					.Where(
 						x =>
-							x.Term.TermCode == match &&
-							x.Course.Subject.Abbreviation == course.Item1 &&
-							x.Course.Number == course.Item2
+							x.Class.Term.TermCode == match &&
+							x.Class.Course.Subject.Abbreviation == course.Item1 &&
+							x.Class.Course.Number == course.Item2
 						);
 
-			return Ok(selectedCourses);
+			return Ok(selectedSections);
 		}
 
         protected override void Dispose(bool disposing)
@@ -131,9 +129,9 @@ namespace PurdueIo.Controllers.Odata
             base.Dispose(disposing);
         }
 
-        private bool ClassExists(Guid key)
+        private bool SectionExists(Guid key)
         {
-            return _Db.Classes.Count(e => e.ClassId == key) > 0;
+            return _Db.Sections.Count(e => e.SectionId == key) > 0;
         }
     }
 }

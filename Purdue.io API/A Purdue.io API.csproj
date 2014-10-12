@@ -238,6 +238,7 @@
     <Compile Include="Controllers\MeController.cs" />
     <Compile Include="Controllers\Odata\ClassesController.cs" />
     <Compile Include="Controllers\Odata\CoursesController.cs" />
+    <Compile Include="Controllers\Odata\SectionsController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

@@ -42,9 +42,9 @@ namespace PurdueIo
 			//OData
 			ODataConventionModelBuilder builder = new ODataConventionModelBuilder();
 
-			EntitySetConfiguration<Course> courseEnt = builder.EntitySet<Course>("Courses");
-			EntitySetConfiguration<Class> classEnt =builder.EntitySet<Class>("Classes");
-			builder.EntitySet<Section>("Sections");
+			EntitySetConfiguration<Course>	courseEnt	= builder.EntitySet<Course>("Courses");
+			EntitySetConfiguration<Class>	classEnt	= builder.EntitySet<Class>("Classes");
+			EntitySetConfiguration<Section> sectionEnt	= builder.EntitySet<Section>("Sections");
 			builder.EntitySet<Term>("Terms");
 			builder.EntitySet<Campus>("Campuses");
 			builder.EntitySet<Building>("Buildings");
@@ -88,6 +88,21 @@ namespace PurdueIo
 			classByTermAndNumberFunc.ReturnsCollectionFromEntitySet<Class>("Classes");
 
 			//Section Functions
+			FunctionConfiguration sectionByTermFunc;
+			sectionByTermFunc = sectionEnt.EntityType.Collection.Function("ByTerm");
+			sectionByTermFunc.Parameter<String>("Term");
+			sectionByTermFunc.ReturnsCollectionFromEntitySet<Section>("Sections");
+
+			FunctionConfiguration sectionByNumberFunc;
+			sectionByNumberFunc = sectionEnt.EntityType.Collection.Function("ByNumber");
+			sectionByNumberFunc.Parameter<String>("Number");
+			sectionByNumberFunc.ReturnsCollectionFromEntitySet<Section>("Sections");
+
+			FunctionConfiguration sectionByTermAndNumberFunc;
+			sectionByTermAndNumberFunc = sectionEnt.EntityType.Collection.Function("ByTermAndNumber");
+			sectionByTermAndNumberFunc.Parameter<String>("Term");
+			sectionByTermAndNumberFunc.Parameter<String>("Number");
+			sectionByTermAndNumberFunc.ReturnsCollectionFromEntitySet<Section>("Sections");
 
 			return builder.GetEdmModel();
 		}
