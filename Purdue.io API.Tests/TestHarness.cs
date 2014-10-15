@@ -145,7 +145,7 @@ namespace PurdueIo.Tests
 				Instructors = new List<Instructor>() { dunsmore },
 				StartDate = new DateTimeOffset(new DateTime(2014, 8, 25), TimeZoneInfo.Local.BaseUtcOffset),
 				EndDate = new DateTimeOffset(new DateTime(2014, 12, 19), TimeZoneInfo.Local.BaseUtcOffset),
-				DaysOfWeek = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday },
+				DaysOfWeek =  DOW.Monday | DOW.Wednesday | DOW.Friday,
 				StartTime = new DateTimeOffset(2000, 1, 1, 12, 0, 0, TimeZoneInfo.Local.BaseUtcOffset),
 				Duration = new TimeSpan(0, 50, 0),
 				Room = windowsLab

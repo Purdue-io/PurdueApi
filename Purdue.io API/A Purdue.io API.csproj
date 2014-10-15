@@ -260,6 +260,10 @@
     <Compile Include="Migrations\201410090730146_ChangeDateTimeToDateTimeOffset.Designer.cs">
       <DependentUpon>201410090730146_ChangeDateTimeToDateTimeOffset.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201410150206492_BitwiseDOW.cs" />
+    <Compile Include="Migrations\201410150206492_BitwiseDOW.Designer.cs">
+      <DependentUpon>201410150206492_BitwiseDOW.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\ApplicationDbContext.cs" />
@@ -316,7 +320,6 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\CollectionModelDescription.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
-    <Content Include="ClassDiagram1.cd" />
     <Content Include="Properties\webjobs-list.json" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
@@ -400,6 +403,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201410090730146_ChangeDateTimeToDateTimeOffset.resx">
       <DependentUpon>201410090730146_ChangeDateTimeToDateTimeOffset.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201410150206492_BitwiseDOW.resx">
+      <DependentUpon>201410150206492_BitwiseDOW.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

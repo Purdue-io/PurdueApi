@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PurdueIo.Models.Catalog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,6 @@ namespace CatalogSync.Models
 	{
 		public MyPurdueMeeting()
 		{
-			this.DaysOfWeek = new List<DayOfWeek>();
 			this.Instructors = new List<Tuple<string, string>>();
 		}
 		/// <summary>
@@ -36,7 +36,7 @@ namespace CatalogSync.Models
 		/// <summary>
 		/// The days of the week that this class meets.
 		/// </summary>
-		public List<DayOfWeek> DaysOfWeek { get; set; }
+		public DOW DaysOfWeek { get; set; }
 
 		/// <summary>
 		/// The time in the day that this class begins.

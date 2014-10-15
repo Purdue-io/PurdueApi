@@ -7,6 +7,18 @@ using System.Web;
 
 namespace PurdueIo.Models.Catalog
 {
+	[Flags]
+	public enum DOW : byte
+	{
+		Monday = 1,
+		Tuesday = 2,
+		Wednesday = 4,
+		Thursday = 8,
+		Friday = 16,
+		Saturday = 32,
+		Sunday = 64
+	}
+
 	public class Meeting
 	{
 		/// <summary>
@@ -45,7 +57,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Days of the week on which this meeting occurs.
 		/// </summary>
-		public ICollection<DayOfWeek> DaysOfWeek { get; set; }
+		public DOW DaysOfWeek { get; set; }
 
 		/// <summary>
 		/// The time this meeting occurs.
@@ -115,7 +127,7 @@ namespace PurdueIo.Models.Catalog
 		/// <summary>
 		/// Days of the week on which this meeting occurs.
 		/// </summary>
-		public ICollection<DayOfWeek> DaysOfWeek { get; set; }
+		public DOW DaysOfWeek { get; set; }
 
 		/// <summary>
 		/// The time this meeting occurs.

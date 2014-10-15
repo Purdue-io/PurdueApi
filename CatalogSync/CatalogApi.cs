@@ -1,5 +1,6 @@
 ﻿using CatalogSync.Models;
 using HtmlAgilityPack;
+using PurdueIo.Models.Catalog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,8 @@ namespace CatalogSync
 {
 	class CatalogApi
 	{
+		public static readonly int MAX_RETRIES = 5;
+
 		public static string default_username = "";
 		public static string default_password = "";
 
@@ -65,7 +68,6 @@ namespace CatalogSync
 		}
 		private async Task<bool> Authenticate()
 		{
-
 			FormUrlEncodedContent content = new FormUrlEncodedContent(new[] 
             {
                 new KeyValuePair<string, string>("pass", password),
@@ -194,6 +196,19 @@ namespace CatalogSync
 				var info = termSelectNodes[i + 1].SelectSingleNode("td");
 				section.Description = info.FirstChild.InnerText.Trim(); // TODO: Deal with white space...
 
+				var additionalInfo = info.SelectSingleNode("span[@class='fieldlabeltext'][4]");
+				while (additionalInfo != null) {
+					if (additionalInfo.InnerText.Contains("Campus"))
+					{
+						section.CampusName = HtmlEntity.DeEntitize(additionalInfo.InnerText.Trim());
+					}
+					if (additionalInfo.InnerText.Contains("Credits"))
+					{
+						section.CreditHours = double.Parse(HtmlEntity.DeEntitize(additionalInfo.InnerText.Trim()).Split(new string[]{" "}, StringSplitOptions.None)[0]);
+					}
+					additionalInfo = additionalInfo.NextSibling;
+				}
+
 				var meetingNodes = info.SelectNodes("table[@class='datadisplaytable'][1]/tr[ not( th ) ]");
 				foreach (var meetingNode in meetingNodes)
 				{
@@ -214,13 +229,13 @@ namespace CatalogSync
 
 					// Parse days of week
 					var daysOfWeek = meetingNode.SelectSingleNode("td[3]").InnerText.Replace("&nbsp;","");
-					if (daysOfWeek.Contains("M")) meeting.DaysOfWeek.Add(DayOfWeek.Monday);
-					if (daysOfWeek.Contains("T")) meeting.DaysOfWeek.Add(DayOfWeek.Tuesday);
-					if (daysOfWeek.Contains("W")) meeting.DaysOfWeek.Add(DayOfWeek.Wednesday);
-					if (daysOfWeek.Contains("R")) meeting.DaysOfWeek.Add(DayOfWeek.Thursday);
-					if (daysOfWeek.Contains("F")) meeting.DaysOfWeek.Add(DayOfWeek.Friday);
-					if (daysOfWeek.Contains("S")) meeting.DaysOfWeek.Add(DayOfWeek.Saturday);
-					if (daysOfWeek.Contains("U")) meeting.DaysOfWeek.Add(DayOfWeek.Sunday);
+					if (daysOfWeek.Contains("M")) meeting.DaysOfWeek |= DOW.Monday;
+					if (daysOfWeek.Contains("T")) meeting.DaysOfWeek |= DOW.Tuesday;
+					if (daysOfWeek.Contains("W")) meeting.DaysOfWeek |= DOW.Wednesday;
+					if (daysOfWeek.Contains("R")) meeting.DaysOfWeek |= DOW.Thursday;
+					if (daysOfWeek.Contains("F")) meeting.DaysOfWeek |= DOW.Friday;
+					if (daysOfWeek.Contains("S")) meeting.DaysOfWeek |= DOW.Saturday;
+					if (daysOfWeek.Contains("U")) meeting.DaysOfWeek |= DOW.Sunday;
 
 
 					// Parse building / room
@@ -229,6 +244,7 @@ namespace CatalogSync
 					{
 						meeting.RoomNumber = "TBA";
 						meeting.BuildingName = "TBA";
+						meeting.BuildingCode = "TBA";
 					}
 					else
 					{
@@ -277,8 +293,13 @@ namespace CatalogSync
 			return sections;
 		}
 
-		private async Task<Dictionary<string,MyPurdueSection>> _FetchSectionDetails(string termCode, string subjectCode, Dictionary<string, MyPurdueSection> sections)
+		private async Task<Dictionary<string,MyPurdueSection>> _FetchSectionDetails(string termCode, string subjectCode, Dictionary<string, MyPurdueSection> sections, int retries = 0)
 		{
+			if (retries > MAX_RETRIES)
+			{
+				Console.WriteLine("Max retries reached.");
+				throw new TimeoutException("Could not fetch section details from myPurdue.");
+			}
 			await Authenticate();
 
 			// Now we have to fetch details (enrollment)
@@ -331,6 +352,13 @@ namespace CatalogSync
 			HtmlNode docRoot = document.DocumentNode;
 
 			HtmlNodeCollection sectionNodes = docRoot.SelectNodes("/html/body/div[@class='pagebodydiv'][1]/table[@class='datadisplaytable'][1]/tr[ not ( th ) ]");
+			if (sectionNodes == null)
+			{
+				Console.WriteLine("ERROR fetching section details... retry " + (retries + 1) + " pending...");
+				cookies = new CookieContainer();
+				referrer = "";
+				return await _FetchSectionDetails(termCode, subjectCode, sections, retries + 1);
+			}
 			int meetingIndex = 0;
 			MyPurdueSection section = null;
 			for (var i=0; i < sectionNodes.Count; i++) {
@@ -356,9 +384,9 @@ namespace CatalogSync
 
 				// Update meeting location (building short name)
 				var loc = HtmlEntity.DeEntitize(node.SelectSingleNode("td[22]").InnerText).Trim();
-				if (loc != "TBA" && loc.Length > 0)
+				if (loc.ToUpper() != "TBA" && loc.Length > 0)
 				{
-					section.Meetings[meetingIndex].BuildingCode = loc.Substring(0, loc.IndexOf(" "));
+					section.Meetings[meetingIndex].BuildingCode = loc.Substring(0, loc.IndexOf(" ")).Trim();
 				}
 
 				// Updating meeting type

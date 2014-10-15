@@ -1,6 +1,7 @@
 ﻿using CatalogSync.Models;
 using PurdueIo.Models;
 using System;
+using System.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,11 +16,10 @@ namespace CatalogSync
 	class Program
 	{
 		private CatalogApi Api;
-		public readonly string CAMPUSNAME = "Purdue University West Lafayette";
-		public readonly string CAMPUSZIP = "47906";
 		static int Main()
 		{
-			var p = new Program("", ""); // Credentials go here.
+			var appSettings = ConfigurationManager.AppSettings;
+			var p = new Program(appSettings["MyPurdueUser"], appSettings["MyPurduePass"]); // Credentials go here.
 			p.SyncCourses("201510").GetAwaiter().GetResult();
 			Console.ReadLine();
 			return 0;
@@ -37,18 +37,6 @@ namespace CatalogSync
 		public async Task SyncCourses(string termId)
 		{
 			var sectionsByCrn = await Api.FetchSectionList(termId, "CS"); // test CS for now.
-
-			foreach (var section in sectionsByCrn.Values)
-			{
-				Console.WriteLine();
-				Console.WriteLine(section.Crn + " | " + section.SubjectCode + section.Number + " / " + section.Title + " (" + section.Type + ") " + section.LinkSelf + " | " + section.LinkOther);
-				Console.WriteLine("Cap: " + section.Capacity + ", Act: " + section.Enrolled + ", Rem: " + section.RemainingSpace);
-				foreach (var meeting in section.Meetings)
-				{
-					var inst = (meeting.Instructors != null && meeting.Instructors.Count > 0) ? meeting.Instructors.Select(x => x.Item1).Aggregate((x, y) => x + ", " + y) : "" ;
-					Console.WriteLine("\t " + inst + " in " + meeting.BuildingName + " (" + meeting.BuildingCode + ") " + meeting.RoomNumber + " @ " + meeting.StartTime.ToString("t") + " - " + meeting.EndTime.ToString("t"));
-				}
-			}
 
 			// We have all the section data - now we need to build classes out of them.
 			
@@ -80,20 +68,6 @@ namespace CatalogSync
 					db.Terms.Add(dbTerm);
 				}
 
-				// Check that the campus exists
-				Campus dbCampus = db.Campuses.Where(c => c.Name.ToUpper() == CAMPUSNAME.ToUpper()).FirstOrDefault();
-				if (dbCampus == null)
-				{
-					dbCampus = new Campus()
-					{
-						CampusId = Guid.NewGuid(),
-						Name = CAMPUSNAME,
-						Buildings = new List<Building>(),
-						ZipCode = CAMPUSZIP
-					};
-					db.Campuses.Add(dbCampus);
-				}
-
 				foreach (var group in sectionGroups)
 				{
 					var subj = group.First().SubjectCode;
@@ -101,6 +75,22 @@ namespace CatalogSync
 					var title = group.First().Title;
 					var description = group.First().Description;
 					var creditHours = group.OrderByDescending(s => s.CreditHours).Select(s => s.CreditHours).FirstOrDefault();
+
+					// Check that the campus exists
+					var campusName = group.First().CampusName;
+					Campus dbCampus = db.Campuses.Where(c => c.Name.ToUpper() == campusName.ToUpper()).FirstOrDefault();
+					if (dbCampus == null)
+					{
+						dbCampus = new Campus()
+						{
+							CampusId = Guid.NewGuid(),
+							Name = group.First().CampusName,
+							Buildings = new List<Building>(),
+							ZipCode = ""
+						};
+						db.Campuses.Add(dbCampus);
+						db.SaveChanges();
+					}
 
 					// Check that the subject exists
 					Subject dbSubj;
@@ -119,6 +109,7 @@ namespace CatalogSync
 							Abbreviation = subj.ToUpper()
 						};
 						db.Subjects.Add(dbSubj);
+						db.SaveChanges();
 					}
 
 					// Check that the course exists
@@ -141,6 +132,7 @@ namespace CatalogSync
 							Classes = new List<Class>()
 						};
 						db.Courses.Add(dbCourse);
+						db.SaveChanges();
 					}
 
 					// Check that the class exists
@@ -163,6 +155,7 @@ namespace CatalogSync
 							Sections = new List<Section>()
 						};
 						db.Classes.Add(dbClass);
+						db.SaveChanges();
 					}
 
 					// Add all of the sections ...
@@ -174,27 +167,123 @@ namespace CatalogSync
 							dbSection = new Section()
 							{
 								SectionId = Guid.NewGuid(),
-								Class = dbClass,
 								CRN = section.Crn,
-								Type = section.Type,
-								StartDate = section.Meetings.OrderBy(m => m.StartDate).Select(m => m.StartDate).First(),
-								EndDate = section.Meetings.OrderByDescending(m => m.EndDate).Select(m => m.EndDate).First(),
-								Capacity = section.Capacity,
-								Enrolled = section.Enrolled,
-								RemainingSpace = section.RemainingSpace,
-								WaitlistCapacity = section.WaitlistCapacity,
-								WaitlistCount = section.WaitlistCount,
-								WaitlistSpace = section.WaitlistSpace,
-								RegistrationStatus = RegistrationStatus.NotAvailable,
 								Meetings = new List<Meeting>()
 							};
 							db.Sections.Add(dbSection);
 						}
+						// Update all the information (whether it exists or not)
+						dbSection.Class = dbClass;
+						dbSection.Type = section.Type;
+						dbSection.StartDate = section.Meetings.OrderBy(m => m.StartDate).Select(m => m.StartDate).First();
+						dbSection.EndDate = section.Meetings.OrderByDescending(m => m.EndDate).Select(m => m.EndDate).First();
+						dbSection.Capacity = section.Capacity;
+						dbSection.Enrolled = section.Enrolled;
+						dbSection.RemainingSpace = section.RemainingSpace;
+						dbSection.WaitlistCapacity = section.WaitlistCapacity;
+						dbSection.WaitlistCount = section.WaitlistCount;
+						dbSection.WaitlistSpace = section.WaitlistSpace;
+						dbSection.RegistrationStatus = RegistrationStatus.NotAvailable;
 
-						// Add all of the meetings ...
+						// First, delete any meetings that don't exist in the latest pull
+						foreach (var meeting in dbSection.Meetings)
+						{
+							// TODO: compare instructors
+							var matches = section.Meetings.Where(m =>
+									m.Type == meeting.Type &&
+									m.StartTime == meeting.StartTime &&
+									m.EndTime == meeting.StartTime.Add(meeting.Duration) &&
+									m.DaysOfWeek == meeting.DaysOfWeek &&
+									m.BuildingCode == meeting.Room.Building.ShortCode &&
+									m.RoomNumber == meeting.Room.Number
+								);
+							if (matches.Count() <= 0)
+							{
+								dbSection.Meetings.Remove(meeting);
+								db.Meetings.Remove(meeting);
+							}
+						}
+
+						// Add all of the meetings that don't exist.
 						foreach (var meeting in section.Meetings)
 						{
+							var matches = dbSection.Meetings.Where(m =>
+									m.Type == meeting.Type &&
+									m.StartTime == meeting.StartTime &&
+									m.Duration == meeting.EndTime.Subtract(meeting.StartTime) &&
+									m.DaysOfWeek == meeting.DaysOfWeek &&
+									m.Room.Building.ShortCode == meeting.BuildingCode &&
+									m.Room.Number == meeting.RoomNumber
+								);
+							if (matches.Count() <= 0)
+							{
+								// make sure instructors exist
+								var newInstructors = new List<Instructor>();
+								foreach (var inst in meeting.Instructors)
+								{
+									var instructorMatch = db.Instructors.Where(i => i.Email == inst.Item2).FirstOrDefault();
+									if (instructorMatch == null)
+									{
+										instructorMatch = new Instructor()
+										{
+											InstructorId = Guid.NewGuid(),
+											Email = inst.Item2,
+											Name = inst.Item1,
+											Meetings = new List<Meeting>()
+										};
+										db.Instructors.Add(instructorMatch);
+										db.SaveChanges(); // Have to save changes after an add op
+									}
+									newInstructors.Add(instructorMatch);
+								}
 
+								// make sure the building exists
+								var buildingMatch = db.Buildings.Where(b => b.ShortCode.ToUpper() == meeting.BuildingCode.ToUpper() && b.Campus.CampusId == dbCampus.CampusId).FirstOrDefault();
+								if (buildingMatch == null)
+								{
+									buildingMatch = new Building()
+									{
+										BuildingId = Guid.NewGuid(),
+										Campus = dbCampus,
+										Name = meeting.BuildingName,
+										ShortCode = meeting.BuildingCode,
+										Rooms = new List<Room>()
+									};
+									db.Buildings.Add(buildingMatch);
+									db.SaveChanges();
+								}
+
+								// make sure the room exists
+								var roomMatch = db.Rooms.Where(r => r.Building.BuildingId == buildingMatch.BuildingId && r.Number == meeting.RoomNumber).FirstOrDefault();
+								if (roomMatch == null)
+								{
+									roomMatch = new Room()
+									{
+										RoomId = Guid.NewGuid(),
+										Building = buildingMatch,
+										Number = meeting.RoomNumber,
+										Meetings = new List<Meeting>()
+									};
+									db.Rooms.Add(roomMatch);
+									db.SaveChanges();
+								}
+
+								// Create the actual meeting object
+								var newMeeting = new Meeting()
+								{
+									MeetingId = Guid.NewGuid(),
+									Type = meeting.Type,
+									StartTime = meeting.StartTime,
+									Duration = meeting.EndTime.Subtract(meeting.StartTime),
+									Instructors = newInstructors,
+									Room = roomMatch,
+									DaysOfWeek = meeting.DaysOfWeek,
+									Section = dbSection,
+									StartDate = meeting.StartDate,
+									EndDate = meeting.EndDate
+								};
+								dbSection.Meetings.Add(newMeeting);
+							}
 						}
 					}
 					db.SaveChanges();
@@ -207,9 +296,9 @@ namespace CatalogSync
 		{
 			sourceList.Remove(sourceSection);
 			outList.Add(sourceSection);
-			var candidates = sourceList.Where(s => s.LinkSelf.Length > 0 && (s.LinkSelf == sourceSection.LinkSelf || s.LinkSelf == sourceSection.LinkOther) && s.Number == sourceSection.Number && s.SubjectCode == sourceSection.SubjectCode).Distinct().ToList();
+			var candidates = sourceList.Where(s => s.LinkSelf.Length > 0 && s.LinkSelf == sourceSection.LinkOther && s.Number == sourceSection.Number && s.SubjectCode == sourceSection.SubjectCode).Distinct().ToList();
 			if (candidates.Count() <= 0) return;
-			outList.AddRange(candidates);
+			//outList.AddRange(candidates);
 			foreach (var candidate in candidates)
 			{
 				sourceList.Remove(candidate);
