@@ -231,11 +231,15 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
-    <Compile Include="Controllers\AccountController.cs" />
+    <Content Include="Content\bootstrap-theme.css" />
+    <Content Include="Content\bootstrap-theme.css.map" />
+    <Content Include="Content\bootstrap.css" />
+    <Content Include="Content\bootstrap.css.map" />
+    <None Include="Controllers\AccountController.cs.old" />
     <Compile Include="Controllers\CatalogController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
-    <Compile Include="Controllers\ManageController.cs" />
-    <Compile Include="Controllers\MeController.cs" />
+    <None Include="Controllers\ManageController.cs.old" />
+    <None Include="Controllers\MeController.cs.old" />
     <Compile Include="Controllers\Odata\CampusesController.cs" />
     <Compile Include="Controllers\Odata\ClassesController.cs" />
     <Compile Include="Controllers\Odata\CoursesController.cs" />
@@ -244,43 +248,10 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201410070900486_InitialCourseCatalog.cs" />
-    <Compile Include="Migrations\201410070900486_InitialCourseCatalog.Designer.cs">
-      <DependentUpon>201410070900486_InitialCourseCatalog.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201410080717394_MultipleInstructorsPerSection.cs" />
-    <Compile Include="Migrations\201410080717394_MultipleInstructorsPerSection.Designer.cs">
-      <DependentUpon>201410080717394_MultipleInstructorsPerSection.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201410090606259_MeetingsAdded.cs" />
-    <Compile Include="Migrations\201410090606259_MeetingsAdded.Designer.cs">
-      <DependentUpon>201410090606259_MeetingsAdded.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201410090730146_ChangeDateTimeToDateTimeOffset.cs" />
-    <Compile Include="Migrations\201410090730146_ChangeDateTimeToDateTimeOffset.Designer.cs">
-      <DependentUpon>201410090730146_ChangeDateTimeToDateTimeOffset.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201410150206492_BitwiseDOW.cs" />
-    <Compile Include="Migrations\201410150206492_BitwiseDOW.Designer.cs">
-      <DependentUpon>201410150206492_BitwiseDOW.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
-    <Compile Include="Models\ApplicationDbContext.cs" />
     <Compile Include="Models\Binding\CourseSearchBindingModel.cs" />
-    <Compile Include="Models\Catalog\Building.cs" />
-    <Compile Include="Models\Catalog\Campus.cs" />
-    <Compile Include="Models\Catalog\Class.cs" />
-    <Compile Include="Models\Catalog\Course.cs" />
-    <Compile Include="Models\Catalog\Meeting.cs" />
-    <Compile Include="Models\Catalog\Room.cs" />
-    <Compile Include="Models\Catalog\Section.cs" />
-    <Compile Include="Models\Catalog\Term.cs" />
-    <Compile Include="Models\IdentityModels.cs" />
-    <Compile Include="Models\Catalog\Instructor.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
     <Compile Include="Models\MeViewModels.cs" />
-    <Compile Include="Models\Catalog\Subject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\ApplicationOAuthProvider.cs" />
     <Compile Include="Results\ChallengeResult.cs" />
@@ -290,7 +261,7 @@
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
     <Content Include="Areas\HelpPage\Views\_ViewStart.cshtml" />
-    <Content Include="Content\bootstrap.css" />
+    <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\Site.css" />
     <Content Include="App_Data\PurdueIo.xml">
@@ -321,25 +292,15 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
     <Content Include="Properties\webjobs-list.json" />
+    <Content Include="fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="fonts\glyphicons-halflings-regular.eot" />
     <None Include="Properties\PublishProfiles\purdue__apidev.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
     <Content Include="Scripts\jquery-1.10.2.min.js" />
-    <Content Include="Scripts\knockout-2.3.0.debug.js" />
-    <Content Include="Scripts\knockout-2.3.0.js" />
-    <Content Include="Scripts\knockout.validation.debug.js" />
-    <Content Include="Scripts\knockout.validation.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
-    <Content Include="Scripts\respond.js" />
-    <Content Include="Scripts\respond.min.js" />
-    <Content Include="Scripts\sammy-0.7.4.js" />
-    <Content Include="Scripts\sammy-0.7.4.min.js" />
     <Content Include="Scripts\_references.js" />
-    <Content Include="Scripts\app\_run.js" />
-    <Content Include="Scripts\app\app.datamodel.js" />
-    <Content Include="Scripts\app\app.viewmodel.js" />
-    <Content Include="Scripts\app\common.js" />
-    <Content Include="Scripts\app\home.viewmodel.js" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Account\ConfirmEmail.cshtml" />
     <Content Include="Views\Account\ExternalLoginConfirmation.cshtml" />
@@ -382,32 +343,17 @@
     </Content>
     <Content Include="Scripts\jquery-1.10.2.min.map" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Content Include="fonts\glyphicons-halflings-regular.woff" />
-    <Content Include="fonts\glyphicons-halflings-regular.ttf" />
-    <Content Include="fonts\glyphicons-halflings-regular.eot" />
+    <ProjectReference Include="..\PurdueIoDatabase\PurdueIoDb.csproj">
+      <Project>{1da165d1-b6e8-4075-a7a6-2bbf70a6796f}</Project>
+      <Name>PurdueIoDb</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="packages.config">
       <SubType>Designer</SubType>
     </Content>
     <None Include="Project_Readme.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Migrations\201410070900486_InitialCourseCatalog.resx">
-      <DependentUpon>201410070900486_InitialCourseCatalog.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201410080717394_MultipleInstructorsPerSection.resx">
-      <DependentUpon>201410080717394_MultipleInstructorsPerSection.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201410090606259_MeetingsAdded.resx">
-      <DependentUpon>201410090606259_MeetingsAdded.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201410090730146_ChangeDateTimeToDateTimeOffset.resx">
-      <DependentUpon>201410090730146_ChangeDateTimeToDateTimeOffset.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201410150206492_BitwiseDOW.resx">
-      <DependentUpon>201410150206492_BitwiseDOW.cs</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

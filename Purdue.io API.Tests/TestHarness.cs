@@ -8,7 +8,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using PurdueIo.Models.Catalog;
+using PurdueIoDb;
+using PurdueIoDb.Catalog;
 
 namespace PurdueIo.Tests
 {

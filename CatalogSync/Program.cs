@@ -1,5 +1,4 @@
 ﻿using CatalogSync.Models;
-using PurdueIo.Models;
 using System;
 using System.Configuration;
 using System.Collections.Generic;
@@ -8,7 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.Entity;
 using Microsoft.AspNet.Identity.EntityFramework;
-using PurdueIo.Models.Catalog;
+using PurdueIoDb;
+using PurdueIoDb.Catalog;
 
 namespace CatalogSync
 {

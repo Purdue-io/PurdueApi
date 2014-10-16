@@ -11,8 +11,8 @@ using System.Web.Http;
 using System.Web.Http.ModelBinding;
 using System.Web.OData;
 using System.Web.OData.Routing;
-using PurdueIo.Models;
-using PurdueIo.Models.Catalog;
+using PurdueIoDb;
+using PurdueIoDb.Catalog;
 using PurdueIo.Utils;
 using System.Text.RegularExpressions;
 

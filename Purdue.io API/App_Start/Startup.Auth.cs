@@ -8,8 +8,8 @@ using Microsoft.Owin.Security.DataProtection;
 using Microsoft.Owin.Security.Google;
 using Microsoft.Owin.Security.OAuth;
 using Owin;
-using PurdueIo.Models;
 using PurdueIo.Providers;
+using PurdueIoDb;
 
 namespace PurdueIo
 {

@@ -1,5 +1,6 @@
 ﻿using PurdueIo.Models;
-using PurdueIo.Models.Catalog;
+using PurdueIoDb;
+using PurdueIoDb.Catalog;
 using System;
 using System.Collections.Generic;
 using System.Linq;

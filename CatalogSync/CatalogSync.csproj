@@ -84,9 +84,9 @@
     <None Include="Properties\webjob-publish-settings.json" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Purdue.io API\A Purdue.io API.csproj">
-      <Project>{276116f3-b640-4e8f-b99a-5353681796ab}</Project>
-      <Name>A Purdue.io API</Name>
+    <ProjectReference Include="..\PurdueIoDatabase\PurdueIoDb.csproj">
+      <Project>{1da165d1-b6e8-4075-a7a6-2bbf70a6796f}</Project>
+      <Name>PurdueIoDb</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -7,7 +7,7 @@ using Microsoft.Owin.Security.OAuth;
 using Newtonsoft.Json.Serialization;
 using System.Web.OData.Builder;
 using System.Web.OData.Extensions;
-using PurdueIo.Models.Catalog;
+using PurdueIoDb.Catalog;
 using System.Web.OData.Batch;
 
 namespace PurdueIo

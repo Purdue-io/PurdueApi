@@ -121,7 +121,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controllers\CatalogControllerTest.cs" />
+    <Compile Include="Controllers\ODataTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestHarness.cs" />
     <Compile Include="BasicDBTest.cs" />
@@ -136,6 +136,10 @@
     <ProjectReference Include="..\Purdue.io API\A Purdue.io API.csproj">
       <Project>{276116F3-B640-4E8F-B99A-5353681796AB}</Project>
       <Name>A Purdue.io API</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PurdueIoDatabase\PurdueIoDb.csproj">
+      <Project>{1da165d1-b6e8-4075-a7a6-2bbf70a6796f}</Project>
+      <Name>PurdueIoDb</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
