@@ -5,5 +5,5 @@
   "endTime": null,
   "jobRecurrenceFrequency": null,
   "interval": null,
-  "runMode": "Continuous"
+  "runMode": "OnDemand"
 }
