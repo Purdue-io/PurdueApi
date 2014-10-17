@@ -82,6 +82,7 @@
     <Content Include="App.default.config" />
     <None Include="packages.config" />
     <None Include="Properties\webjob-publish-settings.json" />
+    <None Include="Properties\webjobs.props" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PurdueIoDatabase\PurdueIoDb.csproj">
