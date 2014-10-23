@@ -240,11 +240,16 @@
     <Compile Include="Controllers\HomeController.cs" />
     <None Include="Controllers\ManageController.cs.old" />
     <None Include="Controllers\MeController.cs.old" />
+    <Compile Include="Controllers\Odata\BuildingsController.cs" />
     <Compile Include="Controllers\Odata\CampusesController.cs" />
     <Compile Include="Controllers\Odata\ClassesController.cs" />
     <Compile Include="Controllers\Odata\CoursesController.cs" />
     <Compile Include="Controllers\Odata\InstructorsController.cs" />
+    <Compile Include="Controllers\Odata\MeetingsController.cs" />
+    <Compile Include="Controllers\Odata\RoomsController.cs" />
     <Compile Include="Controllers\Odata\SectionsController.cs" />
+    <Compile Include="Controllers\Odata\SubjectsController.cs" />
+    <Compile Include="Controllers\Odata\TermsController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
