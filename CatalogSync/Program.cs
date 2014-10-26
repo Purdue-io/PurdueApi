@@ -15,6 +15,7 @@ namespace CatalogSync
 	// To learn more about Microsoft Azure WebJobs, please see http://go.microsoft.com/fwlink/?LinkID=401557
 	class Program
 	{
+		private static readonly int MAX_RETRIES = 8;
 		private CatalogApi Api;
 		static int Main()
 		{
@@ -53,26 +54,43 @@ namespace CatalogSync
 			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronization of term '" + selectedTerm.Name + "' complete.");
 		}
 
-		public async Task SyncSubject(MyPurdueTerm term, MyPurdueSubject subject)
+		public async Task SyncSubject(MyPurdueTerm term, MyPurdueSubject subject, int retries = 0)
 		{
 			// Pull all sections for the specified term and subject.
-			Dictionary<string, MyPurdueSection> sectionsByCrn;
+			Dictionary<string, MyPurdueSection> sectionsByCrn = null;
+			bool fetchFailure = false;
 			try
 			{
 				sectionsByCrn = await Api.FetchSections(term.Id, subject.SubjectCode);
 			}
 			catch (Exception)
 			{
-				Console.WriteLine("\nERROR FETCHING SUBJECT SECTIONS\n");
+				fetchFailure = true;
+			}
+
+			// This flag exists because we cannot 'await' inside of a catch block.
+			if (fetchFailure)
+			{
+				Console.Write(" error. ");
+				if (retries < MAX_RETRIES)
+				{
+					Console.Write("retrying... ");
+					await SyncSubject(term, subject, retries + 1);
+				}
+				else
+				{
+					Console.WriteLine("max attempts exceeded. skipping...");
+				}
 				return;
 			}
+
+
 			
 			Console.Write("+");
 
 			// We have all the section data - now we need to build classes out of them.
 			var sectionGroups = new List<List<MyPurdueSection>>();
 			var sectionFlatList = new List<MyPurdueSection>(sectionsByCrn.Values);
-			int totalSectionCount = sectionFlatList.Count + 1;
 			while (sectionFlatList.Count > 0)
 			{
 				var sectionGroup = new List<MyPurdueSection>();
@@ -321,7 +339,7 @@ namespace CatalogSync
 							}
 						}
 						sectionCount++;
-						if (sectionCount % (int)(totalSectionCount/10.0) == 0)
+						if (sectionCount % 20 == 0)
 						{
 							Console.Write(".");
 						}
