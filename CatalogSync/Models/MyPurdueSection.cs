@@ -6,16 +6,21 @@ using System.Threading.Tasks;
 
 namespace CatalogSync.Models
 {
-	class MyPurdueSection
+	public class MyPurdueSection
 	{
 		public MyPurdueSection()
 		{
 			this.Meetings = new List<MyPurdueMeeting>();
 		}
 		/// <summary>
-		/// Course CRN number. e.g., 68475.
+		/// Section CRN number. e.g., 68475.
 		/// </summary>
 		public string Crn { get; set; }
+
+		/// <summary>
+		/// Section code (usually three characters, differentiates section)
+		/// </summary>
+		public string SectionCode { get; set; }
 
 		/// <summary>
 		/// List of meetings that this section has.
@@ -61,6 +66,11 @@ namespace CatalogSync.Models
 		/// Link ID of other section. e.g., A1.
 		/// </summary>
 		public string LinkOther { get; set; }
+
+		/// <summary>
+		/// Short code name for the campus this section meets on.
+		/// </summary>
+		public string CampusCode { get; set; }
 
 		/// <summary>
 		/// The name of the campus this section meets on.

@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace CatalogSync.Models
 {
-	public class MyPurdueTerm
+	public class MyPurdueSubject
 	{
-		public string Id { get; set; }
-		public string Name { get; set; }
+		public string SubjectCode { get; set; }
+		public string SubjectName { get; set; }
 	}
 }

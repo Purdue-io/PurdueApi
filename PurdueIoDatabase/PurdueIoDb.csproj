@@ -84,6 +84,10 @@
     <Compile Include="Migrations\201410150206492_BitwiseDOW.Designer.cs">
       <DependentUpon>201410150206492_BitwiseDOW.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201410260850526_TermNameCampusCode.cs" />
+    <Compile Include="Migrations\201410260850526_TermNameCampusCode.Designer.cs">
+      <DependentUpon>201410260850526_TermNameCampusCode.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -106,6 +110,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201410150206492_BitwiseDOW.resx">
       <DependentUpon>201410150206492_BitwiseDOW.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201410260850526_TermNameCampusCode.resx">
+      <DependentUpon>201410260850526_TermNameCampusCode.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

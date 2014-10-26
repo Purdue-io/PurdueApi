@@ -26,12 +26,12 @@ namespace CatalogSync.Models
 		/// <summary>
 		/// Date that this class begins.
 		/// </summary>
-		public DateTime StartDate { get; set; }
+		public DateTimeOffset StartDate { get; set; }
 
 		/// <summary>
 		/// Date that this class ends.
 		/// </summary>
-		public DateTime EndDate { get; set; }
+		public DateTimeOffset EndDate { get; set; }
 
 		/// <summary>
 		/// The days of the week that this class meets.

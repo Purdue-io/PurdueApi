@@ -73,7 +73,15 @@
     <Compile Include="CatalogApi.cs" />
     <Compile Include="Models\MyPurdueMeeting.cs" />
     <Compile Include="Models\MyPurdueSection.cs" />
+    <Compile Include="Models\MyPurdueSubject.cs" />
     <Compile Include="Models\MyPurdueTerm.cs" />
+    <Compile Include="Parsers\IParser.cs" />
+    <Compile Include="Parsers\ParseUtility.cs" />
+    <Compile Include="Parsers\SectionDetailsParser.cs" />
+    <Compile Include="Parsers\SectionListParser.cs" />
+    <Compile Include="Parsers\SubjectListParser.cs" />
+    <Compile Include="Parsers\TermListParser.cs" />
+    <Compile Include="Parsers\TestParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -90,6 +98,7 @@
       <Name>PurdueIoDb</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Web.WebJobs.Publish.1.0.1\tools\webjobs.targets" Condition="Exists('..\packages\Microsoft.Web.WebJobs.Publish.1.0.1\tools\webjobs.targets')" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.14\tools\Microsoft.Bcl.Build.targets')" />

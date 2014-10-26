@@ -22,6 +22,13 @@ namespace PurdueIoDb.Catalog
 		public Guid CampusId { get; set; }
 
 		/// <summary>
+		/// A short code to refer to this campus. e.g. "PWL"
+		/// </summary>
+		[Index]
+		[StringLength(12)]
+		public string Code { get; set; }
+
+		/// <summary>
 		/// Friendly name of this campus. e.g. "Purdue University West Lafayette".
 		/// </summary>
 		public string Name { get; set; }

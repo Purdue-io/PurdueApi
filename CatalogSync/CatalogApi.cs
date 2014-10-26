@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CatalogSync.Parsers;
 
 namespace CatalogSync
 {
@@ -38,6 +39,107 @@ namespace CatalogSync
 			}
 		}
 
+		// Methods meant to be accessed by users of the API
+		#region API Methods
+		/// <summary>
+		/// A way for API users to determine whether the credentials are valid.
+		/// </summary>
+		/// <returns></returns>
+		public async Task<bool> HasValidCredentials()
+		{
+			return await Authenticate();
+		}
+
+		/// <summary>
+		/// Fetches the term list from myPurdue.
+		/// </summary>
+		/// <returns>A list of term objects.</returns>
+		public async Task<ICollection<MyPurdueTerm>> FetchTermList()
+		{
+			// Set up the request list...
+			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
+			var requests = new List<Tuple<string, FormUrlEncodedContent, string>>()
+			{
+				new Tuple<string, FormUrlEncodedContent, string>("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
+				new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, null)
+			};
+			return await RequestParse<TermListParser, List<MyPurdueTerm>>(requests);
+		}
+
+		/// <summary>
+		/// Fetches a list of subjects for the specified term.
+		/// </summary>
+		/// <param name="termCode">myPurdue term code, e.g. 201510</param>
+		/// <returns></returns>
+		public async Task<ICollection<MyPurdueSubject>> FetchSubjectList(string termCode)
+		{
+			// Set up the request list...
+			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
+			var requests = new List<Tuple<string, FormUrlEncodedContent, string>>()
+			{
+				new Tuple<string, FormUrlEncodedContent, string>("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
+				new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", new FormUrlEncodedContent(new[] 
+					{
+						new KeyValuePair<string, string>("p_calling_proc", "bwckschd.p_disp_dyn_sched"),
+						new KeyValuePair<string, string>("p_term", termCode)
+					}), "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched")
+			};
+
+			return await RequestParse<SubjectListParser, List<MyPurdueSubject>>(requests);
+		}
+
+		/// <summary>
+		/// Fetches all section information for the subject in the term provided
+		/// by merging data from _FetchSectionList and _FetchSectionDetails
+		/// </summary>
+		/// <param name="termCode">myPurdue code for the desired term, e.g. 201510</param>
+		/// <param name="subjectCode">code for the desired subject, e.g. CS</param>
+		/// <returns>Dictionary of sections keyed by CRN</returns>
+		public async Task<Dictionary<string, MyPurdueSection>> FetchSections(string termCode, string subjectCode)
+		{
+			var sectionList = await _FetchSectionList(termCode, subjectCode);
+			var sectionDetails = await _FetchSectionDetails(termCode, subjectCode);
+
+			// Fill in the missing data on the list from the details.
+			foreach (var sectionPair in sectionList)
+			{
+				var crn = sectionPair.Key;
+				var section = sectionPair.Value;
+				var detailedSection = sectionDetails[crn];
+
+				// Update missing info
+				section.Capacity = detailedSection.Capacity;
+				section.Enrolled = detailedSection.Enrolled;
+				section.RemainingSpace = detailedSection.RemainingSpace;
+				section.WaitlistCapacity = detailedSection.WaitlistCapacity;
+				section.WaitlistCount = detailedSection.WaitlistCount;
+				section.WaitlistSpace = detailedSection.WaitlistSpace;
+				section.Type = detailedSection.Type;
+				section.SectionCode = detailedSection.SectionCode;
+				section.CampusCode = detailedSection.CampusCode;
+
+				// Update missing meeting info
+				for (int i = 0; i < section.Meetings.Count; i++)
+				{
+					section.Meetings[i].BuildingCode = detailedSection.Meetings[i].BuildingCode;
+					section.Meetings[i].Type = detailedSection.Meetings[i].Type;
+				}
+			}
+
+			return sectionList;
+		}
+		#endregion
+
+		// Methods reserved for internal use by the API object
+		#region Private Methods
+
+		/// <summary>
+		/// Generates a basic request, providing POST body, following redirects, and storing cookies.
+		/// </summary>
+		/// <param name="url">URL to request</param>
+		/// <param name="post_content">Optional HTTP POST body</param>
+		/// <param name="follow_redirect">Whether or not to follow redirects.</param>
+		/// <returns>An HttpResponseMessage result.</returns>
 		private async Task<HttpResponseMessage> Request(string url, FormUrlEncodedContent post_content = null, Boolean follow_redirect = true)
 		{
 			HttpClientHandler handler = new HttpClientHandler()
@@ -54,7 +156,7 @@ namespace CatalogSync
 			System.Diagnostics.Debug.WriteLine("Navigating to '" + url + "...");
 			HttpResponseMessage result = await c.PostAsync(url, post_content);
 			referrer = url;
-			
+
 			if (follow_redirect && result.Headers.Location != null)
 			{
 				System.Diagnostics.Debug.WriteLine("Referrer detected. Pursuing...");
@@ -62,10 +164,11 @@ namespace CatalogSync
 			}
 			return result;
 		}
-		public async Task<bool> HasValidCredentials()
-		{
-			return await Authenticate();
-		}
+
+		/// <summary>
+		/// Authenticates against myPurdue, storing required cookies for future requests.
+		/// </summary>
+		/// <returns></returns>
 		private async Task<bool> Authenticate()
 		{
 			FormUrlEncodedContent content = new FormUrlEncodedContent(new[] 
@@ -82,47 +185,66 @@ namespace CatalogSync
 			return (result.Contains("Login Successful"));
 		}
 
-		public async Task<ICollection<MyPurdueTerm>> FetchTermList()
+		/// <summary>
+		/// This method represents an entire request, response, and parse job.
+		/// It takes a list of URIs, authenticates, hits each URL whilst preserving cookies and referrer,
+		/// then parses the content of the last URI in the list with the specified IParser.
+		/// </summary>
+		/// <typeparam name="T">IParser type to use for parsing</typeparam>
+		/// <typeparam name="U">Return type expected from IParser</typeparam>
+		/// <param name="requests">An array of tuples, item1 being the URL, item2 being the optional post body. item3 being the referrer</param>
+		/// <returns>Result from specified IParser</returns>
+		private async Task<U> RequestParse<T, U>(List<Tuple<string, FormUrlEncodedContent, string>> requests) where T : IParser<U>, new()
 		{
-			await Authenticate();
-			referrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
-			HttpResponseMessage t = await Request("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
-			string tr = await t.Content.ReadAsStringAsync();
-
-			///prod/bwskfcls.p_sel_crse_search
-			HttpResponseMessage s = await Request("https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
-			string sr = await s.Content.ReadAsStringAsync();
-			HtmlDocument document = new HtmlDocument();
-			document.LoadHtml(sr);
-			HtmlNode root = document.DocumentNode;
-			HtmlNodeCollection termSelectNodes = root.SelectNodes("//select[@id='term_input_id'][1]/option");
-			var terms = new List<MyPurdueTerm>();
-			foreach (var node in termSelectNodes)
+			// Clear cookies and authenticate.
+			cookies = new CookieContainer();
+			var authResult = await Authenticate();
+			if (!authResult)
 			{
-				terms.Add(new MyPurdueTerm() {
-					Id = node.Attributes["VALUE"].Value,
-					Name = node.NextSibling.InnerText
-				});
+				throw new ApplicationException("Could not authenticate to myPurdue with the provided credentials. Username: " + username);
 			}
-			return terms;
+
+			// Go through each URL in the list.
+			string result = "";
+			foreach (var request in requests)
+			{
+				if (request.Item3 != null && request.Item3.Length > 0)
+				{
+					referrer = request.Item3;
+				}
+				HttpResponseMessage r = await Request(request.Item1, request.Item2);
+				result = await r.Content.ReadAsStringAsync();
+			}
+
+			// Parse the result from the last URL in the list.
+			var parser = new T();
+			U parseResults = parser.ParseHtml(result);
+			return parseResults;
 		}
 
-		public async Task<Dictionary<string,MyPurdueSection>> FetchSectionList(string termCode, string subjectCode)
+		/// <summary>
+		/// This method fetches the preliminary section data for a particular subject in a term.
+		/// The other half of the section data must be fetched by _FetchSectionDetails
+		/// </summary>
+		/// <param name="termCode">myPurdue code for the desired term, e.g. 201510</param>
+		/// <param name="subjectCode">code for the desired subject, e.g. CS</param>
+		/// <returns>Dictionary of sections keyed by CRN</returns>
+		private async Task<Dictionary<string,MyPurdueSection>> _FetchSectionList(string termCode, string subjectCode)
 		{
-			await Authenticate();
-			referrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
-			var request = await Request("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
-
-			FormUrlEncodedContent content = new FormUrlEncodedContent(new[] 
-            {
-				new KeyValuePair<string, string>("p_calling_proc", "bwckschd.p_disp_dyn_sched"),
-                new KeyValuePair<string, string>("term_in", termCode)
-			});
-
-			HttpResponseMessage r = await Request("https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", content);
+			// Set up the request list...
+			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
+			var requests = new List<Tuple<string, FormUrlEncodedContent, string>>()
+			{
+				new Tuple<string, FormUrlEncodedContent, string>("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
+				new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", new FormUrlEncodedContent(new[] 
+					{
+						new KeyValuePair<string, string>("p_calling_proc", "bwckschd.p_disp_dyn_sched"),
+						new KeyValuePair<string, string>("p_term", termCode)
+					}), null)
+			};
 
 			// Construct our "query"
-			content = new FormUrlEncodedContent(new[] 
+			var postBody = new FormUrlEncodedContent(new[] 
             {
                 new KeyValuePair<string, string>("term_in", termCode),
 				new KeyValuePair<string, string>("sel_subj", "dummy"),
@@ -154,161 +276,30 @@ namespace CatalogSync
 				new KeyValuePair<string, string>("end_ap", "a"),
 			});
 
-			HttpResponseMessage rClasses = await Request("https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec", content);
-			string rClassesContent = await rClasses.Content.ReadAsStringAsync();
-			HtmlDocument document = new HtmlDocument();
-			document.LoadHtml(rClassesContent);
-			HtmlNode docRoot = document.DocumentNode;
+			// Add our final request
+			requests.Add(new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec", postBody, null));
 
-			// This will return a table of sections.
-			// Every *two* rows is a section.
-			HtmlNodeCollection termSelectNodes = docRoot.SelectNodes("/html/body/div[@class='pagebodydiv'][1]/table[@class='datadisplaytable'][1]/tr");
-
-			// Prepare regex to parse title
-			string strRegex = @"^(?<title>.*) - (?<crn>\d{5}) - (?<subj>[A-Z]{2,5}) (?<number>\d{5}) - (?<section>\w{3})(&nbsp;&nbsp;Link Id: (?<selflink>\w{0,12})&nbsp;&nbsp;Linked Sections Required\((?<otherlink>\w{0,12})\))?";
-			var regexTitle = new Regex(strRegex);
-
-			// Prepare section list
-			//var sections = new List<MyPurdueSection>();
-			var sections = new Dictionary<string, MyPurdueSection>();
-
-			// Loop through each listing and parse it out
-			for (var i = 0; i < termSelectNodes.Count; i+=2) // NOTE +=2 HERE
-			{
-				var title = termSelectNodes[i].SelectSingleNode("th").InnerText;
-				var titleParse = regexTitle.Match(title);
-				if (!titleParse.Success)
-				{
-					continue;
-				}
-
-				// Create new section object
-				var section = new MyPurdueSection();
-
-				// Grab relevant info from title regex
-				section.Title = titleParse.Groups["title"].Value;
-				section.Crn = titleParse.Groups["crn"].Value;
-				section.SubjectCode = titleParse.Groups["subj"].Value;
-				section.Number = titleParse.Groups["number"].Value;
-				section.LinkSelf = titleParse.Groups["selflink"].Value;
-				section.LinkOther = titleParse.Groups["otherlink"].Value;
-
-				var info = termSelectNodes[i + 1].SelectSingleNode("td");
-				section.Description = info.FirstChild.InnerText.Trim(); // TODO: Deal with white space...
-
-				var additionalInfo = info.SelectSingleNode("span[@class='fieldlabeltext'][4]");
-				while (additionalInfo != null) {
-					if (additionalInfo.InnerText.Contains("Campus"))
-					{
-						section.CampusName = HtmlEntity.DeEntitize(additionalInfo.InnerText.Trim());
-					}
-					if (additionalInfo.InnerText.Contains("Credits"))
-					{
-						section.CreditHours = double.Parse(HtmlEntity.DeEntitize(additionalInfo.InnerText.Trim()).Split(new string[]{" "}, StringSplitOptions.None)[0]);
-					}
-					additionalInfo = additionalInfo.NextSibling;
-				}
-
-				var meetingNodes = info.SelectNodes("table[@class='datadisplaytable'][1]/tr[ not( th ) ]");
-				foreach (var meetingNode in meetingNodes)
-				{
-					var meeting = new MyPurdueMeeting();
-
-					// Parse times
-					var times = meetingNode.SelectSingleNode("td[2]").InnerText.Split(new string[]{ " - " }, StringSplitOptions.None);
-					if (times.Count() != 2)
-					{
-						meeting.StartTime = DateTimeOffset.MinValue;
-						meeting.EndTime = DateTimeOffset.MinValue;
-					}
-					else
-					{
-						meeting.StartTime = DateTimeOffset.Parse(times[0]);
-						meeting.EndTime = DateTimeOffset.Parse(times[1]);
-					}
-
-					// Parse days of week
-					var daysOfWeek = meetingNode.SelectSingleNode("td[3]").InnerText.Replace("&nbsp;","");
-					if (daysOfWeek.Contains("M")) meeting.DaysOfWeek |= DOW.Monday;
-					if (daysOfWeek.Contains("T")) meeting.DaysOfWeek |= DOW.Tuesday;
-					if (daysOfWeek.Contains("W")) meeting.DaysOfWeek |= DOW.Wednesday;
-					if (daysOfWeek.Contains("R")) meeting.DaysOfWeek |= DOW.Thursday;
-					if (daysOfWeek.Contains("F")) meeting.DaysOfWeek |= DOW.Friday;
-					if (daysOfWeek.Contains("S")) meeting.DaysOfWeek |= DOW.Saturday;
-					if (daysOfWeek.Contains("U")) meeting.DaysOfWeek |= DOW.Sunday;
-
-
-					// Parse building / room
-					var room = meetingNode.SelectSingleNode("td[4]").InnerText;
-					if (room.Equals("TBA"))
-					{
-						meeting.RoomNumber = "TBA";
-						meeting.BuildingName = "TBA";
-						meeting.BuildingCode = "TBA";
-					}
-					else
-					{
-						var index = room.LastIndexOf(" ");
-						meeting.BuildingName = room.Substring(0, index);
-						meeting.RoomNumber = room.Substring(index + 1, room.Length - index - 1);
-					}
-
-					// Parse dates
-					var dates = meetingNode.SelectSingleNode("td[5]").InnerText.Replace("&nbsp;", " ");
-					if (dates.Equals("TBA"))
-					{
-						meeting.StartDate = DateTime.MinValue;
-						meeting.EndDate = DateTime.MinValue;
-					}
-					else
-					{
-						var dateArray = dates.Split(new string[] { " - " }, StringSplitOptions.None);
-						meeting.StartDate = DateTime.Parse(dateArray[0]);
-						meeting.EndDate = DateTime.Parse(dateArray[1]);
-					}
-
-					// Parse type
-					var type = meetingNode.SelectSingleNode("td[6]").InnerText.Replace("&nbsp;", " ");
-					meeting.Type = type;
-
-					// Parse instructors
-					var instructorNodes = meetingNode.SelectNodes("td[7]/a");
-					if (instructorNodes != null)
-					{
-						foreach (var instructorNode in instructorNodes)
-						{
-							var email = instructorNode.Attributes["href"].Value.Replace("mailto:", "");
-							var name = instructorNode.Attributes["target"].Value;
-							meeting.Instructors.Add(new Tuple<string, string>(name, email));
-						}
-					}
-
-					section.Meetings.Add(meeting);
-				}
-
-				sections.Add(section.Crn,section);
-			}
-			sections = await _FetchSectionDetails(termCode, subjectCode, sections);
-
-			return sections;
+			return await RequestParse<SectionListParser, Dictionary<string,MyPurdueSection>>(requests);
 		}
 
-		private async Task<Dictionary<string,MyPurdueSection>> _FetchSectionDetails(string termCode, string subjectCode, Dictionary<string, MyPurdueSection> sections, int retries = 0)
+		/// <summary>
+		/// This method fetches the detailed section data for a particular subject in a term.
+		/// The other half of the section data must be fetched by _FetchSectionList
+		/// </summary>
+		/// <param name="termCode">myPurdue code for the desired term, e.g. 201510</param>
+		/// <param name="subjectCode">code for the desired subject, e.g. CS</param>
+		/// <returns>Dictionary of sections keyed by CRN</returns>
+		private async Task<Dictionary<string,MyPurdueSection>> _FetchSectionDetails(string termCode, string subjectCode)
 		{
-			if (retries > MAX_RETRIES)
+			// Set up the request list ...
+			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS";
+			var requests = new List<Tuple<string, FormUrlEncodedContent, string>>()
 			{
-				Console.WriteLine("Max retries reached.");
-				throw new TimeoutException("Could not fetch section details from myPurdue.");
-			}
-			await Authenticate();
-
-			// Now we have to fetch details (enrollment)
-			referrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS";
-			var loginRequest = await Request("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS");
-			var loginResponse = await loginRequest.Content.ReadAsStringAsync();
+				new Tuple<string, FormUrlEncodedContent, string>("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS", null, initialReferrer)
+			};
 
 			// Construct our "query"
-			var detailsContent = new FormUrlEncodedContent(new[] 
+			var postBody = new FormUrlEncodedContent(new[] 
             {
                 new KeyValuePair<string, string>("rsts", "dummy"),
 				new KeyValuePair<string, string>("crn", "dummy"),
@@ -345,57 +336,12 @@ namespace CatalogSync
 			});
 
 			referrer = "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse";
-			HttpResponseMessage rDetails = await Request("https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse_Advanced", detailsContent);
-			string rDetailsContent = await rDetails.Content.ReadAsStringAsync();
-			HtmlDocument document = new HtmlDocument();
-			document.LoadHtml(rDetailsContent);
-			HtmlNode docRoot = document.DocumentNode;
 
-			HtmlNodeCollection sectionNodes = docRoot.SelectNodes("/html/body/div[@class='pagebodydiv'][1]/table[@class='datadisplaytable'][1]/tr[ not ( th ) ]");
-			if (sectionNodes == null)
-			{
-				Console.WriteLine("ERROR fetching section details... retry " + (retries + 1) + " pending...");
-				cookies = new CookieContainer();
-				referrer = "";
-				return await _FetchSectionDetails(termCode, subjectCode, sections, retries + 1);
-			}
-			int meetingIndex = 0;
-			MyPurdueSection section = null;
-			for (var i=0; i < sectionNodes.Count; i++) {
-				var node = sectionNodes[i];
-				var crnNode = node.SelectSingleNode("td[2]");
-				if (crnNode == null) continue;
-				if (HtmlEntity.DeEntitize(crnNode.InnerText).Trim().Length > 0) {
-					// Section w/ primary meeting data
-					var crnNumber = HtmlEntity.DeEntitize(crnNode.InnerText).Trim();
-					meetingIndex = 0;
-					section = sections[crnNumber];
-					// Update attendance data for this section
-					section.Capacity = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[11]").InnerText).Trim());
-					section.Enrolled = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[12]").InnerText).Trim());
-					section.RemainingSpace = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[13]").InnerText).Trim());
-					section.WaitlistCapacity = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[14]").InnerText).Trim());
-					section.WaitlistCount = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[15]").InnerText).Trim());
-					section.WaitlistSpace = Int32.Parse(HtmlEntity.DeEntitize(node.SelectSingleNode("td[16]").InnerText).Trim());
-					// Update type
-					section.Type = HtmlEntity.DeEntitize(node.SelectSingleNode("td[23]").InnerText).Trim();
-				} 
-				// Update meeting data
+			// Add our final request
+			requests.Add(new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse_Advanced", postBody, referrer));
 
-				// Update meeting location (building short name)
-				var loc = HtmlEntity.DeEntitize(node.SelectSingleNode("td[22]").InnerText).Trim();
-				if (loc.ToUpper() != "TBA" && loc.Length > 0)
-				{
-					section.Meetings[meetingIndex].BuildingCode = loc.Substring(0, loc.IndexOf(" ")).Trim();
-				}
-
-				// Updating meeting type
-				section.Meetings[meetingIndex].Type = HtmlEntity.DeEntitize(node.SelectSingleNode("td[23]").InnerText).Trim();
-
-				meetingIndex++;
-			}
-
-			return sections;
+			return await RequestParse<SectionDetailsParser, Dictionary<string, MyPurdueSection>>(requests);
 		}
+		#endregion
 	}
 }

@@ -30,6 +30,11 @@ namespace PurdueIoDb.Catalog
 		public string TermCode { get; set; }
 
 		/// <summary>
+		/// Friendly name for a term, such as "Fall 2014"
+		/// </summary>
+		public string Name { get; set; }
+
+		/// <summary>
 		/// The date on which the term starts.
 		/// </summary>
 		public DateTimeOffset StartDate { get; set; }

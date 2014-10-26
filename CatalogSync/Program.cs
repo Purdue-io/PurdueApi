@@ -20,7 +20,8 @@ namespace CatalogSync
 		{
 			var appSettings = ConfigurationManager.AppSettings;
 			var p = new Program(appSettings["MyPurdueUser"], appSettings["MyPurduePass"]); // Credentials go here.
-			p.SyncCourses("201510").GetAwaiter().GetResult();
+			Database.SetInitializer<ApplicationDbContext>(new MigrateDatabaseToLatestVersion<ApplicationDbContext, PurdueIoDb.Migrations.Configuration>()); 
+			p.Synchronize().GetAwaiter().GetResult();
 			Console.ReadLine();
 			return 0;
 		}
@@ -34,33 +35,55 @@ namespace CatalogSync
 			}
 		}
 
-		public async Task SyncCourses(string termId)
+		public async Task Synchronize()
 		{
-			var sectionsByCrn = await Api.FetchSectionList(termId, "CS"); // test CS for now.
+			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Beginning synchronization...");
+			var terms = await Api.FetchTermList();
+			// Let's synchronize the first term that isn't STAR
+			var selectedTerm = terms.Where(t => !t.Name.ToUpper().StartsWith("STAR")).FirstOrDefault();
+			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronizing term '" + selectedTerm.Name + "'...");
+			var subjects = await Api.FetchSubjectList(selectedTerm.Id);
+			Console.WriteLine("Found " + subjects.Count + " subjects");
+			foreach (var subject in subjects)
+			{
+				Console.Write(DateTimeOffset.Now.ToString("G") + " Synchronizing " + subject.SubjectCode + " / " + subject.SubjectName + ": ");
+				await SyncSubject(selectedTerm, subject);
+				Console.WriteLine("complete.");
+			}
+			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronization of term '" + selectedTerm.Name + "' complete.");
+		}
+
+		public async Task SyncSubject(MyPurdueTerm term, MyPurdueSubject subject)
+		{
+			// Pull all sections for the specified term and subject.
+			var sectionsByCrn = await Api.FetchSections(term.Id, subject.SubjectCode);
+			Console.Write("+");
 
 			// We have all the section data - now we need to build classes out of them.
-			
 			var sectionGroups = new List<List<MyPurdueSection>>();
 			var sectionFlatList = new List<MyPurdueSection>(sectionsByCrn.Values);
-
+			int totalSectionCount = sectionFlatList.Count;
 			while (sectionFlatList.Count > 0)
 			{
 				var sectionGroup = new List<MyPurdueSection>();
-				ProcessLinks(ref sectionFlatList, ref sectionGroup, sectionFlatList.Last());
+				_ProcessLinks(ref sectionFlatList, ref sectionGroup, sectionFlatList.Last());
 				sectionGroups.Add(sectionGroup);
 			}
+			Console.Write("+");
 
 			// Now let's sync up the database...
+			int sectionCount = 0; // Keep a count of every section we've processed.
 			using (var db = new ApplicationDbContext())
 			{
 				// Check that the term exists
-				Term dbTerm = db.Terms.Where(t => t.TermCode.ToUpper() == termId.ToUpper()).FirstOrDefault();
+				Term dbTerm = db.Terms.Where(t => t.TermCode.ToUpper() == term.Id.ToUpper()).FirstOrDefault();
 				if (dbTerm == null)
 				{
 					dbTerm = new Term()
 					{
 						TermId = Guid.NewGuid(),
-						TermCode = termId,
+						TermCode = term.Id,
+						Name = term.Name,
 						Classes = new List<Class>(),
 						StartDate = DateTimeOffset.MinValue,
 						EndDate = DateTimeOffset.MinValue
@@ -78,12 +101,14 @@ namespace CatalogSync
 
 					// Check that the campus exists
 					var campusName = group.First().CampusName;
-					Campus dbCampus = db.Campuses.Where(c => c.Name.ToUpper() == campusName.ToUpper()).FirstOrDefault();
+					var campusCode = group.First().CampusCode;
+					Campus dbCampus = db.Campuses.Where(c => c.Code.ToUpper() == campusCode.ToUpper()).FirstOrDefault();
 					if (dbCampus == null)
 					{
 						dbCampus = new Campus()
 						{
 							CampusId = Guid.NewGuid(),
+							Code = group.First().CampusCode,
 							Name = group.First().CampusName,
 							Buildings = new List<Building>(),
 							ZipCode = ""
@@ -104,7 +129,7 @@ namespace CatalogSync
 						dbSubj = new Subject()
 						{
 							SubjectId = Guid.NewGuid(),
-							Name = "",
+							Name = subj.ToUpper().Equals(subject.SubjectCode.ToUpper()) ? subject.SubjectName : "",
 							Courses = new List<Course>(),
 							Abbreviation = subj.ToUpper()
 						};
@@ -136,10 +161,10 @@ namespace CatalogSync
 					}
 
 					// Check that the class exists
-					// We do this by looking up each CRN until we find one that exists and has a class
+					// We do this by looking up each CRN until we find one that exists and has a class in the same term
 					Class dbClass;
 					var validCrns = group.Select(g => g.Crn);
-					var dbSections = db.Sections.Where(s => validCrns.Contains(s.CRN));
+					var dbSections = db.Sections.Where(s => validCrns.Contains(s.CRN) && s.Class.Term.TermId == dbTerm.TermId);
 					if (dbSections.Count() > 0)
 					{
 						dbClass = dbSections.First().Class;
@@ -161,7 +186,7 @@ namespace CatalogSync
 					// Add all of the sections ...
 					foreach (var section in group)
 					{
-						Section dbSection = db.Sections.Where(s => s.CRN == section.Crn).FirstOrDefault();
+						Section dbSection = db.Sections.Where(s => s.CRN == section.Crn && s.Class.Term.TermId == dbTerm.TermId).FirstOrDefault();
 						if (dbSection == null)
 						{
 							dbSection = new Section()
@@ -285,14 +310,18 @@ namespace CatalogSync
 								dbSection.Meetings.Add(newMeeting);
 							}
 						}
+						sectionCount++;
+						if (sectionCount % (int)(totalSectionCount/10.0) == 0)
+						{
+							Console.Write(".");
+						}
 					}
 					db.SaveChanges();
 				}
 			}
-			Console.WriteLine("Sync complete for " + termId);
 		}
 
-		private void ProcessLinks(ref List<MyPurdueSection> sourceList, ref List<MyPurdueSection> outList, MyPurdueSection sourceSection)
+		private void _ProcessLinks(ref List<MyPurdueSection> sourceList, ref List<MyPurdueSection> outList, MyPurdueSection sourceSection)
 		{
 			sourceList.Remove(sourceSection);
 			outList.Add(sourceSection);
@@ -305,7 +334,7 @@ namespace CatalogSync
 			}
 			foreach (var candidate in candidates)
 			{
-				ProcessLinks(ref sourceList, ref outList, candidate);
+				_ProcessLinks(ref sourceList, ref outList, candidate);
 			}
 		}
 	}
