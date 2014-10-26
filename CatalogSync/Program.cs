@@ -56,7 +56,17 @@ namespace CatalogSync
 		public async Task SyncSubject(MyPurdueTerm term, MyPurdueSubject subject)
 		{
 			// Pull all sections for the specified term and subject.
-			var sectionsByCrn = await Api.FetchSections(term.Id, subject.SubjectCode);
+			Dictionary<string, MyPurdueSection> sectionsByCrn;
+			try
+			{
+				sectionsByCrn = await Api.FetchSections(term.Id, subject.SubjectCode);
+			}
+			catch (Exception)
+			{
+				Console.WriteLine("\nERROR FETCHING SUBJECT SECTIONS\n");
+				return;
+			}
+			
 			Console.Write("+");
 
 			// We have all the section data - now we need to build classes out of them.
