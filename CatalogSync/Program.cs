@@ -72,7 +72,7 @@ namespace CatalogSync
 			// We have all the section data - now we need to build classes out of them.
 			var sectionGroups = new List<List<MyPurdueSection>>();
 			var sectionFlatList = new List<MyPurdueSection>(sectionsByCrn.Values);
-			int totalSectionCount = sectionFlatList.Count;
+			int totalSectionCount = sectionFlatList.Count + 1;
 			while (sectionFlatList.Count > 0)
 			{
 				var sectionGroup = new List<MyPurdueSection>();
