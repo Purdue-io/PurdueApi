@@ -15,7 +15,8 @@ namespace CatalogSync
 	// To learn more about Microsoft Azure WebJobs, please see http://go.microsoft.com/fwlink/?LinkID=401557
 	class Program
 	{
-		private static readonly int MAX_RETRIES = 8;
+		private static readonly int MAX_RETRIES = 20;
+		private static readonly int RETRY_DELAY_MS = 5000;
 		private CatalogApi Api;
 		static int Main()
 		{
@@ -23,7 +24,6 @@ namespace CatalogSync
 			var p = new Program(appSettings["MyPurdueUser"], appSettings["MyPurduePass"]); // Credentials go here.
 			Database.SetInitializer<ApplicationDbContext>(new MigrateDatabaseToLatestVersion<ApplicationDbContext, PurdueIoDb.Migrations.Configuration>()); 
 			p.Synchronize().GetAwaiter().GetResult();
-			Console.ReadLine();
 			return 0;
 		}
 
@@ -74,6 +74,7 @@ namespace CatalogSync
 				Console.Write(" error. ");
 				if (retries < MAX_RETRIES)
 				{
+					await Task.Delay(RETRY_DELAY_MS);
 					Console.Write("retrying... ");
 					await SyncSubject(term, subject, retries + 1);
 				}
@@ -83,9 +84,6 @@ namespace CatalogSync
 				}
 				return;
 			}
-
-
-			
 			Console.Write("+");
 
 			// We have all the section data - now we need to build classes out of them.
