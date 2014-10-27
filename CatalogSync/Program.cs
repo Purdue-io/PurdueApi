@@ -15,7 +15,7 @@ namespace CatalogSync
 	// To learn more about Microsoft Azure WebJobs, please see http://go.microsoft.com/fwlink/?LinkID=401557
 	class Program
 	{
-		private static readonly int MAX_RETRIES = 20;
+		private static readonly int MAX_RETRIES = 10;
 		private static readonly int RETRY_DELAY_MS = 5000;
 		private CatalogApi Api;
 		static int Main()
@@ -49,7 +49,6 @@ namespace CatalogSync
 			{
 				Console.Write(DateTimeOffset.Now.ToString("G") + " Synchronizing " + subject.SubjectCode + " / " + subject.SubjectName + ": ");
 				await SyncSubject(selectedTerm, subject);
-				Console.WriteLine("complete.");
 			}
 			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronization of term '" + selectedTerm.Name + "' complete.");
 		}

@@ -67,6 +67,10 @@ namespace CatalogSync.Parsers
 					if (credits.Contains("-")) {
 						credits = credits.Substring(credits.IndexOf("-")+1);
 					}
+					else if (credits.Contains("/"))
+					{
+						credits = credits.Substring(credits.IndexOf("/") + 1);
+					}
 					section.CreditHours = double.Parse(credits);
 
 					sections.Add(crnNumber, section);
