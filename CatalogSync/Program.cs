@@ -49,6 +49,7 @@ namespace CatalogSync
 			{
 				Console.Write(DateTimeOffset.Now.ToString("G") + " Synchronizing " + subject.SubjectCode + " / " + subject.SubjectName + ": ");
 				await SyncSubject(selectedTerm, subject);
+				Console.WriteLine("");
 			}
 			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronization of term '" + selectedTerm.Name + "' complete.");
 		}
