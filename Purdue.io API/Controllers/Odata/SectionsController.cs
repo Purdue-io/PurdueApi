@@ -20,9 +20,9 @@ namespace PurdueIo.Controllers.Odata
 	[ODataRoutePrefix("Sections")]
     public class SectionsController : ODataController
     {
+		private const int MAX_DEPTH = 1;
         private ApplicationDbContext _Db = new ApplicationDbContext();
 
-		//Disabled, we dont want users to have access to this
         // GET: odata/Sections
 		/// <summary>
 		/// Returns 404, this call should never be used
@@ -30,11 +30,11 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
-		[EnableQuery(MaxAnyAllExpressionDepth = 1)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetSections()
         {
             //return db.Sections;
-			return NotFound();
+			return Ok(_Db.Sections.AsQueryable());
         }
 
         // GET: odata/Sections(5)
@@ -45,7 +45,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("({classKey})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 1)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetSection([FromODataUri] Guid key)
         {
             return Ok(SingleResult.Create(_Db.Sections.Where(section => section.SectionId == key)));
@@ -59,7 +59,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByNumber(Number={subjectAndNumber})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetSectionsByNumber([FromODataUri] String subjectAndNumber)
 		{
 			System.Diagnostics.Debug.WriteLine("Inside GetCoursesByNumber");
@@ -89,7 +89,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTerm(Term={term})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetSectionsByTerm([FromODataUri] String term)
 		{
 			String match = Utilities.ParseTerm(term);
@@ -118,7 +118,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTermAndNumber(Term={term},Number={subjectAndNumber})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetSectionsByTermAndNumber([FromODataUri] String term, [FromODataUri] String subjectAndNumber)
 		{
 			Tuple<String, String> course = Utilities.ParseCourse(subjectAndNumber);

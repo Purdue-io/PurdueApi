@@ -19,6 +19,7 @@ namespace PurdueIo.Controllers.Odata
 	[ODataRoutePrefix("Campuses")]
     public class CampusesController : ODataController
     {
+		private const int MAX_DEPTH = 3;
         private ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: odata/Campuses
@@ -28,7 +29,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetCampuses()
         {
             return Ok(db.Campuses);
@@ -42,7 +43,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("({campusKey})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetCampus([FromODataUri] Guid campusKey)
         {
             return Ok(SingleResult.Create(db.Campuses.Where(campus => campus.CampusId == campusKey)));

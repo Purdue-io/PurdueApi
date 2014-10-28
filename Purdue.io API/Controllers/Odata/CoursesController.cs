@@ -21,6 +21,7 @@ namespace PurdueIo.Controllers.Odata
 	[ODataRoutePrefix("Courses")]
 	public class CoursesController : ODataController
     {
+		private const int MAX_DEPTH = 5;
         private ApplicationDbContext _Db = new ApplicationDbContext();
 
         // GET: odata/Courses
@@ -30,7 +31,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
-		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetCourses()
         {
 			return Ok(_Db.Courses.AsQueryable());
@@ -44,7 +45,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("({courseKey})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetCourse([FromODataUri] Guid courseKey)
         {
             return Ok(SingleResult.Create(_Db.Courses.Where(course => course.CourseId == courseKey)));
@@ -59,7 +60,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByNumber(Number={subjectAndNumber})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetCoursesByNumber([FromODataUri] String subjectAndNumber)
 		{
 			System.Diagnostics.Debug.WriteLine("Inside GetCoursesByNumber");
@@ -89,7 +90,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTerm(Term={term})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetCoursesByTerm([FromODataUri] String term)
 		{
 			String match = Utilities.ParseTerm(term);
@@ -120,7 +121,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTermAndNumber(Term={term},Number={subjectAndNumber})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 3)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetCoursesByTermAndNumber([FromODataUri] String term, [FromODataUri] String subjectAndNumber)
 		{
 			Tuple<String, String> course = Utilities.ParseCourse(subjectAndNumber);

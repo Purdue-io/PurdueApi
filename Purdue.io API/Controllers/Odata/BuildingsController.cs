@@ -19,6 +19,7 @@ namespace PurdueIo.Controllers.Odata
 	[ODataRoutePrefix("Buildings")]
 	public class BuildingsController : ODataController
 	{
+		private const int MAX_DEPTH = 2;
 		private ApplicationDbContext db = new ApplicationDbContext();
 
 		// GET: odata/Buildings
@@ -28,7 +29,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetBuildings()
 		{
 			return Ok(db.Buildings);
@@ -42,7 +43,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("({buildingKey})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetBuilding([FromODataUri] Guid buildingKey)
 		{
 			return Ok(SingleResult.Create(db.Buildings.Where(building => building.BuildingId == buildingKey)));

@@ -20,9 +20,9 @@ namespace PurdueIo.Controllers.Odata
 	[ODataRoutePrefix("Classes")]
     public class ClassesController : ODataController
     {
+		private const int MAX_DEPTH = 4;
         private ApplicationDbContext _Db = new ApplicationDbContext();
 
-		//Disabled, we dont want users to have access to this
         //GET: odata/Classes
 		/// <summary>
 		/// Returns 404, this call should never be used
@@ -30,11 +30,11 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetClasses()
 		{
 			//return db.Classes;
-			return NotFound();
+			return Ok(_Db.Classes.AsQueryable());
 		}
 
         // GET: odata/Classes({GUID})
@@ -45,7 +45,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns>the guid of the class</returns>
 		[HttpGet]
 		[ODataRoute("({classKey})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetClass([FromODataUri] Guid classKey)
         {
 			//For those confused we use @class because class is a keyword
@@ -60,7 +60,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByNumber(Number={subjectAndNumber})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetClassesByNumber([FromODataUri] String subjectAndNumber)
 		{
 			System.Diagnostics.Debug.WriteLine("Inside GetCoursesByNumber");
@@ -90,7 +90,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTerm(Term={term})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetClassesByTerm([FromODataUri] String term)
 		{
 			String match = Utilities.ParseTerm(term);
@@ -119,7 +119,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("Default.ByTermAndNumber(Term={term},Number={subjectAndNumber})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetClassesByTermAndNumber([FromODataUri] String term, [FromODataUri] String subjectAndNumber)
 		{
 			Tuple<String, String> course = Utilities.ParseCourse(subjectAndNumber);
