@@ -78,4 +78,13 @@ div.content div.results h1 {
   font-size: 26px;
   margin: 14px 3px;
 }
+select {
+  font-family: 'Open Sans';
+  font-size: 14px;
+  padding: 4px;
+  width: 80%;
+  color: #a3792c;
+  border: 1px solid #fff;
+  background-color: transparent;
+}
 /*# sourceMappingURL=Demo.css.map */
