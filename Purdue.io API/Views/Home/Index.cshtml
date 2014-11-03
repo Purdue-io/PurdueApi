@@ -7,9 +7,83 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width" />
-	<title></title>
+	<title>Purdue.io API Demo</title>
+	@Styles.Render("~/Content/css")
 </head>
 <body>
-	<h1>Purdue.io Demo</h1>
+	<header>
+		<h1>Purdue.io API Demo</h1>
+	</header>
+	<div class="content">
+		<nav>
+			<h1>Query Properties</h1>
+			<form>
+				<ul>
+					<!-- Term -->
+					<li>
+						<label>
+							Term
+							<br />
+							<select>
+								<option>Spring 2015</option>
+								<option>Fall 2014</option>
+							</select>
+						</label>
+					</li>
+					<!-- Physical Location -->
+					<li>
+						<label>
+							Campus
+							<br />
+							<select>
+								<option>Purdue West Lafayette</option>
+							</select>
+						</label>
+						<label>
+							Building
+							<br />
+							<select>
+								<option>Purdue West Lafayette</option>
+							</select>
+						</label>
+						<label>
+							Room
+							<br />
+							<select>
+								<option>Purdue West Lafayette</option>
+							</select>
+						</label>
+					</li>
+					<!-- Subject / Course -->
+					<li>
+						<label>
+							Subject
+							<br />
+							<select>
+								<option>CS / Computer Science</option>
+							</select>
+						</label>
+						<label>
+							Course Number
+							<br />
+							<select>
+								<option>18200</option>
+							</select>
+						</label>
+						<label>
+							Course
+							<br />
+							<select>
+								<option>Intro to Java</option>
+							</select>
+						</label>
+					</li>
+				</ul>
+			</form>
+		</nav>
+		<div class="results">
+			<h1>Results</h1>
+		</div>
+	</div>
 </body>
 </html>

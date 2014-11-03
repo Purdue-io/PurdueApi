@@ -231,10 +231,32 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
-    <Content Include="Content\bootstrap-theme.css" />
-    <Content Include="Content\bootstrap-theme.css.map" />
-    <Content Include="Content\bootstrap.css" />
-    <Content Include="Content\bootstrap.css.map" />
+    <Content Include="Content\css\Demo.css">
+      <DependentUpon>Demo.less</DependentUpon>
+    </Content>
+    <Content Include="Content\css\Demo.less" />
+    <Content Include="Content\css\Demo.css.map">
+      <DependentUpon>Demo.css</DependentUpon>
+    </Content>
+    <Content Include="Content\css\Fonts.css">
+      <DependentUpon>Fonts.less</DependentUpon>
+    </Content>
+    <Content Include="Content\css\Fonts.min.css">
+      <DependentUpon>Fonts.css</DependentUpon>
+    </Content>
+    <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.eot" />
+    <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.ttf" />
+    <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.woff" />
+    <Content Include="Content\fonts\OpenSans-Light-webfont.eot" />
+    <Content Include="Content\fonts\OpenSans-Light-webfont.ttf" />
+    <Content Include="Content\fonts\OpenSans-Light-webfont.woff" />
+    <Content Include="Content\fonts\OpenSans-Regular-webfont.eot" />
+    <Content Include="Content\fonts\OpenSans-Regular-webfont.ttf" />
+    <Content Include="Content\fonts\OpenSans-Regular-webfont.woff" />
+    <Content Include="Content\css\Fonts.less" />
+    <Content Include="Content\css\Fonts.css.map">
+      <DependentUpon>Fonts.css</DependentUpon>
+    </Content>
     <None Include="Controllers\AccountController.cs.old" />
     <Compile Include="Controllers\CatalogController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -266,17 +288,17 @@
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
     <Content Include="Areas\HelpPage\Views\_ViewStart.cshtml" />
-    <Content Include="Content\bootstrap-theme.min.css" />
-    <Content Include="Content\bootstrap.min.css" />
-    <Content Include="Content\Site.css" />
     <Content Include="App_Data\PurdueIo.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Content\css\Demo.min.css">
+      <DependentUpon>Demo.css</DependentUpon>
+    </Content>
+    <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.svg" />
+    <Content Include="Content\fonts\OpenSans-Light-webfont.svg" />
+    <Content Include="Content\fonts\OpenSans-Regular-webfont.svg" />
     <Content Include="favicon.ico" />
-    <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
-    <Content Include="Scripts\bootstrap.js" />
-    <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Areas\HelpPage\Views\Web.config" />
     <Content Include="Areas\HelpPage\Views\Shared\_Layout.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\ResourceModel.cshtml" />
@@ -297,9 +319,6 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
     <Content Include="Properties\webjobs-list.json" />
-    <Content Include="fonts\glyphicons-halflings-regular.woff" />
-    <Content Include="fonts\glyphicons-halflings-regular.ttf" />
-    <Content Include="fonts\glyphicons-halflings-regular.eot" />
     <None Include="Properties\PublishProfiles\purdue__apidev.pubxml" />
     <None Include="Properties\webjobs.props" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
@@ -335,6 +354,7 @@
     </Content>
     <None Include="Project_Readme.html" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
@@ -363,7 +383,7 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
-  <Import Project="..\packages\Microsoft.Web.WebJobs.Publish.1.0.1\tools\webjobs.targets" Condition="Exists('..\packages\Microsoft.Web.WebJobs.Publish.1.0.1\tools\webjobs.targets')" />
+  <Import Project="..\packages\Microsoft.Web.WebJobs.Publish.1.0.2\tools\webjobs.targets" Condition="Exists('..\packages\Microsoft.Web.WebJobs.Publish.1.0.2\tools\webjobs.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

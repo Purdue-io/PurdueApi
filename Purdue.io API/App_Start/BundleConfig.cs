@@ -22,9 +22,9 @@ namespace PurdueIo
 				"~/Scripts/bootstrap.js",
 				"~/Scripts/respond.js"));
 
-			bundles.Add(new StyleBundle("~/Content/css").Include(
-				 "~/Content/bootstrap.css",
-				 "~/Content/Site.css"));
+			bundles.Add(new StyleBundle("~/Content/css")
+				.Include("~/Content/css/Fonts.css", new CssRewriteUrlTransform())
+				.Include("~/Content/css/Demo.css", new CssRewriteUrlTransform()));
 
 			// Set EnableOptimizations to false for debugging. For more information,
 			// visit http://go.microsoft.com/fwlink/?LinkId=301862
