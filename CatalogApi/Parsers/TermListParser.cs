@@ -1,4 +1,4 @@
-﻿using CatalogSync.Models;
+﻿using CatalogApi.Models;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace CatalogSync.Parsers
+namespace CatalogApi.Parsers
 {
 	public class TermListParser : IParser<List<MyPurdueTerm>>
 	{

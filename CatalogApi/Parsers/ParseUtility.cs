@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CatalogSync.Parsers
+namespace CatalogApi.Parsers
 {
 	public static class ParseUtility
 	{

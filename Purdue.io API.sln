@@ -11,7 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogSync", "CatalogSync\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PurdueIoDb", "PurdueIoDatabase\PurdueIoDb.csproj", "{1DA165D1-B6E8-4075-A7A6-2BBF70A6796F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogSync.Tests", "CatalogSync.Tests\CatalogSync.Tests.csproj", "{91F1C154-9297-4EAE-8C22-B0C4896CDE25}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogApi.Tests", "CatalogSync.Tests\CatalogApi.Tests.csproj", "{91F1C154-9297-4EAE-8C22-B0C4896CDE25}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogApi", "CatalogApi\CatalogApi.csproj", "{207DD1A2-23A5-45E4-BC23-44FC6CD23901}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{91F1C154-9297-4EAE-8C22-B0C4896CDE25}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{91F1C154-9297-4EAE-8C22-B0C4896CDE25}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{91F1C154-9297-4EAE-8C22-B0C4896CDE25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{207DD1A2-23A5-45E4-BC23-44FC6CD23901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{207DD1A2-23A5-45E4-BC23-44FC6CD23901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{207DD1A2-23A5-45E4-BC23-44FC6CD23901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{207DD1A2-23A5-45E4-BC23-44FC6CD23901}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

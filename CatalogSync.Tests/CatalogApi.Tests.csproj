@@ -54,18 +54,18 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CatalogSync\CatalogSync.csproj">
-      <Project>{f2eadfe5-0867-4cce-a4ca-ee283f316398}</Project>
-      <Name>CatalogSync</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Test_Data\TestSectionDetails.txt">
       <CustomToolNamespace>CatalogSync.Tests.Data</CustomToolNamespace>
     </EmbeddedResource>
     <EmbeddedResource Include="Test_Data\TestSectionList.txt">
       <CustomToolNamespace>CatalogSync.Tests.Data</CustomToolNamespace>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CatalogApi\CatalogApi.csproj">
+      <Project>{207dd1a2-23a5-45e4-bc23-44fc6cd23901}</Project>
+      <Name>CatalogApi</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

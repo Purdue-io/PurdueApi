@@ -1,4 +1,4 @@
-﻿using CatalogSync.Models;
+﻿using CatalogApi.Models;
 using HtmlAgilityPack;
 using PurdueIoDb.Catalog;
 using System;
@@ -9,13 +9,13 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CatalogSync.Parsers;
+using CatalogApi.Parsers;
 
-namespace CatalogSync
+namespace CatalogApi
 {
-	class CatalogApi
+	public class CatalogApi
 	{
-		public static readonly int MAX_RETRIES = 5;
+		private static readonly int MAX_RETRIES = 5;
 
 		public static string default_username = "";
 		public static string default_password = "";
@@ -127,6 +127,16 @@ namespace CatalogSync
 			}
 
 			return sectionList;
+		}
+
+		/// <summary>
+		/// Fetches the information for a single section.
+		/// </summary>
+		/// <param name="crn">CRN for section to fetch information for</param>
+		/// <returns>MyPurdueSection object for specific section</returns>
+		public async Task<MyPurdueSection> FetchSection(string crn)
+		{
+			throw new NotImplementedException();
 		}
 		#endregion
 

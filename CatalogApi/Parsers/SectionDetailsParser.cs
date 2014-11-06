@@ -1,4 +1,4 @@
-﻿using CatalogSync.Models;
+﻿using CatalogApi.Models;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CatalogSync.Parsers
+namespace CatalogApi.Parsers
 {
 	/// <summary>
 	/// This parser class exists to grab extra details about sections

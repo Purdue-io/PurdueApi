@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CatalogSync.Models
+namespace CatalogApi.Models
 {
 	public class MyPurdueMeeting
 	{

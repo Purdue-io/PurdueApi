@@ -1,4 +1,4 @@
-﻿using CatalogSync.Models;
+﻿using CatalogApi.Models;
 using HtmlAgilityPack;
 using PurdueIoDb.Catalog;
 using System;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace CatalogSync.Parsers
+namespace CatalogApi.Parsers
 {
 	/// <summary>
 	/// This class is meant to parse the 'schedule of classes' provided by myPurdue.

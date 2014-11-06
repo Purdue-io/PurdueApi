@@ -1,4 +1,5 @@
-﻿using CatalogSync.Models;
+﻿using CatalogApi;
+using CatalogApi.Models;
 using System;
 using System.Configuration;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace CatalogSync
 	{
 		private static readonly int MAX_RETRIES = 10;
 		private static readonly int RETRY_DELAY_MS = 5000;
-		private CatalogApi Api;
+		private CatalogApi.CatalogApi Api;
 		static int Main()
 		{
 			var appSettings = ConfigurationManager.AppSettings;
@@ -28,9 +29,8 @@ namespace CatalogSync
 		}
 
 		Program(string user, string pass) {
-			Api = new CatalogApi(user, pass);
-			var catalogApi = new CatalogApi(user, pass);
-			var login = catalogApi.HasValidCredentials().Result;
+			Api = new CatalogApi.CatalogApi(user, pass);
+			var login = Api.HasValidCredentials().Result;
 			if (!login) {
 				throw new UnauthorizedAccessException("Could not authenticate to myPurdue with the supplied credentials.");
 			}
@@ -237,7 +237,8 @@ namespace CatalogSync
 						dbSection.RegistrationStatus = RegistrationStatus.NotAvailable;
 
 						// First, delete any meetings that don't exist in the latest pull
-						foreach (var meeting in dbSection.Meetings)
+						// ToList to pull a local copy, avoiding breakage due to DB modifications during loop
+						foreach (var meeting in dbSection.Meetings.ToList())
 						{
 							// TODO: compare instructors
 							var matches = section.Meetings.Where(m =>
@@ -256,7 +257,7 @@ namespace CatalogSync
 						}
 
 						// Add all of the meetings that don't exist.
-						foreach (var meeting in section.Meetings)
+						foreach (var meeting in section.Meetings.ToList())
 						{
 							var matches = dbSection.Meetings.Where(m =>
 									m.Type == meeting.Type &&

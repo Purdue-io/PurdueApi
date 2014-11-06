@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CatalogSync.Parsers
+namespace CatalogApi.Parsers
 {
 	public class TestParser : IParser<bool>
 	{

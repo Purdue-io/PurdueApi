@@ -1,10 +1,10 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using CatalogSync.Parsers;
+using CatalogApi.Parsers;
 using System.Reflection;
 using System.IO;
 
-namespace CatalogSync.Tests
+namespace CatalogApi.Tests
 {
 	[TestClass]
 	public class ParseTest
