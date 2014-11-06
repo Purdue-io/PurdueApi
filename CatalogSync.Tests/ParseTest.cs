@@ -54,6 +54,26 @@ namespace CatalogApi.Tests
 			Assert.IsTrue(results["65474"].Meetings.Count > 1, "Error in parsing sections with multiple meetings.");
 		}
 
+		[TestMethod]
+		public void ParseSectionSeatsTest()
+		{
+			Assembly thisAssembly = Assembly.GetExecutingAssembly();
+			string path = "CatalogSync.Tests.Test_Data";
+			var reader = new StreamReader(thisAssembly.GetManifestResourceStream(path + ".TestSectionLookup.txt"));
+			var content = reader.ReadToEnd();
+
+			var p = new SectionSeatsParser();
+			var results = p.ParseHtml(content);
+
+			// Check integrity on some random CRNs
+			Assert.IsTrue(results.SubjectCode.Equals("PES"), "Incorrect result on subject code parse.");
+			Assert.IsTrue(results.Number.Equals("11500"), "Incorrect result on course number");
+			Assert.IsTrue(results.Title.Equals("Bowling"), "Incorrect result on course title.");
+			Assert.IsTrue(results.Enrolled == 30, "Enrolled count mismatch.");
+			Assert.IsTrue(results.Capacity == 30, "Capacity count mismatch.");
+			Assert.IsTrue(results.RemainingSpace == 0, "Remaining space count mismatch.");
+		}
+
 		private U RequestParse<T, U>(string content) where T : IParser<U>, new()
 		{
 			var parser = new T();

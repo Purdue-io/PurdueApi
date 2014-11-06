@@ -15,8 +15,7 @@ namespace CatalogApi
 {
 	public class CatalogApi
 	{
-		private static readonly int MAX_RETRIES = 5;
-
+		public enum HttpMethod { GET, POST };
 		public static string default_username = "";
 		public static string default_password = "";
 
@@ -58,10 +57,10 @@ namespace CatalogApi
 		{
 			// Set up the request list...
 			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
-			var requests = new List<Tuple<string, FormUrlEncodedContent, string>>()
+			var requests = new List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>>()
 			{
-				new Tuple<string, FormUrlEncodedContent, string>("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
-				new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, null)
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, null)
 			};
 			return await RequestParse<TermListParser, List<MyPurdueTerm>>(requests);
 		}
@@ -75,10 +74,10 @@ namespace CatalogApi
 		{
 			// Set up the request list...
 			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
-			var requests = new List<Tuple<string, FormUrlEncodedContent, string>>()
+			var requests = new List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>>()
 			{
-				new Tuple<string, FormUrlEncodedContent, string>("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
-				new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", new FormUrlEncodedContent(new[] 
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", new FormUrlEncodedContent(new[] 
 					{
 						new KeyValuePair<string, string>("p_calling_proc", "bwckschd.p_disp_dyn_sched"),
 						new KeyValuePair<string, string>("p_term", termCode)
@@ -130,13 +129,15 @@ namespace CatalogApi
 		}
 
 		/// <summary>
-		/// Fetches the information for a single section.
+		/// Fetches the seat information for a single section.
 		/// </summary>
+		/// <param name="termCode">myPurdue code for the desired term, e.g. 201510</param>
 		/// <param name="crn">CRN for section to fetch information for</param>
-		/// <returns>MyPurdueSection object for specific section</returns>
-		public async Task<MyPurdueSection> FetchSection(string crn)
+		/// <returns>MyPurdueSectionSeats object for specific section</returns>
+		public async Task<MyPurdueSectionSeats> FetchSectionSeats(string termCode, string crn)
 		{
-			throw new NotImplementedException();
+			var sectionList = await _FetchCrnSeats(termCode, crn);
+			return sectionList;
 		}
 		#endregion
 
@@ -150,7 +151,7 @@ namespace CatalogApi
 		/// <param name="post_content">Optional HTTP POST body</param>
 		/// <param name="follow_redirect">Whether or not to follow redirects.</param>
 		/// <returns>An HttpResponseMessage result.</returns>
-		private async Task<HttpResponseMessage> Request(string url, FormUrlEncodedContent post_content = null, Boolean follow_redirect = true)
+		private async Task<HttpResponseMessage> Request(HttpMethod method, string url, FormUrlEncodedContent post_content = null, Boolean follow_redirect = true)
 		{
 			HttpClientHandler handler = new HttpClientHandler()
 			{
@@ -164,13 +165,26 @@ namespace CatalogApi
 			if (referrer.Length > 0)
 				c.DefaultRequestHeaders.Referrer = new Uri(referrer);
 			System.Diagnostics.Debug.WriteLine("Navigating to '" + url + "...");
-			HttpResponseMessage result = await c.PostAsync(url, post_content);
-			referrer = url;
+			HttpResponseMessage result = null;
+			switch (method)
+			{
+				case HttpMethod.POST:
+					result = await c.PostAsync(url, post_content);
+					break;
+				case HttpMethod.GET:
+					result = await c.GetAsync(url);
+					break;
+			}
+			if (result == null)
+			{
+				throw new InvalidOperationException("No request was made - most likely due to invalid HTTP method.");
+			}
 
+			referrer = url;
 			if (follow_redirect && result.Headers.Location != null)
 			{
 				System.Diagnostics.Debug.WriteLine("Referrer detected. Pursuing...");
-				result = await Request(result.Headers.Location.ToString());
+				result = await Request(method, result.Headers.Location.ToString(), post_content);
 			}
 			return result;
 		}
@@ -188,11 +202,11 @@ namespace CatalogApi
 				new KeyValuePair<string, string>("uuid", "0xACA021")
 			});
 
-			await Request("https://wl.mypurdue.purdue.edu/cp/home/loginf");
-			await Request("https://wl.mypurdue.purdue.edu/cp/home/displaylogin"); //Should set a ton of cookies ...
-			HttpResponseMessage r = await Request("https://wl.mypurdue.purdue.edu/cp/home/login", content);
+			await Request(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/home/loginf");
+			await Request(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/home/displaylogin"); //Should set a ton of cookies ...
+			HttpResponseMessage r = await Request(HttpMethod.POST, "https://wl.mypurdue.purdue.edu/cp/home/login", content);
 			string result = await r.Content.ReadAsStringAsync();
-			return (result.Contains("Login Successful"));
+			return (result.Contains("loginok.html"));
 		}
 
 		/// <summary>
@@ -204,7 +218,7 @@ namespace CatalogApi
 		/// <typeparam name="U">Return type expected from IParser</typeparam>
 		/// <param name="requests">An array of tuples, item1 being the URL, item2 being the optional post body. item3 being the referrer</param>
 		/// <returns>Result from specified IParser</returns>
-		private async Task<U> RequestParse<T, U>(List<Tuple<string, FormUrlEncodedContent, string>> requests) where T : IParser<U>, new()
+		private async Task<U> RequestParse<T, U>(List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>> requests) where T : IParser<U>, new()
 		{
 			// Clear cookies and authenticate.
 			cookies = new CookieContainer();
@@ -218,11 +232,11 @@ namespace CatalogApi
 			string result = "";
 			foreach (var request in requests)
 			{
-				if (request.Item3 != null && request.Item3.Length > 0)
+				if (request.Item4 != null && request.Item4.Length > 0)
 				{
-					referrer = request.Item3;
+					referrer = request.Item4;
 				}
-				HttpResponseMessage r = await Request(request.Item1, request.Item2);
+				HttpResponseMessage r = await Request(request.Item1, request.Item2, request.Item3);
 				result = await r.Content.ReadAsStringAsync();
 			}
 
@@ -243,10 +257,10 @@ namespace CatalogApi
 		{
 			// Set up the request list...
 			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched";
-			var requests = new List<Tuple<string, FormUrlEncodedContent, string>>()
+			var requests = new List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>>()
 			{
-				new Tuple<string, FormUrlEncodedContent, string>("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
-				new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", new FormUrlEncodedContent(new[] 
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched", null, initialReferrer),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", new FormUrlEncodedContent(new[] 
 					{
 						new KeyValuePair<string, string>("p_calling_proc", "bwckschd.p_disp_dyn_sched"),
 						new KeyValuePair<string, string>("p_term", termCode)
@@ -287,7 +301,7 @@ namespace CatalogApi
 			});
 
 			// Add our final request
-			requests.Add(new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec", postBody, null));
+			requests.Add(new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec", postBody, null));
 
 			return await RequestParse<SectionListParser, Dictionary<string,MyPurdueSection>>(requests);
 		}
@@ -303,9 +317,9 @@ namespace CatalogApi
 		{
 			// Set up the request list ...
 			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS";
-			var requests = new List<Tuple<string, FormUrlEncodedContent, string>>()
+			var requests = new List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>>()
 			{
-				new Tuple<string, FormUrlEncodedContent, string>("https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS", null, initialReferrer)
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS", null, initialReferrer)
 			};
 
 			// Construct our "query"
@@ -348,9 +362,28 @@ namespace CatalogApi
 			referrer = "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse";
 
 			// Add our final request
-			requests.Add(new Tuple<string, FormUrlEncodedContent, string>("https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse_Advanced", postBody, referrer));
+			requests.Add(new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse_Advanced", postBody, referrer));
 
 			return await RequestParse<SectionDetailsParser, Dictionary<string, MyPurdueSection>>(requests);
+		}
+
+		/// <summary>
+		/// Fetches the seats for a specific section by CRN
+		/// </summary>
+		/// <param name="termCode">myPurdue code for the desired term, e.g. 201510</param>
+		/// <param name="crn">The CRN number for the section you wish to fetch details on</param>
+		/// <returns></returns>
+		private async Task<MyPurdueSectionSeats> _FetchCrnSeats(string termCode, string crn)
+		{
+			// Set up the request list ...
+			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS";
+			var requests = new List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>>()
+			{
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS", null, initialReferrer),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_detail_sched?term_in=" + termCode + "&crn_in=" + crn, null, "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_listcrse?term_in=" + termCode + "&subj_in=&crse_in=&crn_in=" + crn)
+			};
+
+			return await RequestParse<SectionSeatsParser, MyPurdueSectionSeats>(requests);
 		}
 		#endregion
 	}

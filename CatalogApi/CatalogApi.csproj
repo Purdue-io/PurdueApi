@@ -54,10 +54,12 @@
     <Compile Include="CatalogApi.cs" />
     <Compile Include="Models\MyPurdueMeeting.cs" />
     <Compile Include="Models\MyPurdueSection.cs" />
+    <Compile Include="Models\MyPurdueSectionSeats.cs" />
     <Compile Include="Models\MyPurdueSubject.cs" />
     <Compile Include="Models\MyPurdueTerm.cs" />
     <Compile Include="Parsers\IParser.cs" />
     <Compile Include="Parsers\ParseUtility.cs" />
+    <Compile Include="Parsers\SectionSeatsParser.cs" />
     <Compile Include="Parsers\SectionDetailsParser.cs" />
     <Compile Include="Parsers\SectionListParser.cs" />
     <Compile Include="Parsers\SubjectListParser.cs" />

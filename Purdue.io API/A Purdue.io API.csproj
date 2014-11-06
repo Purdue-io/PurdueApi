@@ -344,6 +344,10 @@
     <Content Include="Scripts\jquery-1.10.2.min.map" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CatalogApi\CatalogApi.csproj">
+      <Project>{207dd1a2-23a5-45e4-bc23-44fc6cd23901}</Project>
+      <Name>CatalogApi</Name>
+    </ProjectReference>
     <ProjectReference Include="..\PurdueIoDatabase\PurdueIoDb.csproj">
       <Project>{1da165d1-b6e8-4075-a7a6-2bbf70a6796f}</Project>
       <Name>PurdueIoDb</Name>
