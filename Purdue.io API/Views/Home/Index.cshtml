@@ -14,76 +14,21 @@
 	<header>
 		<h1>Purdue.io API Demo</h1>
 	</header>
+	<nav>
+		<ul></ul>
+	</nav>
 	<div class="content">
-		<nav>
-			<h1>Query Properties</h1>
-			<form>
-				<ul>
-					<!-- Term -->
-					<li>
-						<label>
-							Term
-							<br />
-							<select>
-								<option>Spring 2015</option>
-								<option>Fall 2014</option>
-							</select>
-						</label>
-					</li>
-					<!-- Physical Location -->
-					<li>
-						<label>
-							Campus
-							<br />
-							<select>
-								<option>Purdue West Lafayette</option>
-							</select>
-						</label>
-						<label>
-							Building
-							<br />
-							<select>
-								<option>LWSN / Lawson Computer Science Bldg</option>
-							</select>
-						</label>
-						<label>
-							Room
-							<br />
-							<select>
-								<option>B160</option>
-							</select>
-						</label>
-					</li>
-					<!-- Subject / Course -->
-					<li>
-						<label>
-							Subject
-							<br />
-							<select>
-								<option>CS / Computer Science</option>
-							</select>
-						</label>
-						<label>
-							Course Number
-							<br />
-							<select>
-								<option>18200</option>
-							</select>
-						</label>
-						<label>
-							Course
-							<br />
-							<select>
-								<option>Intro to Java</option>
-							</select>
-						</label>
-					</li>
-				</ul>
-			</form>
-		</nav>
-		<div class="results">
-			<h1>Results</h1>
-		</div>
+		<ul class="data">
+
+		</ul>
 	</div>
+
+	@Scripts.Render("~/bundles/js")
+	@Scripts.Render("~/bundles/ts")
+	<script type="text/javascript">
+		window.onload = function () {
+			new Demo();
+		};
+	</script>
 </body>
 </html>

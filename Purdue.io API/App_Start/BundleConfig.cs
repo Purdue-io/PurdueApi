@@ -22,6 +22,16 @@ namespace PurdueIo
 				"~/Scripts/bootstrap.js",
 				"~/Scripts/respond.js"));
 
+			bundles.Add(new ScriptBundle("~/bundles/js").Include(
+				"~/Scripts/jquery-{version}.js"));
+
+			bundles.Add(new ScriptBundle("~/bundles/ts").Include(
+				"~/Scripts/ts/odata.js",
+				"~/Scripts/ts/models/course.js",
+				"~/Scripts/ts/models/subject.js",
+				"~/Scripts/ts/models/term.js",
+				"~/Scripts/ts/demo.js"));
+
 			bundles.Add(new StyleBundle("~/Content/css")
 				.Include("~/Content/css/Fonts.css", new CssRewriteUrlTransform())
 				.Include("~/Content/css/Demo.css", new CssRewriteUrlTransform()));

@@ -13,87 +13,71 @@ header {
 	left: 0;
 	right: 0;
 	height: 86px;
-	border-left:12px solid @primary-color;
-	padding:6px 12px;
+	color: #000;
+	background-color: #fff;
+	border-bottom: 5px solid @primary-color;
+	padding: 6px 12px;
 	h1 {
 		font-family: 'Open Sans';
 		font-weight: 100;
 		text-transform: lowercase;
 		font-size: 64px;
-		margin:0;
-		padding:0;
+		margin: 0;
+		padding: 0;
+	}
+}
+
+nav {
+	position: fixed;
+	display: block;
+	height:64px;
+	left: 0;
+	right: 0;
+	top: 104px;
+	padding-left: 24px;
+
+	h1 {
+		font-family: 'Open Sans';
+		font-weight: 900;
+		text-transform: uppercase;
+		font-size: 26px;
+		margin: 14px 3px;
 	}
 }
 
 div.content {
 	position: fixed;
 	display: block;
-	top: 106px;
+	top: 170px;
+	right:0;
+	left:0;
+	bottom:0;
 
-	nav {
-		position: absolute;
-		display: block;
-		width: 360px;
-		left: 0;
-		top: 0;
-		bottom: 0;
-		padding-left: 24px;
-
-		h1 {
-			font-family: 'Open Sans';
-			font-weight: 900;
-			text-transform: uppercase;
-			font-size: 26px;
-			margin: 14px 3px;
-		}
-
-		form {
-			display: block;
-			margin-left: 16px;
-			ul {
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-				li {
-					display: block;
-					margin: 10px 0;
-					label {
-						display: block;
-						padding: 4px 0;
-						font-family: 'Open Sans';
-						font-weight: 100;
-						text-transform: lowercase;
-						font-size: 16px;
-					}
-				}
-			}
-			
-		}
+	// Only display the last data list
+	ul:not(:last-child) {
+		display:none;
 	}
 
-	div.results {
-		position: absolute;
-		display: block;
-		left: 384px;
-		right: 0;
-		top: 0;
-		bottom: 0;
-		h1 {
+	ul.terms {
+		list-style-type:none;
+		width: calc(~"100% - 128px");
+		margin: 0 auto;
+		text-align:center;
+
+		li {
+			display: inline-block;
+			margin: 12px;
+			text-align: center;
 			font-family: 'Open Sans';
-			font-weight: 900;
-			text-transform: uppercase;
-			font-size: 26px;
-			margin: 14px 3px;
+			font-weight: 100;
+			font-size: 32px;
+			border-left: 8px solid @primary-color;
+			width: 200px;
+			height: 100px;
+			line-height: 3;
+			background-color: #fff;
+			color: #000;
+			cursor: pointer;
 		}
 	}
-}
-
-select {
-	font-family: 'Open Sans';
-	font-size: 14px;
-	padding: 4px;
-	width: 80%;
-	color: lighten(@primary-color, 0%);
-	border: 1px solid #fff;
-	background-color: transparent;
 }
