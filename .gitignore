@@ -4,6 +4,12 @@
 # Ignore catalog config containing myPurdue credentials
 CatalogSync/App.config
 
+# Ignore compiled TS files
+**/Scripts/ts/*.js
+**/Scripts/ts/*.js.map
+**/Scripts/ts/**/*.js
+**/Scripts/ts/**/*.js.map
+
 # User-specific files
 *.suo
 *.user

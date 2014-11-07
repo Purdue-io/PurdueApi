@@ -71,4 +71,27 @@ div.content ul.terms li {
   color: #000;
   cursor: pointer;
 }
+div.content ul.subjects {
+  list-style-type: none;
+  width: calc(100% - 128px);
+  margin: 0 auto;
+  text-align: center;
+}
+div.content ul.subjects li {
+  display: inline-block;
+  margin: 12px;
+  text-align: left;
+  font-family: 'Open Sans';
+  font-weight: 500;
+  font-size: 22px;
+  border-left: 8px solid #a3792c;
+  background-color: #fff;
+  color: #000;
+  width: 320px;
+  padding: 4px;
+}
+div.content ul.subjects li span.abbreviation {
+  font-weight: 900;
+  text-transform: uppercase;
+}
 /*# sourceMappingURL=Demo.css.map */
