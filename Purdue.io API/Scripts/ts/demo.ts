@@ -19,7 +19,7 @@
 				((term: Term) => {
 					var item = document.createElement("li");
 					item.innerHTML = term.Name;
-					list.addEventListener("click", () => {
+					item.addEventListener("click", () => {
 						this.selectedTerm = term;
 						this.loadSubjects();
 					});
@@ -38,7 +38,7 @@
 				((subject: Subject) => {
 					var item = document.createElement("li");
 					item.innerHTML = '<span class="abbreviation">' + subject.Abbreviation + '</span>&nbsp;' + subject.Name;
-					list.addEventListener("click", () => {
+					item.addEventListener("click", () => {
 						this.selectedSubject = subject;
 						this.loadCourses();
 					});
@@ -57,7 +57,7 @@
 				((course: Course) => {
 					var item = document.createElement("li");
 					item.innerHTML = '<span class="abbreviation">' + this.selectedSubject.Abbreviation + course.Number + '</span>&nbsp;' + course.Title;
-					list.addEventListener("click", () => {
+					item.addEventListener("click", () => {
 						this.selectedCourse = course;
 						//this.loadClasses();
 					});

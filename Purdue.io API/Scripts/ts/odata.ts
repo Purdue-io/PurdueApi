@@ -14,7 +14,7 @@
 
 	public fetchSubjects(): JQueryPromise<Array<Subject>> {
 		var retval: JQueryDeferred<any> = $.Deferred<any>();
-		$.getJSON(OData.SERVICE_ENDPOINT + "/Subjects")
+		$.getJSON(OData.SERVICE_ENDPOINT + "/Subjects?$orderby=Abbreviation%20asc")
 			.done(function (data) {
 				retval.resolve(<Array<Term>>data.value);
 			}).fail(function () {
