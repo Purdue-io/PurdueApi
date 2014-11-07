@@ -18,10 +18,13 @@ header {
 header h1 {
   font-family: 'Open Sans';
   font-weight: 100;
-  text-transform: lowercase;
+  text-transform: uppercase;
   font-size: 64px;
   margin: 0;
   padding: 0;
+}
+header h1 span.heavy {
+  font-weight: 900;
 }
 nav {
   position: fixed;
