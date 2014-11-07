@@ -52,10 +52,27 @@ div.content {
 	right:0;
 	left:0;
 	bottom:0;
+	overflow-y: auto;
 
 	// Only display the last data list
 	ul:not(:last-child) {
 		display:none;
+	}
+
+	ul.terms, ul.subjects, ul.courses {
+		li {
+			font-family: 'Open Sans';
+			text-align: left;
+			border-left: 4px solid @primary-color;
+			background-color: #fff;
+			color: #000;
+			cursor: pointer;
+			transition: border-left-width 100ms ease-out;
+
+			&:hover {
+				border-left-width: 10px;
+			}
+		}
 	}
 
 	ul.terms {
@@ -67,17 +84,12 @@ div.content {
 		li {
 			display: inline-block;
 			margin: 12px;
-			text-align: center;
-			font-family: 'Open Sans';
 			font-weight: 100;
 			font-size: 32px;
-			border-left: 8px solid @primary-color;
 			width: 200px;
 			height: 100px;
 			line-height: 3;
-			background-color: #fff;
-			color: #000;
-			cursor: pointer;
+			padding-left: 6px;
 		}
 	}
 
@@ -90,14 +102,31 @@ div.content {
 		li {
 			display: inline-block;
 			margin: 12px;
-			text-align: left;
-			font-family: 'Open Sans';
 			font-weight: 500;
 			font-size: 22px;
-			border-left: 8px solid @primary-color;
-			background-color: #fff;
-			color: #000;
 			width: 320px;
+			padding: 4px;
+			white-space: nowrap;
+			overflow: hidden;
+			span.abbreviation {
+				font-weight: 900;
+				text-transform: uppercase;
+			}
+		}
+	}
+
+	ul.courses {
+		list-style-type: none;
+		width: calc(~"100% - 128px");
+		margin: 0 auto;
+		text-align: center;
+
+		li {
+			display: block;
+			margin: 12px auto;
+			font-weight: 500;
+			font-size: 22px;
+			width: 500px;
 			padding: 4px;
 			span.abbreviation {
 				font-weight: 900;
