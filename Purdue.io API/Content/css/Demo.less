@@ -18,9 +18,12 @@ header {
 	border-bottom: 5px solid @primary-color;
 	padding: 6px 12px;
 	h1 {
+		span.heavy {
+			font-weight: 900;
+		}
 		font-family: 'Open Sans';
 		font-weight: 100;
-		text-transform: lowercase;
+		text-transform: uppercase;
 		font-size: 64px;
 		margin: 0;
 		padding: 0;
@@ -36,12 +39,33 @@ nav {
 	top: 104px;
 	padding-left: 24px;
 
+	button {
+		display: inline-block;
+		margin: 6px 18px 6px 6px;
+		width: 52px;
+		height: 52px;
+		border-radius: 26px;
+		border: 2px solid #fff;
+		background-color: transparent;
+		cursor: pointer;
+		background-image: url('../svg/arrow_back_white.svg');
+		background-position: center;
+		background-size: 32px;
+		background-repeat: no-repeat;
+
+		&:active {
+			background-color: #fff;
+		}
+	}
+
 	h1 {
+		display: inline-block;
 		font-family: 'Open Sans';
-		font-weight: 900;
-		text-transform: uppercase;
-		font-size: 26px;
-		margin: 14px 3px;
+		font-weight: 100;
+		text-transform: lowercase;
+		font-size: 48px;
+		margin: 0;
+		vertical-align: top;
 	}
 }
 
@@ -52,10 +76,27 @@ div.content {
 	right:0;
 	left:0;
 	bottom:0;
+	overflow-y: auto;
 
 	// Only display the last data list
 	ul:not(:last-child) {
 		display:none;
+	}
+
+	ul.terms, ul.subjects, ul.courses {
+		li {
+			font-family: 'Open Sans';
+			text-align: left;
+			border-left: 4px solid @primary-color;
+			background-color: #fff;
+			color: #000;
+			cursor: pointer;
+			transition: border-left-width 100ms ease-out;
+
+			&:hover {
+				border-left-width: 10px;
+			}
+		}
 	}
 
 	ul.terms {
@@ -67,17 +108,97 @@ div.content {
 		li {
 			display: inline-block;
 			margin: 12px;
-			text-align: center;
-			font-family: 'Open Sans';
 			font-weight: 100;
 			font-size: 32px;
-			border-left: 8px solid @primary-color;
 			width: 200px;
 			height: 100px;
 			line-height: 3;
+			padding-left: 6px;
+		}
+	}
+
+	ul.subjects {
+		list-style-type: none;
+		width: calc(~"100% - 128px");
+		margin: 0 auto;
+		text-align: center;
+
+		li {
+			display: inline-block;
+			margin: 12px;
+			font-weight: 500;
+			font-size: 22px;
+			width: 320px;
+			padding: 4px;
+			white-space: nowrap;
+			overflow: hidden;
+			span.abbreviation {
+				font-weight: 900;
+				text-transform: uppercase;
+			}
+		}
+	}
+
+	ul.courses {
+		list-style-type: none;
+		width: calc(~"100% - 128px");
+		margin: 0 auto;
+		text-align: center;
+
+		li {
+			display: block;
+			margin: 18px auto;
+			font-weight: 500;
+			font-size: 22px;
+			width: 500px;
+			padding: 4px;
+			span.abbreviation {
+				font-weight: 900;
+				text-transform: uppercase;
+			}
+		}
+	}
+
+	ul.classes {
+		font-family: 'Open Sans';
+		list-style-type: none;
+		width: calc(~"100% - 128px");
+		max-width: 800px;
+		margin: 0 auto;
+		padding: 0;
+		text-align: center;
+
+		li {
+			h1 {
+				display:inline-block;
+				margin: 0 0 0 -16px;
+				font-family: 'Open Sans';
+				font-weight: 900;
+				font-size: 32px;
+				border-left: 8px solid @primary-color;
+				padding-left: 8px;
+			}
+			padding: 16px;
+			font-weight: 500;
+			text-align: left;
+			display: block;
+			margin: 32px auto;
+			width: 95%;
 			background-color: #fff;
 			color: #000;
-			cursor: pointer;
+
+			table {
+				th {
+					font-weight: 900;
+					text-transform: uppercase;
+					text-align: left;
+					padding: 0 6px;
+				}
+				td {
+					text-align: left;
+					padding: 6px;
+				}
+			}
 		}
 	}
 }

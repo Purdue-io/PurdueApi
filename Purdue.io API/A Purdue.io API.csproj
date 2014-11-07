@@ -288,6 +288,7 @@
     <Compile Include="Startup.cs" />
     <Compile Include="Utils\Utils.cs" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
+    <Content Include="Content\svg\arrow_back_white.svg" />
     <Content Include="Scripts\jquery-2.1.1.js" />
     <Content Include="Scripts\jquery-2.1.1.min.js" />
     <Content Include="Scripts\jquery-2.1.1.min.map" />
@@ -364,7 +365,13 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\ts\demo.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\building.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\class.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\course.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\instructor.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\meeting.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\room.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\section.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\subject.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\term.ts" />
     <TypeScriptCompile Include="Scripts\ts\odata.ts" />
