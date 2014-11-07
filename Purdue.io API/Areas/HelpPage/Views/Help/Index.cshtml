@@ -25,33 +25,33 @@
                 <li><strong>$select:</strong> return a subset of information about a specific entity property.</li>
                 <li><strong>$expand:</strong> also return information about specific subentities of the initial entities requested.</li>
                 <li><strong>$orderby:</strong> determines the order to display results, <strong>asc</strong> by default but can also be changed to <strong>desc</strong>.</li>
-                <li><a href="http://docs.oasis-open.org/odata/odata/v4.0/errata01/os/complete/part2-url-conventions/odata-v4.0-errata01-os-part2-url-conventions-complete.html#_Toc395267109">More Info in OData v4 Documentation</a></li>
+                <li><a target="_blank" href="http://docs.oasis-open.org/odata/odata/v4.0/errata01/os/complete/part2-url-conventions/odata-v4.0-errata01-os-part2-url-conventions-complete.html#_Toc395267109">More Info in OData v4 Documentation</a></li>
             </ul>
             <h1>Query Examples</h1>
             <p>
                 Listing of all courses under a particular subject:
                 <br />
-                <a href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">odata/Courses?$filter=Subject/Abbreviation eq 'CS'&$orderby=Number asc</a>
+                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">odata/Courses?$filter=Subject/Abbreviation eq 'CS'&$orderby=Number asc</a>
             </p>
             <p>
                 Searching for a course by title with a specific word:
                 <br />
-                <a href="~/odata/Courses?$filter=contains(Title,%20%27Algebra%27)">odata/Courses?$filter=contains(Title, 'Algebra')</a>
+                <a target="_blank" href="~/odata/Courses?$filter=contains(Title,%20%27Algebra%27)">odata/Courses?$filter=contains(Title, 'Algebra')</a>
             </p>
             <p>
                 Information about classes, sections, and meetings of a specific course by subject and number:
                 <br />
-                <a href="~/odata/Courses?$expand=Classes($expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation%20eq%20%27CS%27%20and%20Number%20eq%20%2718000%27">odata/Courses?$expand=Classes($expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation eq 'CS' and Number eq '18000'</a>
+                <a target="_blank" href="~/odata/Courses?$expand=Classes($expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation%20eq%20%27CS%27%20and%20Number%20eq%20%2718000%27">odata/Courses?$expand=Classes($expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation eq 'CS' and Number eq '18000'</a>
             </p>
             <p>
                 Listing of all courses that meet in a specific room (notice how any is used when narrowing down by collections):
                 <br />
-                <a href="~/odata/Courses?$filter=(Classes/any(c:%20c/Campus/Buildings/any(b:%20b/ShortCode%20eq%20%27CL50%27)))%20and%20(Classes/any(c:%20c/Campus/Buildings/any(b:%20b/Rooms/any(r:%20r/Number%20eq%20%27224%27))))">odata/Courses?$filter=(Classes/any(c: c/Campus/Buildings/any(b: b/ShortCode eq 'CL50'))) and (Classes/any(c: c/Campus/Buildings/any(b: b/Rooms/any(r: r/Number eq '224'))))</a>
+                <a target="_blank" href="~/odata/Courses?$filter=(Classes/any(c:%20c/Campus/Buildings/any(b:%20b/ShortCode%20eq%20%27CL50%27)))%20and%20(Classes/any(c:%20c/Campus/Buildings/any(b:%20b/Rooms/any(r:%20r/Number%20eq%20%27224%27))))">odata/Courses?$filter=(Classes/any(c: c/Campus/Buildings/any(b: b/ShortCode eq 'CL50'))) and (Classes/any(c: c/Campus/Buildings/any(b: b/Rooms/any(r: r/Number eq '224'))))</a>
             </p>
             <p>
                 Listing of all courses taught by a specific professor:
                 <br />
-                <a href="~/odata/Courses?$filter=Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Instructors/any(i:%20i/Name%20eq%20%27Hubert%20E.%20Dunsmore%27))))">odata/Courses?$filter=Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Instructors/any(i: i/Name eq 'Hubert E. Dunsmore'))))</a>
+                <a target="_blank" href="~/odata/Courses?$filter=Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Instructors/any(i:%20i/Name%20eq%20%27Hubert%20E.%20Dunsmore%27))))">odata/Courses?$filter=Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Instructors/any(i: i/Name eq 'Hubert E. Dunsmore'))))</a>
             </p>
         </div>
     </nav>
