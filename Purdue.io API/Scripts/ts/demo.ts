@@ -59,8 +59,31 @@
 					item.innerHTML = '<span class="abbreviation">' + this.selectedSubject.Abbreviation + course.Number + '</span>&nbsp;' + course.Title;
 					item.addEventListener("click", () => {
 						this.selectedCourse = course;
-						//this.loadClasses();
+						this.loadClasses();
 					});
+					list.appendChild(item);
+				})(data[i]);
+			}
+			this.elementContent.appendChild(list);
+		});
+	}
+
+	public loadClasses() {
+		this.odata.fetchClasses(this.selectedTerm, this.selectedCourse).done((data) => {
+			var list = document.createElement("ul");
+			list.classList.add("classes");
+			for (var i = 0; i < data.length; i++) {
+				((theClass: Class) => {
+					var item = document.createElement("li");
+					var inner = '<h1>Class ' + (i + 1) + '</h1>';
+					inner += '<h2>' + theClass.Sections.length + ' section(s)</h2>';
+					inner += '<table><tbody>'
+					inner += '<tr><th>CRN</th><th>Type</th><th>Day</th><th>Time</th></tr>';
+					for (var j = 0; j < theClass.Sections.length; j++) {
+						inner += '<tr><td>' + theClass.Sections[j].CRN + '</td><td>' + theClass.Sections[j].Type + '</td><td>' + theClass.Sections[j].Meetings[0].DaysOfWeek + '</td><td>' + ('0' + new Date(theClass.Sections[j].Meetings[0].StartTime).getHours()).slice(-2) + ":" + ('0' + new Date(theClass.Sections[j].Meetings[0].StartTime).getMinutes()).slice(-2) + '</td></tr>';
+					}
+					inner += '</tbody></table>';
+					item.innerHTML = inner;
 					list.appendChild(item);
 				})(data[i]);
 			}

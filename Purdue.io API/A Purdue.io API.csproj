@@ -364,7 +364,13 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\ts\demo.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\building.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\class.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\course.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\instructor.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\meeting.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\room.ts" />
+    <TypeScriptCompile Include="Scripts\ts\models\section.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\subject.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\term.ts" />
     <TypeScriptCompile Include="Scripts\ts\odata.ts" />

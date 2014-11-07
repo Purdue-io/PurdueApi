@@ -18,9 +18,12 @@ header {
 	border-bottom: 5px solid @primary-color;
 	padding: 6px 12px;
 	h1 {
+		span.heavy {
+			font-weight: 900;
+		}
 		font-family: 'Open Sans';
 		font-weight: 100;
-		text-transform: lowercase;
+		text-transform: uppercase;
 		font-size: 64px;
 		margin: 0;
 		padding: 0;
@@ -123,7 +126,7 @@ div.content {
 
 		li {
 			display: block;
-			margin: 12px auto;
+			margin: 18px auto;
 			font-weight: 500;
 			font-size: 22px;
 			width: 500px;
@@ -131,6 +134,49 @@ div.content {
 			span.abbreviation {
 				font-weight: 900;
 				text-transform: uppercase;
+			}
+		}
+	}
+
+	ul.classes {
+		font-family: 'Open Sans';
+		list-style-type: none;
+		width: calc(~"100% - 128px");
+		max-width: 800px;
+		margin: 0 auto;
+		padding: 0;
+		text-align: center;
+
+		li {
+			h1 {
+				display:inline-block;
+				margin: 0 0 0 -16px;
+				font-family: 'Open Sans';
+				font-weight: 900;
+				font-size: 32px;
+				border-left: 8px solid @primary-color;
+				padding-left: 8px;
+			}
+			padding: 16px;
+			font-weight: 500;
+			text-align: left;
+			display: block;
+			margin: 32px auto;
+			width: 95%;
+			background-color: #fff;
+			color: #000;
+
+			table {
+				th {
+					font-weight: 900;
+					text-transform: uppercase;
+					text-align: left;
+					padding: 0 6px;
+				}
+				td {
+					text-align: left;
+					padding: 6px;
+				}
 			}
 		}
 	}

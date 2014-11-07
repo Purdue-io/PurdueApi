@@ -34,4 +34,17 @@
 			});
 		return retval;
 	}
+
+	public fetchClasses(term: Term, course: Course): JQueryPromise<Array<Class>> {
+		var retval: JQueryDeferred<Array<Class>> = $.Deferred<Array<Class>>();
+		var query = "/Classes?$expand=Sections($expand=Meetings($expand=Instructors,Room($expand=Building)))&$filter=Course/CourseId%20eq%20" + course.CourseId + "%20and%20Term/TermId%20eq%20" + term.TermId;
+		$.getJSON(OData.SERVICE_ENDPOINT + query)
+			.done(function (data) {
+				retval.resolve(data.value);
+			})
+			.fail(function () {
+				retval.reject();
+			});
+		return retval;
+	}
 }
