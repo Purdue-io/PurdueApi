@@ -92,7 +92,7 @@
 					inner += '<table><tbody>'
 					inner += '<tr><th>CRN</th><th>Type</th><th>Day</th><th>Time</th></tr>';
 					for (var j = 0; j < theClass.Sections.length; j++) {
-						inner += '<tr><td>' + theClass.Sections[j].CRN + '</td><td>' + theClass.Sections[j].Type + '</td><td>' + theClass.Sections[j].Meetings[0].DaysOfWeek + '</td><td>' + ('0' + new Date(theClass.Sections[j].Meetings[0].StartTime).getHours()).slice(-2) + ":" + ('0' + new Date(theClass.Sections[j].Meetings[0].StartTime).getMinutes()).slice(-2) + '</td></tr>';
+						inner += '<tr><td>' + theClass.Sections[j].CRN + '</td><td>' + theClass.Sections[j].Type + '</td><td>' + theClass.Sections[j].Meetings[0].DaysOfWeek + '</td><td>' + ('0' + new Date(theClass.Sections[j].Meetings[0].StartTime).getUTCHours()).slice(-2) + ":" + ('0' + new Date(theClass.Sections[j].Meetings[0].StartTime).getUTCMinutes()).slice(-2) + '</td></tr>';
 					}
 					inner += '</tbody></table>';
 					item.innerHTML = inner;
