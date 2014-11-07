@@ -288,6 +288,7 @@
     <Compile Include="Startup.cs" />
     <Compile Include="Utils\Utils.cs" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
+    <Content Include="Content\svg\arrow_back_white.svg" />
     <Content Include="Scripts\jquery-2.1.1.js" />
     <Content Include="Scripts\jquery-2.1.1.min.js" />
     <Content Include="Scripts\jquery-2.1.1.min.map" />

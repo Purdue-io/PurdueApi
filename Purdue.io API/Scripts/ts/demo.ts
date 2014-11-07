@@ -1,5 +1,7 @@
 ﻿class Demo {
 	private odata: OData;
+	private headerStack: Array<string>;
+	private elementHeader: HTMLElement;
 	private elementContent: HTMLElement;
 	private selectedTerm: Term;
 	private selectedSubject: Subject;
@@ -7,7 +9,12 @@
 
 	constructor() {
 		this.odata = new OData();
-		this.elementContent = <HTMLUListElement>document.querySelector("div.content");
+		this.headerStack = new Array<string>();
+		this.elementHeader = (<HTMLElement>document.querySelector("nav h1"));
+		document.querySelector("nav button").addEventListener("click", () => {
+			this.goBack();
+		});
+		this.elementContent = <HTMLElement>document.querySelector("div.content");
 		this.loadTerms();
 	}
 
@@ -31,6 +38,7 @@
 	}
 
 	public loadSubjects() {
+		this.setHeader(this.selectedTerm.Name);
 		this.odata.fetchSubjects().done((data) => {
 			var list = document.createElement("ul");
 			list.classList.add("subjects");
@@ -50,6 +58,7 @@
 	}
 
 	public loadCourses() {
+		this.setHeader(this.selectedSubject.Name);
 		this.odata.fetchCourses(this.selectedTerm,this.selectedSubject).done((data) => {
 			var list = document.createElement("ul");
 			list.classList.add("courses");
@@ -69,6 +78,7 @@
 	}
 
 	public loadClasses() {
+		this.setHeader(this.selectedCourse.Title);
 		this.odata.fetchClasses(this.selectedTerm, this.selectedCourse).done((data) => {
 			var list = document.createElement("ul");
 			list.classList.add("classes");
@@ -76,7 +86,9 @@
 				((theClass: Class) => {
 					var item = document.createElement("li");
 					var inner = '<h1>Class ' + (i + 1) + '</h1>';
-					inner += '<h2>' + theClass.Sections.length + ' section(s)</h2>';
+					inner += '<h2>' + theClass.Sections.length + ' section';
+					if (theClass.Sections.length > 1) inner += 's';
+					inner += '</h2>';
 					inner += '<table><tbody>'
 					inner += '<tr><th>CRN</th><th>Type</th><th>Day</th><th>Time</th></tr>';
 					for (var j = 0; j < theClass.Sections.length; j++) {
@@ -89,5 +101,24 @@
 			}
 			this.elementContent.appendChild(list);
 		});
+	}
+
+	public goBack(): void {
+		this.backHeader();
+		var lists = this.elementContent.getElementsByTagName("ul");
+		if (lists.length > 1) {
+			(<HTMLElement>lists[lists.length - 1]).parentElement.removeChild(lists[lists.length - 1]);
+		}
+	}
+
+	private backHeader(): void {
+		if (this.headerStack.length > 0) {
+			this.elementHeader.innerHTML = this.headerStack.pop();
+		}
+	}
+
+	private setHeader(header: string): void {
+		this.headerStack.push(this.elementHeader.innerHTML);
+		this.elementHeader.innerHTML = header;
 	}
 }

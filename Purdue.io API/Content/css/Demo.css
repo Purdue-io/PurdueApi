@@ -35,12 +35,31 @@ nav {
   top: 104px;
   padding-left: 24px;
 }
+nav button {
+  display: inline-block;
+  margin: 6px 18px 6px 6px;
+  width: 52px;
+  height: 52px;
+  border-radius: 26px;
+  border: 2px solid #fff;
+  background-color: transparent;
+  cursor: pointer;
+  background-image: url('../svg/arrow_back_white.svg');
+  background-position: center;
+  background-size: 32px;
+  background-repeat: no-repeat;
+}
+nav button:active {
+  background-color: #fff;
+}
 nav h1 {
+  display: inline-block;
   font-family: 'Open Sans';
-  font-weight: 900;
-  text-transform: uppercase;
-  font-size: 26px;
-  margin: 14px 3px;
+  font-weight: 100;
+  text-transform: lowercase;
+  font-size: 48px;
+  margin: 0;
+  vertical-align: top;
 }
 div.content {
   position: fixed;
