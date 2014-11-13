@@ -46,7 +46,7 @@
             <p>
                 Listing of all courses that meet in a specific room (notice how any is used when narrowing down by collections):
                 <br />
-                <a target="_blank" href="~/odata/Courses?$filter=(Classes/any(c:%20c/Campus/Buildings/any(b:%20b/ShortCode%20eq%20%27CL50%27)))%20and%20(Classes/any(c:%20c/Campus/Buildings/any(b:%20b/Rooms/any(r:%20r/Number%20eq%20%27224%27))))">odata/Courses?$filter=(Classes/any(c: c/Campus/Buildings/any(b: b/ShortCode eq 'CL50'))) and (Classes/any(c: c/Campus/Buildings/any(b: b/Rooms/any(r: r/Number eq '224'))))</a>
+                <a target="_blank" href="~/odata/Courses?$filter=((Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Room/Building/ShortCode%20eq%20%27CL50%27))))%20and%20(Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Room/Number%20eq%20%27224%27)))))">odata/Courses?$filter=((Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Room/Building/ShortCode eq 'CL50')))) and (Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Room/Number eq '224')))))</a>
             </p>
             <p>
                 Listing of all courses taught by a specific professor:
