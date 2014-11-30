@@ -260,6 +260,16 @@
     <Content Include="Content\css\Fonts.css.map">
       <DependentUpon>Fonts.css</DependentUpon>
     </Content>
+    <Content Include="Areas\HelpPage\Views\Help\Courses.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Classes.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Buildings.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Subjects.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Terms.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Campuses.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Meetings.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Sections.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Rooms.cshtml" />
+    <Content Include="Areas\HelpPage\Views\Help\Instructors.cshtml" />
     <None Include="Controllers\AccountController.cs.old" />
     <Compile Include="Controllers\CatalogController.cs" />
     <Compile Include="Controllers\HomeController.cs" />

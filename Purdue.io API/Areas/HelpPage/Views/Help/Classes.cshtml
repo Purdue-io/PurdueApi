@@ -1,0 +1,61 @@
+<html>
+<head>
+    <link type="text/css" href="~/Areas/HelpPage/HelpPage.css" rel="stylesheet" />
+    <link type="text/css" href="~/Content/css/Fonts.css" rel="stylesheet" />
+    <title>Classes - Purdue.io Web API Help Page</title>
+</head>
+<header>
+    <div>
+        <div>
+            <h1><span class="heavy">Purdue.io</span> Web API Help Page</h1>
+        </div>
+    </div>
+</header>
+<body>
+    <nav>
+        <div class="info">
+            <h1>Class Object Content</h1>
+            <p>
+                <table>
+                    <tr>
+                        <td><b>Name</b></td>
+                        <td><b>Description</b></td>
+                        <td><b>Type</b></td>
+                    </tr>
+                    <tr>
+                        <td>ClassId</td>
+                        <td>A unique identifier for a specific class.</td>
+                        <td>Guid</td>
+                    </tr>
+                    <tr>
+                        <td>Course</td>
+                        <td>@Html.ActionLink("Course entity.", "Courses")</td>
+                        <td>Entity</td>
+                    </tr>
+                    <tr>
+                        <td>Term</td>
+                        <td>@Html.ActionLink("Term entity.", "Terms")</td>
+                        <td>Entity</td>
+                    </tr>
+                    <tr>
+                        <td>Campus</td>
+                        <td>@Html.ActionLink("Campus entity.", "Campuses")</td>
+                        <td>Entity</td>
+                    </tr>
+                    <tr>
+                        <td>Sections</td>
+                        <td>@Html.ActionLink("Section entity.", "Sections")</td>
+                        <td>Entity</td>
+                    </tr>
+                </table>
+            </p>
+            <h1>Class Query Examples</h1>
+            <p>
+                Generic Heading:
+                <br />
+                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">Generic Link</a>
+            </p>
+        </div>
+    </nav>
+</body>
+</html>

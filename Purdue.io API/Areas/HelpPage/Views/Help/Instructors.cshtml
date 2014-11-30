@@ -1,0 +1,56 @@
+<html>
+<head>
+    <link type="text/css" href="~/Areas/HelpPage/HelpPage.css" rel="stylesheet" />
+    <link type="text/css" href="~/Content/css/Fonts.css" rel="stylesheet" />
+    <title>Instructors - Purdue.io Web API Help Page</title>
+</head>
+<header>
+    <div>
+        <div>
+            <h1><span class="heavy">Purdue.io</span> Web API Help Page</h1>
+        </div>
+    </div>
+</header>
+<body>
+    <nav>
+        <div class="info">
+            <h1>Instructor Object Content</h1>
+            <p>
+                <table>
+                    <tr>
+                        <td><b>Name</b></td>
+                        <td><b>Description</b></td>
+                        <td><b>Type</b></td>
+                    </tr>
+                    <tr>
+                        <td>InstructorId</td>
+                        <td>A unique identifier for a specific instructor.</td>
+                        <td>Guid</td>
+                    </tr>
+                    <tr>
+                        <td>Name</td>
+                        <td>Name of a specific instructor, i.e. "Peter W. Cook"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>Email</td>
+                        <td>Email address of the instructor.  No example to avoid spambots</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>Meetings</td>
+                        <td>@Html.ActionLink("Meeting entity.", "Meetings")</td>
+                        <td>Entity</td>
+                    </tr>
+                </table>
+            </p>
+            <h1>Instructor Query Examples</h1>
+            <p>
+                Generic Heading:
+                <br />
+                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">Generic Link</a>
+            </p>
+        </div>
+    </nav>
+</body>
+</html>

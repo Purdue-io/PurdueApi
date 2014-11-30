@@ -2,6 +2,7 @@
 <head>
     <link type="text/css" href="~/Areas/HelpPage/HelpPage.css" rel="stylesheet" />
     <link type="text/css" href="~/Content/css/Fonts.css" rel="stylesheet" />
+    <title>Purdue.io Web API Help Page</title>
 </head>
 <header>
     <div>
@@ -28,31 +29,16 @@
                 <li><a target="_blank" href="http://docs.oasis-open.org/odata/odata/v4.0/errata01/os/complete/part2-url-conventions/odata-v4.0-errata01-os-part2-url-conventions-complete.html#_Toc395267109">More Info in OData v4 Documentation</a></li>
             </ul>
             <h1>Query Examples</h1>
-            <p>
-                Listing of all courses under a particular subject:
-                <br />
-                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">odata/Courses?$filter=Subject/Abbreviation eq 'CS'&$orderby=Number asc</a>
-            </p>
-            <p>
-                Searching for a course by title with a specific word:
-                <br />
-                <a target="_blank" href="~/odata/Courses?$filter=contains(Title,%20%27Algebra%27)">odata/Courses?$filter=contains(Title, 'Algebra')</a>
-            </p>
-            <p>
-                Information about classes, sections, and meetings of a specific course by subject and number:
-                <br />
-                <a target="_blank" href="~/odata/Courses?$expand=Classes($expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation%20eq%20%27CS%27%20and%20Number%20eq%20%2718000%27">odata/Courses?$expand=Classes($expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation eq 'CS' and Number eq '18000'</a>
-            </p>
-            <p>
-                Listing of all courses that meet in a specific room (notice how any is used when narrowing down by collections):
-                <br />
-                <a target="_blank" href="~/odata/Courses?$filter=((Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Room/Building/ShortCode%20eq%20%27CL50%27))))%20and%20(Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Room/Number%20eq%20%27224%27)))))">odata/Courses?$filter=((Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Room/Building/ShortCode eq 'CL50')))) and (Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Room/Number eq '224')))))</a>
-            </p>
-            <p>
-                Listing of all courses taught by a specific professor:
-                <br />
-                <a target="_blank" href="~/odata/Courses?$filter=Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Instructors/any(i:%20i/Name%20eq%20%27Hubert%20E.%20Dunsmore%27))))">odata/Courses?$filter=Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Instructors/any(i: i/Name eq 'Hubert E. Dunsmore'))))</a>
-            </p>
+            @Html.ActionLink("Courses", "Courses") <br />
+            @Html.ActionLink("Classes", "Classes") <br />
+            @Html.ActionLink("Sections", "Sections") <br />
+            @Html.ActionLink("Meetings", "Meetings") <br />
+            @Html.ActionLink("Subjects", "Subjects") <br />
+            @Html.ActionLink("Buildings", "Buildings") <br />
+            @Html.ActionLink("Rooms", "Rooms") <br />
+            @Html.ActionLink("Instructors", "Instructors") <br />
+            @Html.ActionLink("Terms", "Terms") <br />
+            @Html.ActionLink("Campuses", "Campuses") <br />
         </div>
     </nav>
 </body>

@@ -31,6 +31,56 @@ namespace PurdueIo.Areas.HelpPage.Controllers
             return View(Configuration.Services.GetApiExplorer().ApiDescriptions);
         }
 
+        public ActionResult Courses()
+        {
+            return View("Courses");
+        }
+
+        public ActionResult Classes()
+        {
+            return View("Classes");
+        }
+
+        public ActionResult Subjects()
+        {
+            return View("Subjects");
+        }
+
+        public ActionResult Terms()
+        {
+            return View("Terms");
+        }
+
+        public ActionResult Campuses()
+        {
+            return View("Campuses");
+        }
+
+        public ActionResult Buildings()
+        {
+            return View("Buildings");
+        }
+
+        public ActionResult Sections()
+        {
+            return View("Sections");
+        }
+
+        public ActionResult Rooms()
+        {
+            return View("Rooms");
+        }
+
+        public ActionResult Instructors()
+        {
+            return View("Instructors");
+        }
+
+        public ActionResult Meetings()
+        {
+            return View("Meetings");
+        }
+
         public ActionResult Api(string apiId)
         {
             if (!String.IsNullOrEmpty(apiId))
