@@ -354,7 +354,7 @@
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
     <Content Include="Properties\webjobs-list.json" />
     <None Include="Properties\PublishProfiles\purdue__apidev.pubxml" />
-    <None Include="Properties\webjobs.props" />
+    <Content Include="Properties\webjobs.props" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
     <Content Include="Scripts\_references.js" />
