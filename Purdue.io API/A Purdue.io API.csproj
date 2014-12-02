@@ -314,6 +314,7 @@
     <Compile Include="Startup.cs" />
     <Compile Include="Utils\Utils.cs" />
     <Content Include="Properties\webjobs-list.json" />
+    <Content Include="Properties\webjobs.props" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
     <Content Include="Content\svg\arrow_back_white.svg" />
     <Content Include="Scripts\jquery-2.1.1.js" />
