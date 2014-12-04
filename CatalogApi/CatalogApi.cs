@@ -139,6 +139,19 @@ namespace CatalogApi
 			var sectionList = await _FetchCrnSeats(termCode, crn);
 			return sectionList;
 		}
+
+		/// <summary>
+		/// Attempts to add the list of CRNs given to the user's schedule for the given term.
+		/// </summary>
+		/// <param name="termCode">myPurdue code for the term to add classes to, e.g. 201510</param>
+		/// <param name="pin">User's registration PIN</param>
+		/// <param name="crnList">List of CRNs to add to the user's schedule</param>
+		/// <returns></returns>
+		public async Task AddCrn(string termCode, string pin, List<string> crnList)
+		{
+			await _AddCrn(termCode, pin, crnList);
+		}
+
 		#endregion
 
 		// Methods reserved for internal use by the API object
@@ -384,6 +397,72 @@ namespace CatalogApi
 			};
 
 			return await RequestParse<SectionSeatsParser, MyPurdueSectionSeats>(requests);
+		}
+
+		/// <summary>
+		/// Attempts to add the list of CRNs to the user's schedule for the specified term.
+		/// </summary>
+		/// <param name="termCode">myPurdue code for the desired term, e.g. 201510</param>
+		/// <param name="pin">User's registration PIN</param>
+		/// <param name="crnList">The list of CRNs to add to the user's schedule</param>
+		/// <returns></returns>
+		private async Task _AddCrn(string termCode, string pin, List<string> crnList)
+		{
+			// Set up the request list ...
+			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS";
+			var requests = new List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>>()
+			{
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS", null, initialReferrer),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", new FormUrlEncodedContent(new[] 
+					{
+						new KeyValuePair<string, string>("p_calling_proc", "bwckschd.P_CrseSearch"),
+						new KeyValuePair<string, string>("p_term", termCode)
+					}), null)
+			};
+
+			// Construct AltPin1 request...
+			var alt1BodyFields = new List<KeyValuePair<string, string>>()
+			{
+				new KeyValuePair<string, string>("crn", "dummy"),
+				new KeyValuePair<string, string>("rsts", "dummy"),
+				new KeyValuePair<string, string>("TERM_IN", termCode),
+				new KeyValuePair<string, string>("sel_crn", "dummy"),
+				new KeyValuePair<string, string>("assoc_term_in", "dummy"),
+				new KeyValuePair<string, string>("ADD_BTN", "dummy"),
+			};
+			foreach (string crn in crnList)
+			{
+				alt1BodyFields.Add(new KeyValuePair<string, string>("assoc_term_in", termCode));
+				alt1BodyFields.Add(new KeyValuePair<string, string>("sel_crn", crn + " " + termCode));
+			}
+			alt1BodyFields.Add(new KeyValuePair<string, string>("ADD_BTN", "Register"));
+
+			var alt1PostBody = new FormUrlEncodedContent(alt1BodyFields.ToArray());
+			requests.Add(new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_AltPin1", alt1PostBody, "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse"));
+
+			// Construct CheckAltPin1 request...
+			var bodyFields = new List<KeyValuePair<string, string>>() {
+				new KeyValuePair<string, string>("term_in", termCode),
+				new KeyValuePair<string, string>("assoc_term_in", "dummy"),
+				new KeyValuePair<string, string>("sel_crn", "dummy")
+			};
+
+			foreach (string crn in crnList)
+			{
+				bodyFields.Add(new KeyValuePair<string, string>("assoc_term_in", termCode));
+				bodyFields.Add(new KeyValuePair<string, string>("sel_crn", crn + " " + termCode));
+			}
+
+			bodyFields.Add(new KeyValuePair<string, string>("add_btn", "dummy"));
+			bodyFields.Add(new KeyValuePair<string, string>("add_btn", "Register"));
+			bodyFields.Add(new KeyValuePair<string, string>("sel_term_arr", termCode));
+			bodyFields.Add(new KeyValuePair<string, string>("pin", pin));
+
+			// Construct our "query"
+			var postBody = new FormUrlEncodedContent(bodyFields.ToArray());
+			requests.Add(new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_CheckAltPin1", postBody, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_AltPin1"));
+
+			await RequestParse<AddDropParser, bool>(requests);
 		}
 		#endregion
 	}

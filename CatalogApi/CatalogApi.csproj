@@ -64,6 +64,7 @@
     <Compile Include="Parsers\SectionListParser.cs" />
     <Compile Include="Parsers\SubjectListParser.cs" />
     <Compile Include="Parsers\TermListParser.cs" />
+    <Compile Include="Parsers\AddDropParser.cs" />
     <Compile Include="Parsers\TestParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
