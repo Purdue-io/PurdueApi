@@ -142,6 +142,7 @@ namespace CatalogApi
 
 		/// <summary>
 		/// Attempts to add the list of CRNs given to the user's schedule for the given term.
+		/// This method will throw an exception if there are registration errors.
 		/// </summary>
 		/// <param name="termCode">myPurdue code for the term to add classes to, e.g. 201510</param>
 		/// <param name="pin">User's registration PIN</param>
@@ -409,58 +410,58 @@ namespace CatalogApi
 		private async Task _AddCrn(string termCode, string pin, List<string> crnList)
 		{
 			// Set up the request list ...
-			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS";
+			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_ADDDROP";
 			var requests = new List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>>()
 			{
-				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_LOOKCLASS", null, initialReferrer),
-				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date", new FormUrlEncodedContent(new[] 
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_ADDDROP", null, initialReferrer),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_AltPin", null, null),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_AltPin", new FormUrlEncodedContent(new[] 
 					{
-						new KeyValuePair<string, string>("p_calling_proc", "bwckschd.P_CrseSearch"),
-						new KeyValuePair<string, string>("p_term", termCode)
+						new KeyValuePair<string, string>("term_in", termCode)
+					}), null),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_CheckAltPin", new FormUrlEncodedContent(new[] 
+					{
+						new KeyValuePair<string, string>("pin", pin)
 					}), null)
 			};
 
-			// Construct AltPin1 request...
-			var alt1BodyFields = new List<KeyValuePair<string, string>>()
+			// Construct post body ...
+			var bodyFields = new List<KeyValuePair<string, string>>()
 			{
-				new KeyValuePair<string, string>("crn", "dummy"),
-				new KeyValuePair<string, string>("rsts", "dummy"),
-				new KeyValuePair<string, string>("TERM_IN", termCode),
-				new KeyValuePair<string, string>("sel_crn", "dummy"),
-				new KeyValuePair<string, string>("assoc_term_in", "dummy"),
-				new KeyValuePair<string, string>("ADD_BTN", "dummy"),
-			};
-			foreach (string crn in crnList)
-			{
-				alt1BodyFields.Add(new KeyValuePair<string, string>("assoc_term_in", termCode));
-				alt1BodyFields.Add(new KeyValuePair<string, string>("sel_crn", crn + " " + termCode));
-			}
-			alt1BodyFields.Add(new KeyValuePair<string, string>("ADD_BTN", "Register"));
-
-			var alt1PostBody = new FormUrlEncodedContent(alt1BodyFields.ToArray());
-			requests.Add(new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_AltPin1", alt1PostBody, "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse"));
-
-			// Construct CheckAltPin1 request...
-			var bodyFields = new List<KeyValuePair<string, string>>() {
 				new KeyValuePair<string, string>("term_in", termCode),
-				new KeyValuePair<string, string>("assoc_term_in", "dummy"),
-				new KeyValuePair<string, string>("sel_crn", "dummy")
+				new KeyValuePair<string, string>("RSTS_IN", "DUMMY"),
+				new KeyValuePair<string, string>("assoc_term_in", "DUMMY"),
+				new KeyValuePair<string, string>("CRN_IN", "DUMMY"),
+				new KeyValuePair<string, string>("start_date_in", "DUMMY"),
+				new KeyValuePair<string, string>("end_date_in", "DUMMY"),
+				new KeyValuePair<string, string>("SUBJ", "DUMMY"),
+				new KeyValuePair<string, string>("CRSE", "DUMMY"),
+				new KeyValuePair<string, string>("SEC", "DUMMY"),
+				new KeyValuePair<string, string>("LEVL", "DUMMY"),
+				new KeyValuePair<string, string>("CRED", "DUMMY"),
+				new KeyValuePair<string, string>("GMOD", "DUMMY"),
+				new KeyValuePair<string, string>("TITLE", "DUMMY"),
+				new KeyValuePair<string, string>("MESG", "DUMMY"),
+				new KeyValuePair<string, string>("REG_BTN", "DUMMY"),
+				new KeyValuePair<string, string>("MESG", "DUMMY"),
 			};
 
 			foreach (string crn in crnList)
 			{
-				bodyFields.Add(new KeyValuePair<string, string>("assoc_term_in", termCode));
-				bodyFields.Add(new KeyValuePair<string, string>("sel_crn", crn + " " + termCode));
+				bodyFields.Add(new KeyValuePair<string, string>("RSTS_IN", "RW"));
+				bodyFields.Add(new KeyValuePair<string, string>("CRN_IN", crn));
+				bodyFields.Add(new KeyValuePair<string, string>("assoc_term_in", ""));
+				bodyFields.Add(new KeyValuePair<string, string>("start_date_in", ""));
+				bodyFields.Add(new KeyValuePair<string, string>("end_date_in", ""));
 			}
 
-			bodyFields.Add(new KeyValuePair<string, string>("add_btn", "dummy"));
-			bodyFields.Add(new KeyValuePair<string, string>("add_btn", "Register"));
-			bodyFields.Add(new KeyValuePair<string, string>("sel_term_arr", termCode));
-			bodyFields.Add(new KeyValuePair<string, string>("pin", pin));
+			bodyFields.Add(new KeyValuePair<string, string>("regs_row", "0"));
+			bodyFields.Add(new KeyValuePair<string, string>("wait_row", "0"));
+			bodyFields.Add(new KeyValuePair<string, string>("add_row", "" + crnList.Count));
+			bodyFields.Add(new KeyValuePair<string, string>("REG_BTN", "Submit Changes"));
 
-			// Construct our "query"
 			var postBody = new FormUrlEncodedContent(bodyFields.ToArray());
-			requests.Add(new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_CheckAltPin1", postBody, "https://selfservice.mypurdue.purdue.edu/prod/bwskfreg.P_AltPin1"));
+			requests.Add(new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwckcoms.P_Regs", postBody, null));
 
 			await RequestParse<AddDropParser, bool>(requests);
 		}
