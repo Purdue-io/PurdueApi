@@ -17,7 +17,7 @@ using PurdueIoDb.Catalog;
 namespace PurdueIo.Controllers.Odata
 {
 	[ODataRoutePrefix("Subjects")]
-	public class SubjectController : ODataController
+	public class SubjectsController : ODataController
 	{
 		private const int MAX_DEPTH = 5;
 		private ApplicationDbContext db = new ApplicationDbContext();
