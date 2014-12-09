@@ -66,6 +66,11 @@
                 <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">odata/Courses?$filter=Subject/Abbreviation eq 'CS'&$orderby=Number asc</a>
             </p>
             <p>
+                Listing of all courses under a particular subject in a certain range (for example, 300 level courses):
+                <br />
+                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27SPAN%27%20and%20Number%20ge%20%2730000%27%20and%20Number%20le%20%2739999%27&$orderby=Number%20asc">odata/Courses?$filter=Subject/Abbreviation eq 'SPAN' and Number ge '30000' and Number le '39999'&$orderby=Number asc</a>
+            </p>
+            <p>
                 Searching for a course by title with a specific word:
                 <br />
                 <a target="_blank" href="~/odata/Courses?$filter=contains(Title,%20%27Algebra%27)">odata/Courses?$filter=contains(Title, 'Algebra')</a>

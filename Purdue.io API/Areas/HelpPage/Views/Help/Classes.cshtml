@@ -51,9 +51,12 @@
             </p>
             <h1>Class Query Examples</h1>
             <p>
-                Generic Heading:
+                Direct queries on a class should be relatively rare - chances are if information about classes or subentities are needed, it will be of greater benefit to search with the courses entity as the parent.
+            </p>
+            <p>
+                Listing of all classes that meet in a specific room (notice how any is used when narrowing down by collections):
                 <br />
-                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">Generic Link</a>
+                <a target="_blank" href="~/odata/Classes?$expand=Sections($expand=Meetings)&$filter=(Sections/any(s:%20s/Meetings/any(m:%20m/Room/Building/ShortCode%20eq%20%27CL50%27)))%20and%20(Sections/any(s:%20s/Meetings/any(m:%20m/Room/Number%20eq%20%27224%27)))">odata/Classes?$expand=Sections($expand=Meetings)&$filter=(Sections/any(s: s/Meetings/any(m: m/Room/Building/ShortCode eq 'CL50'))) and (Sections/any(s: s/Meetings/any(m: m/Room/Number eq '224')))</a>
             </p>
         </div>
     </nav>

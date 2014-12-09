@@ -51,9 +51,14 @@
             </p>
             <h1>Building Query Examples</h1>
             <p>
-                Generic Heading:
+                Finding the full name of a building from its abbreviation:
                 <br />
-                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">Generic Link</a>
+                <a target="_blank" href="~/odata/Buildings?$filter=ShortCode%20eq%20%27FRNY%27">odata/Buildings?$filter=ShortCode eq 'FRNY'</a>
+            </p>
+            <p>
+                Finding a list of all the classrooms in a particular building:
+                <br />
+                <a target="_blank" href="~/odata/Buildings?$expand=Rooms&$filter=ShortCode%20eq%20%27PHYS%27">odata/Buildings?$expand=Rooms&$filter=ShortCode eq 'PHYS'</a>
             </p>
         </div>
     </nav>

@@ -96,9 +96,9 @@
             </p>
             <h1>Section Query Examples</h1>
             <p>
-                Generic Heading:
+                A list of all lectures that have at least 20 students enrolled with at least 5 spots remaining:
                 <br />
-                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">Generic Link</a>
+                <a target="_blank" href="~/odata/Sections?$filter=Type%20eq%20%27Lecture%27%20and%20Enrolled%20gt%2020%20and%20RemainingSpace%20gt%205">odata/Sections?$filter=Type eq 'Lecture' and Enrolled gt 20 and RemainingSpace gt 5</a>
             </p>
         </div>
     </nav>

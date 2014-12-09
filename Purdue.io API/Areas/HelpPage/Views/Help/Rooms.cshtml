@@ -46,9 +46,9 @@
             </p>
             <h1>Room Query Examples</h1>
             <p>
-                Generic Heading:
+                Listing of all buildings with a classroom under a specific number:
                 <br />
-                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">Generic Link</a>
+                <a target="_blank" href="~/odata/Rooms?$expand=Building&$filter=Number%20eq%20%27224%27">odata/Rooms?$expand=Building&$filter=Number eq '224'</a>
             </p>
         </div>
     </nav>

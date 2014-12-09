@@ -76,9 +76,9 @@
             </p>
             <h1>Meeting Query Examples</h1>
             <p>
-                Generic Heading:
+                A list of all lectures that start at 8:30 AM:
                 <br />
-                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">Generic Link</a>
+                <a target="_blank" href="~/odata/Meetings?$filter=Type%20eq%20%27Lecture%27%20and%20hour(StartTime)%20eq%208%20and%20minute(StartTime)%20eq%2030">odata/Meetings?$filter=Type eq 'Lecture' and hour(StartTime) eq 8 and minute(StartTime) eq 30</a>
             </p>
         </div>
     </nav>
