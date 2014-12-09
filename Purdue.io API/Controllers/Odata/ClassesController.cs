@@ -14,9 +14,11 @@ using System.Web.OData.Routing;
 using PurdueIoDb;
 using PurdueIoDb.Catalog;
 using PurdueIo.Utils;
+using System.Web.Http.Cors;
 
 namespace PurdueIo.Controllers.Odata
 {
+	[EnableCors(origins: "*", headers: "*", methods: "get")]
 	[ODataRoutePrefix("Classes")]
     public class ClassesController : ODataController
     {

@@ -9,6 +9,7 @@ using System.Web.OData.Builder;
 using System.Web.OData.Extensions;
 using PurdueIoDb.Catalog;
 using System.Web.OData.Batch;
+using System.Web.Http.Cors;
 
 namespace PurdueIo
 {
@@ -26,6 +27,9 @@ namespace PurdueIo
 
 			// Web API routes
 			config.MapHttpAttributeRoutes();
+
+			// Enable CORS
+			config.EnableCors();
 
 			config.Routes.MapHttpRoute(
 				name: "DefaultApi",

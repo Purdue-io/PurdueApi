@@ -13,12 +13,15 @@ using System.Web.OData;
 using System.Web.OData.Routing;
 using PurdueIoDb;
 using PurdueIoDb.Catalog;
+using System.Web.Http.Cors;
 
 namespace PurdueIo.Controllers.Odata
 {
+	[EnableCors(origins: "*", headers: "*", methods: "get")]
 	[ODataRoutePrefix("Subjects")]
-	public class SubjectController : ODataController
+	public class SubjectsController : ODataController
 	{
+		private const int MAX_DEPTH = 5;
 		private ApplicationDbContext db = new ApplicationDbContext();
 
 		// GET: odata/Subject
@@ -28,10 +31,10 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetSubjects()
 		{
-			return Ok(db.Subjects);
+			return Ok(db.Subjects.AsQueryable());
 		}
 
 		// GET: odata/Subject(5)
@@ -42,7 +45,7 @@ namespace PurdueIo.Controllers.Odata
 		/// <returns></returns>
 		[HttpGet]
 		[ODataRoute("({subjectKey})")]
-		[EnableQuery(MaxAnyAllExpressionDepth = 2)]
+		[EnableQuery(MaxAnyAllExpressionDepth = MAX_DEPTH, MaxExpansionDepth = MAX_DEPTH)]
 		public IHttpActionResult GetSubject([FromODataUri] Guid subjectKey)
 		{
 			return Ok(SingleResult.Create(db.Subjects.Where(subject => subject.SubjectId == subjectKey)));

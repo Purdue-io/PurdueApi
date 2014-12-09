@@ -15,9 +15,11 @@ using PurdueIoDb;
 using PurdueIoDb.Catalog;
 using PurdueIo.Utils;
 using System.Text.RegularExpressions;
+using System.Web.Http.Cors;
 
 namespace PurdueIo.Controllers.Odata
 {
+	[EnableCors(origins: "*", headers: "*", methods: "get")]
 	[ODataRoutePrefix("Courses")]
 	public class CoursesController : ODataController
     {
