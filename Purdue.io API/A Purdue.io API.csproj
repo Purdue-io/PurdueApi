@@ -292,7 +292,6 @@
     <Content Include="Areas\HelpPage\Views\Help\Sections.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Rooms.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Instructors.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Test.cshtml" />
     <None Include="Controllers\AccountController.cs.old" />
     <Compile Include="Controllers\CatalogController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
