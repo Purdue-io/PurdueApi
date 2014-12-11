@@ -22,7 +22,7 @@ namespace CatalogApi.Parsers
 			return dow;
 		}
 
-		public static Tuple<DateTimeOffset, DateTimeOffset> ParseStartEndTime(string startEndTime)
+		public static Tuple<DateTimeOffset, DateTimeOffset> ParseStartEndTime(string startEndTime, TimeZoneInfo timeZone)
 		{
 			var times = startEndTime.Split(new string[] { "-" }, StringSplitOptions.None);
 			if (times.Count() != 2)
@@ -31,11 +31,19 @@ namespace CatalogApi.Parsers
 			}
 			else
 			{
-				return new Tuple<DateTimeOffset, DateTimeOffset>(DateTimeOffset.Parse(times[0].Trim()), DateTimeOffset.Parse(times[1].Trim()));
+				var start = DateTime.Parse(times[0].Trim());
+				var startTzOffset = timeZone.GetUtcOffset(start);
+				var startDto = new DateTimeOffset(start, startTzOffset);
+				
+				var end = DateTime.Parse(times[0].Trim());
+				var endTzOffset = timeZone.GetUtcOffset(end);
+				var endDto = new DateTimeOffset(end, endTzOffset);
+
+				return new Tuple<DateTimeOffset, DateTimeOffset>(startDto, endDto);
 			}
 		}
 
-		public static Tuple<DateTimeOffset, DateTimeOffset> ParseStartEndDate(string startEndDate)
+		public static Tuple<DateTimeOffset, DateTimeOffset> ParseStartEndDate(string startEndDate, TimeZoneInfo timeZone)
 		{
 			var dateArray = startEndDate.Split(new string[] { "-" }, StringSplitOptions.None);
 			if (startEndDate.Equals("TBA") || dateArray.Count() < 2)
@@ -44,7 +52,15 @@ namespace CatalogApi.Parsers
 			}
 			else
 			{
-				return new Tuple<DateTimeOffset, DateTimeOffset>(DateTime.Parse(dateArray[0].Trim()), DateTime.Parse(dateArray[1].Trim()));
+				var start = DateTime.Parse(dateArray[0].Trim());
+				var startTzOffset = timeZone.GetUtcOffset(start);
+				var startDto = new DateTimeOffset(start, startTzOffset);
+
+				var end = DateTime.Parse(dateArray[1].Trim());
+				var endTzOffset = timeZone.GetUtcOffset(end);
+				var endDto = new DateTimeOffset(end, endTzOffset);
+
+				return new Tuple<DateTimeOffset, DateTimeOffset>(startDto, endDto);
 			}
 		}
 	}

@@ -86,13 +86,13 @@ namespace CatalogApi.Parsers
 
 				// Parse times
 				var times = HtmlEntity.DeEntitize(node.SelectSingleNode("td[10]").InnerText).Trim();
-				var startEndTimes = ParseUtility.ParseStartEndTime(times);
+				var startEndTimes = ParseUtility.ParseStartEndTime(times, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: Not hard-code time zone
 				meeting.StartTime = startEndTimes.Item1;
 				meeting.EndTime = startEndTimes.Item2;
 
 				// Parse dates
 				var dates = HtmlEntity.DeEntitize(node.SelectSingleNode("td[21]").InnerText);
-				var startEndDates = ParseUtility.ParseStartEndDate(dates);
+				var startEndDates = ParseUtility.ParseStartEndDate(dates, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: Not hard-code time zone
 				meeting.StartDate = startEndDates.Item1;
 				meeting.EndDate = startEndDates.Item2;
 
