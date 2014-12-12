@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 
@@ -14,19 +15,11 @@ namespace PurdueIo.Controllers
     {
 		[Route("Authenticate")]
 		[HttpPost]
-		public async Task<IHttpActionResult> PostAuthenticate(StudentAddCourseModel model)
+		public async Task<IHttpActionResult> PostAuthenticate()
 		{
-			if(model.username == null)
-			{
-				return BadRequest("No specified username");
-			}
+			string[] creds = ParseAuthorization(Request);
 
-			if(model.password == null)
-			{
-				return BadRequest("No specified password");
-			}
-
-			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(model.username, model.password);
+			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
 
 			//Checks to see if the credentials are correct
 			bool correct = false;
@@ -107,7 +100,7 @@ namespace PurdueIo.Controllers
 			}
 			catch (Exception e)
 			{
-				return BadRequest("An exception occured: " + e.ToString());
+				return BadRequest("An exception occured: ");
 			}
 
 			//No code to return from the async task it just goes, yolo
@@ -121,6 +114,30 @@ namespace PurdueIo.Controllers
 			return null;
 		}
 
+		private string[] ParseAuthorization(HttpRequestMessage request)
+		{
+			var he = request.Headers;
+			if(!he.Contains("Authorization"))
+			{
+				throw new  Exception("No authorization header");
+			}
 
+			string auth = request.Headers.Authorization.ToString();
+
+			if(auth == null || auth.Length == 0 || ! auth.StartsWith("Basic"))
+			{
+				throw new Exception("Invalid authorization header");
+			}
+
+			string base64Creds = auth.Substring(6);
+			string[] creds = Encoding.ASCII.GetString(Convert.FromBase64String(base64Creds)).Split(new char[] { ':' });
+
+			if(creds.Length != 2 || string.IsNullOrEmpty(creds[0]) || string.IsNullOrEmpty(creds[1]))
+			{
+				throw new Exception("Invalid authorization credentials, missing either the username or password");
+			}
+
+			return creds;
+		}
     }
 }
