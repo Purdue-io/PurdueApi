@@ -95,7 +95,7 @@ namespace PurdueIo.Controllers
 				return BadRequest("An exception occured: " + e);
 			}
 
-			//No code to return from the async task it just goes, yolo
+			//TODO: There is no error message if bogus PIN and CRN is given
 			return Ok("Added");
 		}
 
@@ -134,6 +134,7 @@ namespace PurdueIo.Controllers
 
 		//Not used anymore, it actually does not save any space or reduce work since
 		//new code need to be written to handel the output
+		//just keeping this here in case I later want to go back and abstract it
 		private async Task<string> Authenticate(CatalogApi.CatalogApi api)
 		{
 			bool correct = false;
