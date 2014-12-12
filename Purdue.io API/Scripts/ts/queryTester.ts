@@ -1,4 +1,4 @@
-﻿class Demo {
+﻿class QueryTester {
     private elementContent: HTMLElement;
     private elementQuery: HTMLInputElement;
 

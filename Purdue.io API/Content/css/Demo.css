@@ -38,15 +38,13 @@ nav {
 nav button {
   display: inline-block;
   margin: 6px 18px 6px 6px;
-  width: 52px;
-  height: 52px;
-  border-radius: 26px;
+  width: 24px;
+  height: 24px;
   border: 2px solid #fff;
-  background-color: transparent;
   cursor: pointer;
-  background-image: url('../svg/arrow_back_white.svg');
+  background-image: url('../svg/arrow_forward_white.svg');
   background-position: center;
-  background-size: 32px;
+  background-size: 24px;
   background-repeat: no-repeat;
 }
 nav button:active {
@@ -61,17 +59,41 @@ nav h1 {
   margin: 0;
   vertical-align: top;
 }
+nav h3 {
+  display: inline-block;
+  font-family: 'Open Sans';
+  font-weight: 100;
+  text-transform: lowercase;
+  margin: 0;
+  vertical-align: top;
+  padding-top: 10px;
+}
 div.content {
   position: fixed;
   display: block;
-  top: 170px;
+  top: 220px;
   right: 0;
   left: 0;
   bottom: 0;
   overflow-y: auto;
+  padding-left: 24px;
+}
+div h1 {
+  display: inline-block;
+  font-family: 'Open Sans';
+  font-weight: 100;
+  text-transform: lowercase;
+  font-size: 48px;
+  margin: 0;
+  vertical-align: top;
 }
 div.content ul:not(:last-child) {
   display: none;
+}
+div.content textarea {
+  white-space: pre;
+  word-wrap: normal;
+  overflow-x: scroll;
 }
 div.content ul.terms li,
 div.content ul.subjects li,

@@ -1,32 +1,46 @@
-﻿@{
-	Layout = null;
-}
-
-<!DOCTYPE html>
-
 <html>
 <head>
-	<meta name="viewport" content="width=device-width" />
-	<title>Purdue.io API Demo</title>
-	@Styles.Render("~/Content/css")
+    <link type="text/css" href="~/Areas/HelpPage/HelpPage.css" rel="stylesheet" />
+    <link type="text/css" href="~/Content/css/Fonts.css" rel="stylesheet" />
+    <title>Purdue.io Web API Help Page</title>
 </head>
+<header>
+    <div>
+        <div>
+            <h1><span class="heavy">Purdue.io</span> Web API Help Page</h1>
+        </div>
+    </div>
+</header>
 <body>
-	<header>
-		<h1><span class="heavy">Purdue.io</span> API Demo</h1>
-	</header>
-	<nav>
-		<button class="back"></button>
-		<h1>Select Term</h1>
-	</nav>
-	<div class="content">
-	</div>
-
-	@Scripts.Render("~/bundles/js")
-	@Scripts.Render("~/bundles/ts")
-	<script type="text/javascript">
-		window.onload = function () {
-			new Demo();
-		};
-	</script>
+    <nav>
+        <div class="info">
+            <h1>Difference Between Courses, Classes, and Sections</h1>
+            <ul>
+                <li><strong>Course:</strong> A course offered by Purdue:  CS18000</li>
+                <li><strong>Class:</strong> A specific offering of the course:  CS18000 Lecture and its connected Recitations/PSOs in Fall14</li>
+                <li><strong>Section:</strong> A specific instance of the class with a CRN:  CS18000 Lecture, with CRN 34295, taught by Antony L Hosking</li>
+            </ul>
+            <h1>Common OData Operations</h1>
+            <ul>
+                <li><strong>$filter:</strong> something that must evaluate to <strong>true</strong> in order to be returned.</li>
+                <li><strong>$select:</strong> return a subset of information about a specific entity property.</li>
+                <li><strong>$expand:</strong> also return information about specific subentities of the initial entities requested.</li>
+                <li><strong>$orderby:</strong> determines the order to display results, <strong>asc</strong> by default but can also be changed to <strong>desc</strong>.</li>
+                <li><a target="_blank" href="http://docs.oasis-open.org/odata/odata/v4.0/errata01/os/complete/part2-url-conventions/odata-v4.0-errata01-os-part2-url-conventions-complete.html#_Toc395267109">More Info in OData v4 Documentation</a></li>
+            </ul>
+            <h1>@Html.ActionLink("Query Tester", "QueryTester")</h1>
+            <h1>Query Examples</h1>
+            @Html.ActionLink("Courses", "Courses") <br />
+            @Html.ActionLink("Classes", "Classes") <br />
+            @Html.ActionLink("Sections", "Sections") <br />
+            @Html.ActionLink("Meetings", "Meetings") <br />
+            @Html.ActionLink("Subjects", "Subjects") <br />
+            @Html.ActionLink("Buildings", "Buildings") <br />
+            @Html.ActionLink("Rooms", "Rooms") <br />
+            @Html.ActionLink("Instructors", "Instructors") <br />
+            @Html.ActionLink("Terms", "Terms") <br />
+            @Html.ActionLink("Campuses", "Campuses") <br />
+        </div>
+    </nav>
 </body>
 </html>
