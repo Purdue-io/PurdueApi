@@ -17,8 +17,8 @@ namespace PurdueIo.Controllers
 		private ApplicationDbContext _Db = new ApplicationDbContext();
 
 		[Route("Authenticate")]
-		[HttpPost]
-		public async Task<IHttpActionResult> PostAuthenticate()
+		[HttpGet]
+		public async Task<IHttpActionResult> GetAuthenticate()
 		{
 			string[] creds;
 			try
