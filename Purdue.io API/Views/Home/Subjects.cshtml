@@ -1,0 +1,56 @@
+<html>
+<head>
+    <link type="text/css" href="~/Areas/HelpPage/HelpPage.css" rel="stylesheet" />
+    <link type="text/css" href="~/Content/css/Fonts.css" rel="stylesheet" />
+    <title>Subjects - Purdue.io Web API Help Page</title>
+</head>
+<header>
+    <div>
+        <div>
+            <h1><span class="heavy">Purdue.io</span> Web API Help Page</h1>
+        </div>
+    </div>
+</header>
+<body>
+    <nav>
+        <div class="info">
+            <h1>Subject Object Content</h1>
+            <p>
+                <table>
+                    <tr>
+                        <td><b>Name</b></td>
+                        <td><b>Description</b></td>
+                        <td><b>Type</b></td>
+                    </tr>
+                    <tr>
+                        <td>SubjectId</td>
+                        <td>A unique identifier for a specific subject.</td>
+                        <td>Guid</td>
+                    </tr>
+                    <tr>
+                        <td>Name</td>
+                        <td>Official subject name, i.e. "Mathematics"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>Abbreviation</td>
+                        <td>Subject standard abbreviation, i.e. "MA"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>Courses</td>
+                        <td>@Html.ActionLink("Course entity.", "Courses")</td>
+                        <td>Entity</td>
+                    </tr>
+                </table>
+            </p>
+            <h1>Subject Query Examples</h1>
+            <p>
+                Finding the full name of a department from its abbreviation:
+                <br />
+                <a target="_blank" href="~/odata/Subjects?$filter=Abbreviation%20eq%20%27MARS%27">odata/Subjects?$filter=Abbreviation eq 'MARS'</a>
+            </p>
+        </div>
+    </nav>
+</body>
+</html>

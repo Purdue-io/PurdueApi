@@ -1,0 +1,66 @@
+<html>
+<head>
+    <link type="text/css" href="~/Areas/HelpPage/HelpPage.css" rel="stylesheet" />
+    <link type="text/css" href="~/Content/css/Fonts.css" rel="stylesheet" />
+    <title>Buildings - Purdue.io Web API Help Page</title>
+</head>
+<header>
+    <div>
+        <div>
+            <h1><span class="heavy">Purdue.io</span> Web API Help Page</h1>
+        </div>
+    </div>
+</header>
+<body>
+    <nav>
+        <div class="info">
+            <h1>Building Object Content</h1>
+            <p>
+                <table>
+                    <tr>
+                        <td><b>Name</b></td>
+                        <td><b>Description</b></td>
+                        <td><b>Type</b></td>
+                    </tr>
+                    <tr>
+                        <td>BuildingId</td>
+                        <td>A unique identifier for a specific building.</td>
+                        <td>Guid</td>
+                    </tr>
+                    <tr>
+                        <td>Name</td>
+                        <td>Official name of the building, i.e. "Class of 1950 Lecture Hall"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>ShortCode</td>
+                        <td>Abbreviation of the building, i.e. "CL50"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>Campus</td>
+                        <td>@Html.ActionLink("Campus entity.", "Campuses")</td>
+                        <td>Entity</td>
+                    </tr>
+                    <tr>
+                        <td>Rooms</td>
+                        <td>@Html.ActionLink("Room entity.", "Rooms")</td>
+                        <td>Entity</td>
+                    </tr>
+                </table>
+            </p>
+            <h1>Building Query Examples</h1>
+            <p>
+                Finding the full name of a building from its abbreviation:
+                <br />
+                <a target="_blank" href="~/odata/Buildings?$filter=ShortCode%20eq%20%27FRNY%27">odata/Buildings?$filter=ShortCode eq 'FRNY'</a>
+            </p>
+            <p>
+                Finding a list of all the classrooms in a particular building:
+                <br />
+                <a target="_blank" href="~/odata/Buildings?$expand=Rooms&$filter=ShortCode%20eq%20%27PHYS%27">odata/Buildings?$expand=Rooms&$filter=ShortCode eq 'PHYS'</a>
+            </p>
+        </div>
+    </nav>
+</body>
+</html>

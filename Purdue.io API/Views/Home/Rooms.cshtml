@@ -1,0 +1,56 @@
+<html>
+<head>
+    <link type="text/css" href="~/Areas/HelpPage/HelpPage.css" rel="stylesheet" />
+    <link type="text/css" href="~/Content/css/Fonts.css" rel="stylesheet" />
+    <title>Rooms - Purdue.io Web API Help Page</title>
+</head>
+<header>
+    <div>
+        <div>
+            <h1><span class="heavy">Purdue.io</span> Web API Help Page</h1>
+        </div>
+    </div>
+</header>
+<body>
+    <nav>
+        <div class="info">
+            <h1>Room Object Content</h1>
+            <p>
+                <table>
+                    <tr>
+                        <td><b>Name</b></td>
+                        <td><b>Description</b></td>
+                        <td><b>Type</b></td>
+                    </tr>
+                    <tr>
+                        <td>RoomId</td>
+                        <td>A unique identifier for a specific room.</td>
+                        <td>Guid</td>
+                    </tr>
+                    <tr>
+                        <td>Number</td>
+                        <td>Room number, i.e. "224"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>Building</td>
+                        <td>@Html.ActionLink("Building entity.", "Buildings")</td>
+                        <td>Entity</td>
+                    </tr>
+                    <tr>
+                        <td>Meetings</td>
+                        <td>@Html.ActionLink("Meeting entity.", "Meetings")</td>
+                        <td>Entity</td>
+                    </tr>
+                </table>
+            </p>
+            <h1>Room Query Examples</h1>
+            <p>
+                Listing of all buildings with a classroom under a specific number:
+                <br />
+                <a target="_blank" href="~/odata/Rooms?$expand=Building&$filter=Number%20eq%20%27224%27">odata/Rooms?$expand=Building&$filter=Number eq '224'</a>
+            </p>
+        </div>
+    </nav>
+</body>
+</html>

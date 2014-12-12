@@ -1,0 +1,96 @@
+<html>
+<head>
+    <link type="text/css" href="~/Areas/HelpPage/HelpPage.css" rel="stylesheet" />
+    <link type="text/css" href="~/Content/css/Fonts.css" rel="stylesheet" />
+    <title>Courses - Purdue.io Web API Help Page</title>
+</head>
+<header>
+    <div>
+        <div>
+            <h1><span class="heavy">Purdue.io</span> Web API Help Page</h1>
+        </div>
+    </div>
+</header>
+<body>
+    <nav>
+        <div class="info">
+            <h1>Course Object Content</h1>
+            <p>
+                <table>
+                    <tr>
+                        <td><b>Name</b></td>
+                        <td><b>Description</b></td>
+                        <td><b>Type</b></td>
+                    </tr>
+                    <tr>
+                        <td>CourseId</td>
+                        <td>A unique identifier for a specific course.</td>
+                        <td>Guid</td>
+                    </tr>
+                    <tr>
+                        <td>Number</td>
+                        <td>Course number in a 5 digit string, i.e. "26100"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>Title</td>
+                        <td>Title of the course, i.e. "Multivariate Calculus"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>CreditHours</td>
+                        <td>Numeric value of credits for the course, i.e. "4.0"</td>
+                        <td>Double</td>
+                    </tr>
+                    <tr>
+                        <td>Description</td>
+                        <td>Course description and/or notes, i.e. "Evening Exams Required"</td>
+                        <td>String</td>
+                    </tr>
+                    <tr>
+                        <td>Subject</td>
+                        <td>@Html.ActionLink("Subject entity.", "Subjects")</td>
+                        <td>Entity</td>
+                    </tr>
+                    <tr>
+                        <td>Classes</td>
+                        <td>@Html.ActionLink("Class entity.", "Classes")</td>
+                        <td>Entity</td>
+                    </tr>
+                </table>
+            </p>
+            <h1>Course Query Examples</h1>
+            <p>
+                Listing of all courses under a particular subject:
+                <br />
+                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27CS%27&$orderby=Number%20asc">odata/Courses?$filter=Subject/Abbreviation eq 'CS'&$orderby=Number asc</a>
+            </p>
+            <p>
+                Listing of all courses under a particular subject in a certain range (for example, 300 level courses):
+                <br />
+                <a target="_blank" href="~/odata/Courses?$filter=Subject/Abbreviation%20eq%20%27SPAN%27%20and%20Number%20ge%20%2730000%27%20and%20Number%20le%20%2739999%27&$orderby=Number%20asc">odata/Courses?$filter=Subject/Abbreviation eq 'SPAN' and Number ge '30000' and Number le '39999'&$orderby=Number asc</a>
+            </p>
+            <p>
+                Searching for a course by title with a specific word:
+                <br />
+                <a target="_blank" href="~/odata/Courses?$filter=contains(Title,%20%27Algebra%27)">odata/Courses?$filter=contains(Title, 'Algebra')</a>
+            </p>
+            <p>
+                Information about classes, sections, and meetings of a specific course by subject and number:
+                <br />
+                <a target="_blank" href="~/odata/Courses?$expand=Classes($expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation%20eq%20%27CS%27%20and%20Number%20eq%20%2718000%27">odata/Courses?$expand=Classes($expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation eq 'CS' and Number eq '18000'</a>
+            </p>
+            <p>
+                Listing of all courses that meet in a specific room (notice how any is used when narrowing down by collections):
+                <br />
+                <a target="_blank" href="~/odata/Courses?$filter=((Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Room/Building/ShortCode%20eq%20%27CL50%27))))%20and%20(Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Room/Number%20eq%20%27224%27)))))">odata/Courses?$filter=((Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Room/Building/ShortCode eq 'CL50')))) and (Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Room/Number eq '224')))))</a>
+            </p>
+            <p>
+                Listing of all courses taught by a specific professor:
+                <br />
+                <a target="_blank" href="~/odata/Courses?$filter=Classes/any(c:%20c/Sections/any(s:%20s/Meetings/any(m:%20m/Instructors/any(i:%20i/Name%20eq%20%27Hubert%20E.%20Dunsmore%27))))">odata/Courses?$filter=Classes/any(c: c/Sections/any(s: s/Meetings/any(m: m/Instructors/any(i: i/Name eq 'Hubert E. Dunsmore'))))</a>
+            </p>
+        </div>
+    </nav>
+</body>
+</html>

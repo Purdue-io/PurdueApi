@@ -1,0 +1,206 @@
+﻿body {
+  margin: 0;
+  background-color: #000;
+  color: #fff;
+}
+header {
+  position: fixed;
+  display: block;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 86px;
+  color: #000;
+  background-color: #fff;
+  border-bottom: 5px solid #a3792c;
+  padding: 6px 12px;
+}
+header h1 {
+  font-family: 'Open Sans';
+  font-weight: 100;
+  text-transform: uppercase;
+  font-size: 64px;
+  margin: 0;
+  padding: 0;
+}
+header h1 span.heavy {
+  font-weight: 900;
+}
+nav {
+  position: fixed;
+  display: block;
+  height: 64px;
+  left: 0;
+  right: 0;
+  top: 104px;
+  padding-left: 24px;
+}
+nav button {
+  display: inline-block;
+  margin: 6px 18px 6px 6px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #fff;
+  cursor: pointer;
+  background-image: url('../svg/arrow_forward_white.svg');
+  background-position: center;
+  background-size: 24px;
+  background-repeat: no-repeat;
+}
+nav button:active {
+  background-color: #fff;
+}
+nav h1 {
+  display: inline-block;
+  font-family: 'Open Sans';
+  font-weight: 100;
+  text-transform: lowercase;
+  font-size: 48px;
+  margin: 0;
+  vertical-align: top;
+}
+nav h3 {
+  display: inline-block;
+  font-family: 'Open Sans';
+  font-weight: 100;
+  text-transform: lowercase;
+  margin: 0;
+  vertical-align: top;
+  padding-top: 10px;
+}
+div.content {
+  position: fixed;
+  display: block;
+  top: 220px;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
+  padding-left: 24px;
+}
+div h1 {
+  display: inline-block;
+  font-family: 'Open Sans';
+  font-weight: 100;
+  text-transform: lowercase;
+  font-size: 48px;
+  margin: 0;
+  vertical-align: top;
+}
+div.content ul:not(:last-child) {
+  display: none;
+}
+div.content textarea {
+  white-space: pre;
+  word-wrap: normal;
+  overflow-x: scroll;
+}
+div.content ul.terms li,
+div.content ul.subjects li,
+div.content ul.courses li {
+  font-family: 'Open Sans';
+  text-align: left;
+  border-left: 4px solid #a3792c;
+  background-color: #fff;
+  color: #000;
+  cursor: pointer;
+  transition: border-left-width 100ms ease-out;
+}
+div.content ul.terms li:hover,
+div.content ul.subjects li:hover,
+div.content ul.courses li:hover {
+  border-left-width: 10px;
+}
+div.content ul.terms {
+  list-style-type: none;
+  width: calc(100% - 128px);
+  margin: 0 auto;
+  text-align: center;
+}
+div.content ul.terms li {
+  display: inline-block;
+  margin: 12px;
+  font-weight: 100;
+  font-size: 32px;
+  width: 200px;
+  height: 100px;
+  line-height: 3;
+  padding-left: 6px;
+}
+div.content ul.subjects {
+  list-style-type: none;
+  width: calc(100% - 128px);
+  margin: 0 auto;
+  text-align: center;
+}
+div.content ul.subjects li {
+  display: inline-block;
+  margin: 12px;
+  font-weight: 500;
+  font-size: 22px;
+  width: 320px;
+  padding: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+div.content ul.subjects li span.abbreviation {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+div.content ul.courses {
+  list-style-type: none;
+  width: calc(100% - 128px);
+  margin: 0 auto;
+  text-align: center;
+}
+div.content ul.courses li {
+  display: block;
+  margin: 18px auto;
+  font-weight: 500;
+  font-size: 22px;
+  width: 500px;
+  padding: 4px;
+}
+div.content ul.courses li span.abbreviation {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+div.content ul.classes {
+  font-family: 'Open Sans';
+  list-style-type: none;
+  width: calc(100% - 128px);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0;
+  text-align: center;
+}
+div.content ul.classes li {
+  padding: 16px;
+  font-weight: 500;
+  text-align: left;
+  display: block;
+  margin: 32px auto;
+  width: 95%;
+  background-color: #fff;
+  color: #000;
+}
+div.content ul.classes li h1 {
+  display: inline-block;
+  margin: 0 0 0 -16px;
+  font-family: 'Open Sans';
+  font-weight: 900;
+  font-size: 32px;
+  border-left: 8px solid #a3792c;
+  padding-left: 8px;
+}
+div.content ul.classes li table th {
+  font-weight: 900;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0 6px;
+}
+div.content ul.classes li table td {
+  text-align: left;
+  padding: 6px;
+}
+/*# sourceMappingURL=Demo.css.map */
