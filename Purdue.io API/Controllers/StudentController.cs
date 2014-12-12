@@ -92,7 +92,7 @@ namespace PurdueIo.Controllers
 			}
 			catch (Exception e)
 			{
-				return BadRequest("An exception occured: ");
+				return BadRequest("An exception occured: " + e);
 			}
 
 			//No code to return from the async task it just goes, yolo
