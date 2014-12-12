@@ -282,16 +282,6 @@
     <Content Include="Content\css\Fonts.css.map">
       <DependentUpon>Fonts.css</DependentUpon>
     </Content>
-    <Content Include="Areas\HelpPage\Views\Help\Courses.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Classes.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Buildings.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Subjects.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Terms.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Campuses.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Meetings.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Sections.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Rooms.cshtml" />
-    <Content Include="Areas\HelpPage\Views\Help\Instructors.cshtml" />
     <None Include="Controllers\AccountController.cs.old" />
     <Compile Include="Controllers\CatalogController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -319,6 +309,7 @@
     <Compile Include="Results\ChallengeResult.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Utils\Utils.cs" />
+    <Content Include="Content\svg\arrow_forward_white.svg" />
     <Content Include="Properties\webjobs-list.json" />
     <Content Include="Properties\webjobs.props" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
@@ -326,6 +317,21 @@
     <Content Include="Scripts\jquery-2.1.1.js" />
     <Content Include="Scripts\jquery-2.1.1.min.js" />
     <Content Include="Scripts\jquery-2.1.1.min.map" />
+    <Content Include="Views\Home\Index.cshtml">
+      <SubType>
+      </SubType>
+    </Content>
+    <Content Include="Views\Home\Buildings.cshtml" />
+    <Content Include="Views\Home\Campuses.cshtml" />
+    <Content Include="Views\Home\Classes.cshtml" />
+    <Content Include="Views\Home\Courses.cshtml" />
+    <Content Include="Views\Home\Instructors.cshtml" />
+    <Content Include="Views\Home\Meetings.cshtml" />
+    <Content Include="Views\Home\Rooms.cshtml" />
+    <Content Include="Views\Home\Sections.cshtml" />
+    <Content Include="Views\Home\Subjects.cshtml" />
+    <Content Include="Views\Home\Terms.cshtml" />
+    <Content Include="Views\Home\QueryTester.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
@@ -364,7 +370,6 @@
     <Content Include="Scripts\modernizr-2.6.2.js" />
     <Content Include="Scripts\_references.js" />
     <Content Include="Views\_ViewStart.cshtml" />
-    <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -395,7 +400,8 @@
     <None Include="Project_Readme.html" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="Scripts\ts\demo.ts" />
+    <TypeScriptCompile Include="Scripts\ts\DataSource.ts" />
+    <TypeScriptCompile Include="Scripts\ts\DEBUG.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\building.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\class.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\course.ts" />
@@ -405,7 +411,7 @@
     <TypeScriptCompile Include="Scripts\ts\models\section.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\subject.ts" />
     <TypeScriptCompile Include="Scripts\ts\models\term.ts" />
-    <TypeScriptCompile Include="Scripts\ts\odata.ts" />
+    <TypeScriptCompile Include="Scripts\ts\queryTester.ts" />
     <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
   </ItemGroup>
   <PropertyGroup>

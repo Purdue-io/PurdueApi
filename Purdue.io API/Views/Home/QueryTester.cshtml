@@ -1,0 +1,39 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Purdue.io API Tester</title>
+    @Styles.Render("~/Content/css")
+</head>
+<body>
+    <header>
+        <h1><span class="heavy">Purdue.io</span> API Tester</h1>
+    </header>
+    <nav>
+        <h1>Test your query here</h1>
+        <br />
+        <h3>http://api.purdue.io/odata/</h3>
+        <input type="text" size="100" id="queryBox" value="Courses?$filter=contains(Title, 'Algebra')">
+        <button class="go"></button>
+    </nav>
+    <div class="content">
+        <h1>Query results</h1>
+        <br />
+        <textarea id="resultsBox" cols="140" rows="25"></textarea>
+        <br />
+    </div>
+
+    @Scripts.Render("~/bundles/js")
+    @Scripts.Render("~/bundles/ts")
+    <script type="text/javascript">
+		window.onload = function () {
+			new QueryTester();
+		};
+    </script>
+</body>
+</html>
