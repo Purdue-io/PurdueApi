@@ -59,6 +59,7 @@
     <Compile Include="Models\MyPurdueTerm.cs" />
     <Compile Include="Parsers\IParser.cs" />
     <Compile Include="Parsers\ParseUtility.cs" />
+    <Compile Include="Parsers\UserScheduleParser.cs" />
     <Compile Include="Parsers\SectionSeatsParser.cs" />
     <Compile Include="Parsers\SectionDetailsParser.cs" />
     <Compile Include="Parsers\SectionListParser.cs" />

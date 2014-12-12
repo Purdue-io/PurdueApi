@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 
@@ -13,20 +14,12 @@ namespace PurdueIo.Controllers
     public class StudentController : ApiController
     {
 		[Route("Authenticate")]
-		[HttpPost]
-		public async Task<IHttpActionResult> PostAuthenticate(StudentAddCourseModel model)
+		[HttpGet]
+		public async Task<IHttpActionResult> GetAuthenticate()
 		{
-			if(model.username == null)
-			{
-				return BadRequest("No specified username");
-			}
+			string[] creds = ParseAuthorization(Request);
 
-			if(model.password == null)
-			{
-				return BadRequest("No specified password");
-			}
-
-			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(model.username, model.password);
+			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
 
 			//Checks to see if the credentials are correct
 			bool correct = false;
@@ -58,19 +51,11 @@ namespace PurdueIo.Controllers
 		[HttpPost]
 		public async Task<IHttpActionResult> PostAddCrns(StudentAddCourseModel model)
 		{
+			string[] creds = ParseAuthorization(Request);
+
 			if(model == null)
 			{
 				return BadRequest("No body");
-			}
-
-			if(model.username == null)
-			{
-				return BadRequest("No specified username");
-			}
-
-			if(model.password == null)
-			{
-				return BadRequest("No specified password");
 			}
 
 			if(model.pin == null)
@@ -82,7 +67,7 @@ namespace PurdueIo.Controllers
 			{
 				return BadRequest("No specified CRNs");
 			}
-			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(model.username, model.password);
+			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
 
 			//Checks to see if the credentials are correct
 			bool correct = false;
@@ -103,15 +88,15 @@ namespace PurdueIo.Controllers
 			//Attemps to add the classes
 			try
 			{
-				await api.AddCrn(model.termCode, model.pin, model.crnList);
+				await api.AddCrn(model.termCode, model.pin, model.crnList.Split(new char[] { ',' }).ToList());
 			}
 			catch (Exception e)
 			{
-				return BadRequest("An exception occured: " + e.ToString());
+				return BadRequest("An exception occured: " + e);
 			}
 
-			//No code to return from the async task it just goes, yolo
-			return Ok();
+			//TODO: There is no error message if bogus PIN and CRN is given
+			return Ok("Added");
 		}
 
 		[Route("DropCrns")]
@@ -121,6 +106,53 @@ namespace PurdueIo.Controllers
 			return null;
 		}
 
+		private string[] ParseAuthorization(HttpRequestMessage request)
+		{
+			var he = request.Headers;
+			if(!he.Contains("Authorization"))
+			{
+				throw new  Exception("No authorization header");
+			}
 
+			string auth = request.Headers.Authorization.ToString();
+
+			if(auth == null || auth.Length == 0 || ! auth.StartsWith("Basic"))
+			{
+				throw new Exception("Invalid authorization header");
+			}
+
+			string base64Creds = auth.Substring(6);
+			string[] creds = Encoding.ASCII.GetString(Convert.FromBase64String(base64Creds)).Split(new char[] { ':' });
+
+			if(creds.Length != 2 || string.IsNullOrEmpty(creds[0]) || string.IsNullOrEmpty(creds[1]))
+			{
+				throw new Exception("Invalid authorization credentials, missing either the username or password");
+			}
+
+			return creds;
+		}
+
+		//Not used anymore, it actually does not save any space or reduce work since
+		//new code need to be written to handel the output
+		//just keeping this here in case I later want to go back and abstract it
+		private async Task<string> Authenticate(CatalogApi.CatalogApi api)
+		{
+			bool correct = false;
+			try
+			{
+				correct = await api.HasValidCredentials();
+			}
+			catch (Exception e)
+			{
+				return "And error occured trying to verify credentials: " + e.ToString();
+			}
+
+			if (!correct)
+			{
+				return "Invalid Credentials";
+			}
+
+			return null;
+		}
     }
 }
