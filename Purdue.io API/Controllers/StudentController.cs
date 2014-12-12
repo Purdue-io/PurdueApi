@@ -1,4 +1,5 @@
 ﻿using PurdueIo.Models;
+using PurdueIoDb;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,11 +14,21 @@ namespace PurdueIo.Controllers
 	[RoutePrefix("Students")]
     public class StudentController : ApiController
     {
+		private ApplicationDbContext _Db = new ApplicationDbContext();
+
 		[Route("Authenticate")]
 		[HttpPost]
 		public async Task<IHttpActionResult> PostAuthenticate()
 		{
-			string[] creds = ParseAuthorization(Request);
+			string[] creds;
+			try
+			{
+				creds = ParseAuthorization(Request);
+			}
+			catch(Exception e)
+			{
+				return BadRequest("Invalid header: " + e.ToString());
+			}
 
 			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
 
@@ -42,16 +53,56 @@ namespace PurdueIo.Controllers
 
 		[Route("GetSchedule")]
 		[HttpGet]
-		public IHttpActionResult GetSchedule()
+		public async Task<IHttpActionResult> GetSchedule()
 		{
-			return null;
+			string[] creds;
+			try
+			{
+				creds = ParseAuthorization(Request);
+			}
+			catch (Exception e)
+			{
+				return BadRequest("Invalid header: " + e.ToString());
+			}
+
+			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
+
+			Dictionary<string, List<string>> sch;
+			try
+			{
+				sch = await api.UserSchedule();
+			}
+			catch(Exception e)
+			{
+				return BadRequest("Error getting schedule "  + e.ToString());
+			}
+
+			//find the list of section guids
+			Dictionary<string, IEnumerable<Guid>> returnSch = new Dictionary<string, IEnumerable<Guid>>();
+			foreach (var key in sch.Keys) 
+			{
+				var list = sch[key].AsQueryable();
+				
+				returnSch.Add(key, _Db.Sections.Where(s => list.Contains(s.CRN) && s.Class.Term.Name.ToLower() == key.ToLower()).Select(s => s.SectionId));
+				//return Ok(list);
+			}
+
+			return Ok(returnSch);
 		}
 
 		[Route("AddCrns")]
 		[HttpPost]
 		public async Task<IHttpActionResult> PostAddCrns(StudentAddCourseModel model)
 		{
-			string[] creds = ParseAuthorization(Request);
+			string[] creds;
+			try
+			{
+				creds = ParseAuthorization(Request);
+			}
+			catch (Exception e)
+			{
+				return BadRequest("Invalid header: " + e.ToString());
+			}
 
 			if(model == null)
 			{
