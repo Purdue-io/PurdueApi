@@ -51,19 +51,11 @@ namespace PurdueIo.Controllers
 		[HttpPost]
 		public async Task<IHttpActionResult> PostAddCrns(StudentAddCourseModel model)
 		{
+			string[] creds = ParseAuthorization(Request);
+
 			if(model == null)
 			{
 				return BadRequest("No body");
-			}
-
-			if(model.username == null)
-			{
-				return BadRequest("No specified username");
-			}
-
-			if(model.password == null)
-			{
-				return BadRequest("No specified password");
 			}
 
 			if(model.pin == null)
@@ -75,7 +67,7 @@ namespace PurdueIo.Controllers
 			{
 				return BadRequest("No specified CRNs");
 			}
-			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(model.username, model.password);
+			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
 
 			//Checks to see if the credentials are correct
 			bool correct = false;
@@ -104,7 +96,7 @@ namespace PurdueIo.Controllers
 			}
 
 			//No code to return from the async task it just goes, yolo
-			return Ok();
+			return Ok("Added");
 		}
 
 		[Route("DropCrns")]
@@ -138,6 +130,28 @@ namespace PurdueIo.Controllers
 			}
 
 			return creds;
+		}
+
+		//Not used anymore, it actually does not save any space or reduce work since
+		//new code need to be written to handel the output
+		private async Task<string> Authenticate(CatalogApi.CatalogApi api)
+		{
+			bool correct = false;
+			try
+			{
+				correct = await api.HasValidCredentials();
+			}
+			catch (Exception e)
+			{
+				return "And error occured trying to verify credentials: " + e.ToString();
+			}
+
+			if (!correct)
+			{
+				return "Invalid Credentials";
+			}
+
+			return null;
 		}
     }
 }
