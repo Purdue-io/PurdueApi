@@ -88,7 +88,7 @@ namespace PurdueIo.Controllers
 			//Attemps to add the classes
 			try
 			{
-				await api.AddCrn(model.termCode, model.pin, model.crnList);
+				await api.AddCrn(model.termCode, model.pin, model.crnList.Split(new char[] { ',' }).ToList());
 			}
 			catch (Exception e)
 			{

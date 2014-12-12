@@ -10,7 +10,7 @@ namespace PurdueIo.Models
 	{
 		public string termCode { get; set; }
 		public string pin { get; set; }
-
-		public List<string> crnList { get; set; }
+		//comma separated
+		public string crnList { get; set; }
 	}
 }
