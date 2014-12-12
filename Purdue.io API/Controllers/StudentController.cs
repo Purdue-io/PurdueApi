@@ -9,9 +9,44 @@ using System.Web.Http;
 
 namespace PurdueIo.Controllers
 {
-	[RoutePrefix("Student")]
+	[RoutePrefix("Students")]
     public class StudentController : ApiController
     {
+		[Route("Authenticate")]
+		[HttpPost]
+		public async Task<IHttpActionResult> PostAuthenticate(StudentAddCourseModel model)
+		{
+			if(model.username == null)
+			{
+				return BadRequest("No specified username");
+			}
+
+			if(model.password == null)
+			{
+				return BadRequest("No specified password");
+			}
+
+			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(model.username, model.password);
+
+			//Checks to see if the credentials are correct
+			bool correct = false;
+			try
+			{
+				correct = await api.HasValidCredentials();
+			}
+			catch (Exception e)
+			{
+				return BadRequest("And error occured trying to verify credentials: " + e.ToString());
+			}
+
+			if (!correct)
+			{
+				return BadRequest("Invalid Credentials");
+			}
+
+			return Ok("Authenticated");
+		}
+
 		[Route("GetSchedule")]
 		[HttpGet]
 		public IHttpActionResult GetSchedule()
