@@ -83,8 +83,13 @@ namespace PurdueIo.Controllers
 			{
 				var list = sch[key].AsQueryable();
 				
-				returnSch.Add(key, _Db.Sections.Where(s => list.Contains(s.CRN) && s.Class.Term.Name.ToLower() == key.ToLower()).Select(s => s.SectionId));
-				//return Ok(list);
+				returnSch.Add(key, _Db.Sections.Where(
+										s =>	
+											list.Contains(s.CRN) && 
+											s.Class.Term.Name.ToLower() == key.ToLower()
+										).Select(
+											s => s.SectionId
+											));				
 			}
 
 			return Ok(returnSch);
