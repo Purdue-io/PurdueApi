@@ -153,6 +153,15 @@ namespace CatalogApi
 			await _AddCrn(termCode, pin, crnList);
 		}
 
+		/// <summary>
+		/// Fetches the current user's schedule
+		/// </summary>
+		/// <returns>A key-value list, key = term name (Fall 2014), value = list of CRNs for that term</returns>
+		public async Task<Dictionary<string, List<string>>> UserSchedule()
+		{
+			return await _UserSchedule();
+		}
+
 		#endregion
 
 		// Methods reserved for internal use by the API object
@@ -464,6 +473,23 @@ namespace CatalogApi
 			requests.Add(new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.POST, "https://selfservice.mypurdue.purdue.edu/prod/bwckcoms.P_Regs", postBody, null));
 
 			await RequestParse<AddDropParser, bool>(requests);
+		}
+
+		/// <summary>
+		/// Method to fetch a user's schedule
+		/// </summary>
+		/// <returns>A dictionary with keys of term name, values of lists containing CRNs</returns>
+		private async Task<Dictionary<string, List<string>>> _UserSchedule()
+		{
+			// Set up the request list ...
+			var initialReferrer = "https://wl.mypurdue.purdue.edu/render.UserLayoutRootNode.uP?uP_tparam=utf&utf=%2fcp%2fip%2flogin%3fsys%3dsctssb%26url%3dhttps://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_ACTIVEREG";
+			var requests = new List<Tuple<HttpMethod, string, FormUrlEncodedContent, string>>()
+			{
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://wl.mypurdue.purdue.edu/cp/ip/login?sys=sctssb&url=https://selfservice.mypurdue.purdue.edu/prod/tzwkwbis.P_CheckAgreeAndRedir?ret_code=STU_ACTIVEREG", null, initialReferrer),
+				new Tuple<HttpMethod, string, FormUrlEncodedContent, string>(HttpMethod.GET, "https://selfservice.mypurdue.purdue.edu/prod/bwsksreg.p_active_regs", null, null)
+			};
+
+			return await RequestParse<UserScheduleParser, Dictionary<string, List<string>>>(requests);
 		}
 		#endregion
 	}
