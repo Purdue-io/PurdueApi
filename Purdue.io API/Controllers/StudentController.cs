@@ -14,8 +14,8 @@ namespace PurdueIo.Controllers
     public class StudentController : ApiController
     {
 		[Route("Authenticate")]
-		[HttpPost]
-		public async Task<IHttpActionResult> PostAuthenticate()
+		[HttpGet]
+		public async Task<IHttpActionResult> GetAuthenticate()
 		{
 			string[] creds = ParseAuthorization(Request);
 
