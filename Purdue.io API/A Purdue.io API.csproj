@@ -474,7 +474,7 @@ XCOPY "$(SolutionDir)CatalogSync\bin\$(ConfigurationName)\*" "%25webjob_dist_pat
   </PropertyGroup>
   <Target Name="CustomCollectFiles">
     <ItemGroup>
-      <_CustomFiles Include="App_Data\CatalogSync\**\*" />
+      <_CustomFiles Include="App_Data\jobs\**\*" />
       <FilesForPackagingFromProject Include="%(_CustomFiles.Identity)">
         <DestinationRelativePath>%(RelativeDir)%(Filename)%(Extension)</DestinationRelativePath>
       </FilesForPackagingFromProject>
