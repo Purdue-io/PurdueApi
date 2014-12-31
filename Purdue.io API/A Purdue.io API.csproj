@@ -470,17 +470,14 @@
 	</CopyAllFilesToSingleFolderForMsdeployDependsOn>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>set webjob_dist_path=$(ProjectDir)App_Data\jobs\triggered\CatalogSync
-IF EXIST "%25webjob_dist_path%25" (
-  RMDIR "%25webjob_dist_path%25" /S /Q
-)
-XCOPY "$(SolutionDir)CatalogSync\bin\$(ConfigurationName)\*" "%25webjob_dist_path%25" /Q /E /I /Y</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <Target Name="CustomCollectFiles">
     <ItemGroup>
-      <_CustomFiles Include="App_Data\jobs\**\*" />
+      <_CustomFiles Include="$(SolutionDir)\CatalogSync\bin\$(ConfigurationName)\**\*" />
       <FilesForPackagingFromProject Include="%(_CustomFiles.Identity)">
-        <DestinationRelativePath>%(RelativeDir)%(Filename)%(Extension)</DestinationRelativePath>
+        <DestinationRelativePath>App_Data\jobs\triggered\CatalogSync\%(RecursiveDir)%(Filename)%(Extension)</DestinationRelativePath>
       </FilesForPackagingFromProject>
     </ItemGroup>
   </Target>
