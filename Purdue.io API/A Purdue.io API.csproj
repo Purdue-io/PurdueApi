@@ -42,6 +42,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>App_Data/PurdueIo.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Antlr3.Runtime">

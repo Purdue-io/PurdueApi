@@ -100,7 +100,6 @@
     <Content Include="App.config" />
     <Content Include="App.default.config" />
     <None Include="packages.config" />
-    <None Include="Properties\PublishProfiles\purdue__apidev.pubxml" />
     <None Include="Properties\webjobs.props" />
     <None Include="Properties\webjob-publish-settings.json" />
   </ItemGroup>
