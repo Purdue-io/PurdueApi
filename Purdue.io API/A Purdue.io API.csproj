@@ -450,11 +450,8 @@
     <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
   </Target>
   <PropertyGroup>
-    <PostBuildEvent>set webjob_dist_path=$(ProjectDir)App_Data\jobs\triggered\CatalogSync
-IF EXIST "%25webjob_dist_path%25" (
-  RMDIR "%25webjob_dist_path%25" /S /Q
-)
-XCOPY "$(SolutionDir)CatalogSync\bin\$(ConfigurationName)\*" "%25webjob_dist_path%25" /Q /E /I /Y</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -471,6 +468,13 @@ XCOPY "$(SolutionDir)CatalogSync\bin\$(ConfigurationName)\*" "%25webjob_dist_pat
 	  CustomCollectFiles;
 	  $(CopyAllFilesToSingleFolderForPackageDependsOn);
 	</CopyAllFilesToSingleFolderForMsdeployDependsOn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>set webjob_dist_path=$(ProjectDir)App_Data\jobs\triggered\CatalogSync
+IF EXIST "%25webjob_dist_path%25" (
+  RMDIR "%25webjob_dist_path%25" /S /Q
+)
+XCOPY "$(SolutionDir)CatalogSync\bin\$(ConfigurationName)\*" "%25webjob_dist_path%25" /Q /E /I /Y</PreBuildEvent>
   </PropertyGroup>
   <Target Name="CustomCollectFiles">
     <ItemGroup>
