@@ -13,7 +13,7 @@ using System.Web.Http.Cors;
 namespace PurdueIo.Controllers
 {
 	[EnableCors(origins: "*", headers: "*", methods: "*")]
-	[RoutePrefix("Students")]
+	[RoutePrefix("Student")]
     public class StudentController : ApiController
     {
 		private ApplicationDbContext _Db = new ApplicationDbContext();
@@ -53,7 +53,7 @@ namespace PurdueIo.Controllers
 			return Ok("Authenticated");
 		}
 
-		[Route("GetSchedule")]
+		[Route("Schedule")]
 		[HttpGet]
 		public async Task<IHttpActionResult> GetSchedule()
 		{

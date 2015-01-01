@@ -22,7 +22,7 @@ namespace PurdueIo.Controllers.Odata
 	[ODataRoutePrefix("Sections")]
     public class SectionsController : ODataController
     {
-		private const int MAX_DEPTH = 1;
+		private const int MAX_DEPTH = 3;
         private ApplicationDbContext _Db = new ApplicationDbContext();
 
         // GET: odata/Sections
