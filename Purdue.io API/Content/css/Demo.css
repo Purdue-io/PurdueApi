@@ -1,206 +1,176 @@
-﻿body {
-  margin: 0;
+﻿/* Common useful Functions */
+/* Animations */
+@font-face {
+  font-family: 'Open Sans';
+  src: url('../fonts/OpenSans-Regular-webfont.eot');
+  src: url('../fonts/OpenSans-Regular-webfont.eot?#iefix') format('embedded-opentype'), url('../fonts/OpenSans-Regular-webfont.woff') format('woff'), url('../fonts/OpenSans-Regular-webfont.ttf') format('truetype'), url('../fonts/OpenSans-Regular-webfont.svg#open_sanslight') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Open Sans';
+  src: url('../fonts/OpenSans-Light-webfont.eot');
+  src: url('../fonts/OpenSans-Light-webfont.eot?#iefix') format('embedded-opentype'), url('../fonts/OpenSans-Light-webfont.woff') format('woff'), url('../fonts/OpenSans-Light-webfont.ttf') format('truetype'), url('../fonts/OpenSans-Light-webfont.svg#open_sanslight') format('svg');
+  font-weight: 100;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Open Sans';
+  src: url('../fonts/OpenSans-ExtraBold-webfont.eot');
+  src: url('../fonts/OpenSans-ExtraBold-webfont.eot?#iefix') format('embedded-opentype'), url('../fonts/OpenSans-ExtraBold-webfont.woff') format('woff'), url('../fonts/OpenSans-ExtraBold-webfont.ttf') format('truetype'), url('../fonts/OpenSans-ExtraBold-webfont.svg#open_sanslight') format('svg');
+  font-weight: 900;
+  font-style: normal;
+}
+body {
   background-color: #000;
+  font-family: "Open Sans";
   color: #fff;
 }
-header {
+/* Common controls */
+h1 {
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-top: 0;
+  padding-top: 0;
+  border-bottom: 4px solid #e3ae24;
+}
+input[type=text],
+input[type=password],
+input[type=search] {
+  font-family: "Open Sans";
+  background-color: #dedede;
+  border: 0;
+  padding: 4px 8px;
+  -webkit-transition: background-color 150ms ease-in-out;
+  -moz-transition: background-color 150ms ease-in-out;
+  -o-transition: background-color 150ms ease-in-out;
+  transition: background-color 150ms ease-in-out;
+}
+input[type=text]:focus,
+input[type=password]:focus,
+input[type=search]:focus {
+  background-color: #fff;
+}
+@-moz-keyframes anim-progress-indicator {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: 48px;
+  }
+}
+@-webkit-keyframes anim-progress-indicator {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: 48px;
+  }
+}
+@keyframes anim-progress-indicator {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: 48px;
+  }
+}
+div.globalProgressIndicator {
   position: fixed;
-  display: block;
   top: 0;
   left: 0;
   right: 0;
-  height: 86px;
-  color: #000;
-  background-color: #fff;
-  border-bottom: 5px solid #a3792c;
-  padding: 6px 12px;
+  height: 18px;
+  z-index: 1000;
+  background: url(../svg/progress_stripe.svg);
+  opacity: 0.8;
+  -moz-animation-name: anim-progress-indicator;
+  -o-animation-name: anim-progress-indicator;
+  -webkit-animation-name: anim-progress-indicator;
+  animation-name: anim-progress-indicator;
+  -moz-animation-duration: 1600ms;
+  -o-animation-duration: 1600ms;
+  -webkit-animation-duration: 1600ms;
+  animation-duration: 1600ms;
+  -moz-animation-iteration-count: infinite;
+  -o-animation-iteration-count: infinite;
+  -webkit-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+  -moz-animation-direction: normal;
+  -o-animation-direction: normal;
+  -webkit-animation-direction: normal;
+  animation-direction: normal;
+  -moz-animation-timing-function: linear;
+  -o-animation-timing-function: linear;
+  -webkit-animation-timing-function: linear;
+  animation-timing-function: linear;
+  -moz-animation-play-state: running;
+  -o-animation-play-state: running;
+  -webkit-animation-play-state: running;
+  animation-play-state: running;
+  -webkit-transition: top 200ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1);
+  -moz-transition: top 200ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1);
+  -o-transition: top 200ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: top 200ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1);
 }
-header h1 {
-  font-family: 'Open Sans';
-  font-weight: 100;
-  text-transform: uppercase;
-  font-size: 64px;
-  margin: 0;
-  padding: 0;
+div.globalProgressIndicator.closed {
+  top: -18px;
+  opacity: 0;
+  -webkit-transition: top 400ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 400ms cubic-bezier(0.165, 0.84, 0.44, 1);
+  -moz-transition: top 400ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 400ms cubic-bezier(0.165, 0.84, 0.44, 1);
+  -o-transition: top 400ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 400ms cubic-bezier(0.165, 0.84, 0.44, 1);
+  transition: top 400ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 400ms cubic-bezier(0.165, 0.84, 0.44, 1);
 }
-header h1 span.heavy {
-  font-weight: 900;
-}
-nav {
-  position: fixed;
-  display: block;
-  height: 64px;
+header {
+  position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  top: 104px;
-  padding-left: 24px;
-}
-nav button {
-  display: inline-block;
-  margin: 6px 18px 6px 6px;
-  width: 24px;
-  height: 24px;
-  border: 2px solid #fff;
-  cursor: pointer;
-  background-image: url('../svg/arrow_forward_white.svg');
-  background-position: center;
-  background-size: 24px;
-  background-repeat: no-repeat;
-}
-nav button:active {
-  background-color: #fff;
-}
-nav h1 {
-  display: inline-block;
-  font-family: 'Open Sans';
-  font-weight: 100;
-  text-transform: lowercase;
-  font-size: 48px;
-  margin: 0;
-  vertical-align: top;
-}
-nav h3 {
-  display: inline-block;
-  font-family: 'Open Sans';
-  font-weight: 100;
-  text-transform: lowercase;
-  margin: 0;
-  vertical-align: top;
-  padding-top: 10px;
-}
-div.content {
-  position: fixed;
-  display: block;
-  top: 220px;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  overflow-y: auto;
-  padding-left: 24px;
-}
-div h1 {
-  display: inline-block;
-  font-family: 'Open Sans';
-  font-weight: 100;
-  text-transform: lowercase;
-  font-size: 48px;
-  margin: 0;
-  vertical-align: top;
-}
-div.content ul:not(:last-child) {
-  display: none;
-}
-div.content textarea {
-  white-space: pre;
-  word-wrap: normal;
-  overflow-x: scroll;
-}
-div.content ul.terms li,
-div.content ul.subjects li,
-div.content ul.courses li {
-  font-family: 'Open Sans';
-  text-align: left;
-  border-left: 4px solid #a3792c;
-  background-color: #fff;
-  color: #000;
-  cursor: pointer;
-  transition: border-left-width 100ms ease-out;
-}
-div.content ul.terms li:hover,
-div.content ul.subjects li:hover,
-div.content ul.courses li:hover {
-  border-left-width: 10px;
-}
-div.content ul.terms {
-  list-style-type: none;
-  width: calc(100% - 128px);
-  margin: 0 auto;
-  text-align: center;
-}
-div.content ul.terms li {
-  display: inline-block;
-  margin: 12px;
-  font-weight: 100;
-  font-size: 32px;
-  width: 200px;
-  height: 100px;
-  line-height: 3;
-  padding-left: 6px;
-}
-div.content ul.subjects {
-  list-style-type: none;
-  width: calc(100% - 128px);
-  margin: 0 auto;
-  text-align: center;
-}
-div.content ul.subjects li {
-  display: inline-block;
-  margin: 12px;
-  font-weight: 500;
-  font-size: 22px;
-  width: 320px;
-  padding: 4px;
-  white-space: nowrap;
+  height: 96px;
   overflow: hidden;
-}
-div.content ul.subjects li span.abbreviation {
-  font-weight: 900;
-  text-transform: uppercase;
-}
-div.content ul.courses {
+  font-family: "Open Sans";
+  font-weight: 200;
+  font-size: 52px;
   list-style-type: none;
-  width: calc(100% - 128px);
-  margin: 0 auto;
-  text-align: center;
-}
-div.content ul.courses li {
-  display: block;
-  margin: 18px auto;
-  font-weight: 500;
-  font-size: 22px;
-  width: 500px;
-  padding: 4px;
-}
-div.content ul.courses li span.abbreviation {
-  font-weight: 900;
-  text-transform: uppercase;
-}
-div.content ul.classes {
-  font-family: 'Open Sans';
-  list-style-type: none;
-  width: calc(100% - 128px);
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0;
-  text-align: center;
-}
-div.content ul.classes li {
-  padding: 16px;
-  font-weight: 500;
-  text-align: left;
-  display: block;
-  margin: 32px auto;
-  width: 95%;
-  background-color: #fff;
-  color: #000;
-}
-div.content ul.classes li h1 {
   display: inline-block;
-  margin: 0 0 0 -16px;
-  font-family: 'Open Sans';
-  font-weight: 900;
-  font-size: 32px;
-  border-left: 8px solid #a3792c;
-  padding-left: 8px;
+  margin: 14px 16px;
+  padding: 0;
+  white-space: nowrap;
 }
-div.content ul.classes li table th {
-  font-weight: 900;
-  text-transform: uppercase;
-  text-align: left;
-  padding: 0 6px;
+form {
+  position: relative;
+  top: 100px;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 800px;
+  text-align: center;
+  font-size: 24px;
 }
-div.content ul.classes li table td {
+form input[type=text] {
+  width: 512px;
+  font-size: 24px;
+}
+form input[type=submit],
+form a {
+  color: #e3ae24;
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  font-size: 20px;
+  margin: 8px;
+  text-decoration: none;
+}
+div.results {
+  position: absolute;
+  top: 200px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  text-align: center;
+}
+div.results pre {
+  display: inline-block;
   text-align: left;
-  padding: 6px;
 }
 /*# sourceMappingURL=Demo.css.map */

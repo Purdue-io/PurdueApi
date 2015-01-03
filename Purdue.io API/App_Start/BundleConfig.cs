@@ -10,27 +10,21 @@ namespace PurdueIo
 		// For more information on bundling, visit http://go.microsoft.com/fwlink/?LinkId=301862
 		public static void RegisterBundles(BundleCollection bundles)
 		{
-			bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
-				"~/Scripts/jquery-{version}.js"));
+			var scriptBundle = new ScriptBundle("~/bundles/ts");
+			scriptBundle.Include(
+				"~/Scripts/prettify.js",
+				"~/Scripts/es6-promise-2.0.1.js",
+                "~/Scripts/ts/JsonRequest.js",
+				"~/Scripts/ts/QueryTester.js");
+#if DEBUG
+			scriptBundle.Include("~/Scripts/ts/DEBUG.js");
+#endif
 
-			// Use the development version of Modernizr to develop with and learn from. Then, when you're
-			// ready for production, use the build tool at http://modernizr.com to pick only the tests you need.
-			bundles.Add(new ScriptBundle("~/bundles/modernizr").Include(
-				"~/Scripts/modernizr-*"));
+			bundles.Add(scriptBundle);
 
-			bundles.Add(new ScriptBundle("~/bundles/bootstrap").Include(
-				"~/Scripts/bootstrap.js",
-				"~/Scripts/respond.js"));
-
-			bundles.Add(new ScriptBundle("~/bundles/js").Include(
-				"~/Scripts/jquery-{version}.js"));
-
-			bundles.Add(new ScriptBundle("~/bundles/ts").Include(
-				"~/Scripts/ts/queryTester.js",
-                "~/Scripts/ts/DataSource.js"));
-
-			bundles.Add(new StyleBundle("~/Content/css")
-				.Include("~/Content/css/Fonts.css", new CssRewriteUrlTransform())
+			bundles.Add(new StyleBundle("~/Content/bundles/css")
+				.Include("~/Content/css/sunburst.css", new CssRewriteUrlTransform())
+				.Include("~/Content/css/prettify.css", new CssRewriteUrlTransform())
 				.Include("~/Content/css/Demo.css", new CssRewriteUrlTransform()));
 
 			// Set EnableOptimizations to false for debugging. For more information,

@@ -264,6 +264,12 @@
     <Content Include="Content\css\Fonts.min.css">
       <DependentUpon>Fonts.css</DependentUpon>
     </Content>
+    <Content Include="Content\css\Functions.css">
+      <DependentUpon>Functions.less</DependentUpon>
+    </Content>
+    <Content Include="Content\css\Functions.min.css">
+      <DependentUpon>Functions.css</DependentUpon>
+    </Content>
     <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.eot" />
     <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.ttf" />
     <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.woff" />
@@ -276,6 +282,11 @@
     <Content Include="Content\css\Fonts.less" />
     <Content Include="Content\css\Fonts.css.map">
       <DependentUpon>Fonts.css</DependentUpon>
+    </Content>
+    <Content Include="Content\css\Constants.less" />
+    <Content Include="Content\css\Functions.less" />
+    <Content Include="Content\css\Functions.css.map">
+      <DependentUpon>Functions.css</DependentUpon>
     </Content>
     <None Include="Controllers\AccountController.cs.old" />
     <Compile Include="Controllers\CatalogController.cs" />
@@ -307,13 +318,11 @@
     <Compile Include="Startup.cs" />
     <Compile Include="Utils\Utils.cs" />
     <Content Include="Content\svg\arrow_forward_white.svg" />
+    <Content Include="Content\svg\progress_stripe.svg" />
     <Content Include="Properties\webjobs-list.json" />
     <Content Include="Properties\webjobs.props" />
-    <None Include="Scripts\jquery-2.1.1.intellisense.js" />
     <Content Include="Content\svg\arrow_back_white.svg" />
-    <Content Include="Scripts\jquery-2.1.1.js" />
-    <Content Include="Scripts\jquery-2.1.1.min.js" />
-    <Content Include="Scripts\jquery-2.1.1.min.map" />
+    <Content Include="Scripts\es6-promise-2.0.1.js" />
     <Content Include="Views\Home\Index.cshtml">
       <SubType>
       </SubType>
@@ -363,8 +372,6 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\CollectionModelDescription.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
-    <None Include="Scripts\jquery-1.10.2.intellisense.js" />
-    <Content Include="Scripts\modernizr-2.6.2.js" />
     <Content Include="Scripts\_references.js" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Web.config">
@@ -400,19 +407,10 @@
     <None Include="Project_Readme.html" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="Scripts\ts\DataSource.ts" />
     <TypeScriptCompile Include="Scripts\ts\DEBUG.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\building.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\class.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\course.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\instructor.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\meeting.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\room.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\section.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\subject.ts" />
-    <TypeScriptCompile Include="Scripts\ts\models\term.ts" />
-    <TypeScriptCompile Include="Scripts\ts\queryTester.ts" />
-    <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
+    <TypeScriptCompile Include="Scripts\ts\JsonRequest.ts" />
+    <TypeScriptCompile Include="Scripts\ts\QueryTester.ts" />
+    <TypeScriptCompile Include="Scripts\typings\es6-promise\es6-promise.d.ts" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

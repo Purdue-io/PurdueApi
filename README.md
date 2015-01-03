@@ -7,6 +7,33 @@ experience for Purdue students.
 
 ###This project contains the Purdue.io API only. Front-end applications can be found in other repositories.
 
+## How do I use it?
+
+Purdue.io allows you to construct OData queries that you can run via RESTful HTTP calls to query
+for course catalog information. For example, this URL
+
+`http://api.purdue.io/odata/Courses?$filter=contains(Title, 'Algebra')`
+
+will return this:
+
+	{
+		"@odata.context":"http://api-dev.purdue.io/odata/$metadata#Courses","value":[
+		{
+		"CourseId":"0c3ace0d-8317-466e-aad8-0e47a027a8a3","Number":"15300","Title":"Algebra And Trigonometry I","CreditHours":3.0,"Description":"Supplemental Instruction (SI) study sessions are available for students in this course. Evening Exams Required."
+		},{
+		"CourseId":"69bb933f-95bb-4cf4-9b72-2b9c9f0d296f","Number":"15400","Title":"Algebra And Trigonometry II","CreditHours":3.0,"Description":"Evening Exams Required."
+		},{
+		"CourseId":"5fdfd551-ac9a-485b-991b-3e60bb0b0fae","Number":"26200","Title":"Linear Algebra And Differential Equations","CreditHours":4.0,"Description":""
+		},{
+		"CourseId":"e5111623-39a0-4c1a-9553-432493e3f3c4","Number":"45300","Title":"Elements Of Algebra I","CreditHours":3.0,"Description":""
+		}, ...
+
+## What kind of queries can I run?
+
+Check out the [wiki](https://github.com/Purdue-io/PurdueApi/wiki/)!
+You can run the [sample queries](https://github.com/Purdue-io/PurdueApi/wiki/OData-Queries#example-queries)
+there through the query tester at [http://api.purdue.io/](http://api.purdue.io/).
+
 ##Pull Requests
 Pull requests will be accepted / merged on the dev branch only. 
 
@@ -24,37 +51,5 @@ Pull requests will be accepted / merged on the dev branch only.
 	</tr>
 </table>
 
-##Developers: Getting Started
-1. Install Visual Studio 2013 Update 4
-2. Install [Visual Studio Web Essentials](http://vswebessentials.com/download) (for LESS and TypeScript compilation / tooling)
-3. Clone the repository by selecting "clone" in the "Local Git Repositories" section of Team Explorer and pasting the clone URL
-4. Switch to the dev branch by selecting "New Branch" from the Branches section of team explorer and selecting "origin/dev" from the drop-down menu.
-5. Select the Home button in Team Explorer and open the Purdue.io API Visual Studio Solution.
-6. Run!
-
-##Layout
-This repository contains 4 separate projects that make up the Purdue.io API.
-
-###A Purdue.io API
-This project is the ASP.Net Web API project that hosts the actual API. This 
-includes exposing the database via OData, and exposing RESTful API methods.
-
-###CatalogApi
-This is a class library of methods that provide access to raw myPurdue data.
-`CatalogApi` impersonates a myPurdue user, and uses authenticated HTTPS requests
-to scrape data from myPurdue pages.
-
-###CatalogSync
-This is a console application that's responsible for scraping information from myPurdue
-via the `CatalogApi` project and storing it in the SQL database. This application is run
-regularly as an Azure Webjob to keep the database up to date with the latest myPurdue 
-catalog information.
-
-###PurdueIoDb
-This is a class library that provides access to the SQL database via entity framework.
-`CatalogSync` and `A Purdue.io API` utilize this library for database access.
-
-###Test Projects
-These contain unit tests for various parts of the API. Automated builds will fail
-if these tests don't pass. You're encouraged to write new tests for added functionality,
-or improve tests for existing features.
+#Contributing
+See the [contributing](https://github.com/Purdue-io/PurdueApi/wiki/Contributing) wiki page!

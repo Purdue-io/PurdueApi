@@ -1,204 +1,139 @@
-﻿@primary-color: #a3792c;
+﻿@import "Constants.less";
+@import "Functions.less";
+@import "Fonts.less";
 
 body {
-	margin: 0;
 	background-color:#000;
+	font-family: "Open Sans";
 	color:#fff;
 }
 
+/* Common controls */
+h1 {
+	font-weight:900;
+	text-transform:uppercase;
+	margin-top:0;
+	padding-top:0;
+	border-bottom:4px solid @accent-color;
+}
+
+input[type=text], input[type=password], input[type=search] {
+	font-family:"Open Sans";
+	background-color:#dedede;
+	border:0;
+	padding:4px 8px;
+	.transition(background-color 150ms ease-in-out);
+
+	&:focus {
+		background-color:#fff;
+	}
+}
+
+@-moz-keyframes anim-progress-indicator {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: 48px;
+  }
+}
+
+@-webkit-keyframes anim-progress-indicator {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: 48px;
+  }
+}
+
+@keyframes anim-progress-indicator {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: 48px;
+  }
+}
+
+div.globalProgressIndicator {
+	position:fixed;
+	top:0;
+	left:0;
+	right:0;
+	height:18px;
+	z-index: 1000;
+	background: url(../svg/progress_stripe.svg);
+	opacity: 0.8;
+	.animation-name(anim-progress-indicator);
+	.animation-duration(1600ms);
+	.animation-iteration-count(infinite);
+	.animation-direction(normal);
+	.animation-timing-function(linear);
+	.animation-play-state(running);
+	.transition(top 200ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1););
+
+	&.closed {
+		top:-18px;
+		opacity:0;
+		.transition(top 400ms cubic-bezier(0.165, 0.84, 0.44, 1), opacity 400ms cubic-bezier(0.165, 0.84, 0.44, 1););
+	}
+}
+
 header {
-	position: fixed;
-	display: block;
+	position: absolute;
 	top: 0;
 	left: 0;
 	right: 0;
-	height: 86px;
-	color: #000;
-	background-color: #fff;
-	border-bottom: 5px solid @primary-color;
-	padding: 6px 12px;
-	h1 {
-		span.heavy {
-			font-weight: 900;
-		}
-		font-family: 'Open Sans';
-		font-weight: 100;
-		text-transform: uppercase;
-		font-size: 64px;
-		margin: 0;
-		padding: 0;
+	height: 96px;
+	overflow: hidden;
+
+	font-family: "Open Sans";
+	font-weight: 200;
+	font-size: 52px;
+	list-style-type: none;
+	display: inline-block;
+	margin: 14px 16px;
+	padding:0;
+	white-space: nowrap;
+}
+
+form {
+	position:relative;
+	top:100px;
+	margin:0 auto;
+	width:100%;
+	max-width:800px;
+	text-align:center;
+	font-size:24px;
+
+	input[type=text] {
+		width:512px;
+		font-size:24px;
+	}
+
+	input[type=submit], a {
+		color:@accent-color;
+		cursor:pointer;
+		background-color:transparent;
+		border:0;
+		font-size:20px;
+		margin:8px;
+		text-decoration:none;
 	}
 }
 
-nav {
-	position: fixed;
-	display: block;
-	height:64px;
-	left: 0;
-	right: 0;
-	top: 104px;
-	padding-left: 24px;
-
-	button {
-		display: inline-block;
-		margin: 6px 18px 6px 6px;
-		width: 52px;
-		height: 52px;
-		border-radius: 26px;
-		border: 2px solid #fff;
-		background-color: transparent;
-		cursor: pointer;
-		background-image: url('../svg/arrow_forward_white.svg');
-		background-position: center;
-		background-size: 32px;
-		background-repeat: no-repeat;
-
-		&:active {
-			background-color: #fff;
-		}
-	}
-
-	h1 {
-		display: inline-block;
-		font-family: 'Open Sans';
-		font-weight: 100;
-		text-transform: lowercase;
-		font-size: 48px;
-		margin: 0;
-		vertical-align: top;
-	}
-}
-
-div.content {
-	position: fixed;
-	display: block;
-	top: 170px;
-	right:0;
+div.results {
+	position:absolute;
+	top:200px;
 	left:0;
+	right:0;
 	bottom:0;
-	overflow-y: auto;
+	overflow:auto;
+	text-align:center;
 
-	// Only display the last data list
-	ul:not(:last-child) {
-		display:none;
-	}
-
-	ul.terms, ul.subjects, ul.courses {
-		li {
-			font-family: 'Open Sans';
-			text-align: left;
-			border-left: 4px solid @primary-color;
-			background-color: #fff;
-			color: #000;
-			cursor: pointer;
-			transition: border-left-width 100ms ease-out;
-
-			&:hover {
-				border-left-width: 10px;
-			}
-		}
-	}
-
-	ul.terms {
-		list-style-type:none;
-		width: calc(~"100% - 128px");
-		margin: 0 auto;
-		text-align:center;
-
-		li {
-			display: inline-block;
-			margin: 12px;
-			font-weight: 100;
-			font-size: 32px;
-			width: 200px;
-			height: 100px;
-			line-height: 3;
-			padding-left: 6px;
-		}
-	}
-
-	ul.subjects {
-		list-style-type: none;
-		width: calc(~"100% - 128px");
-		margin: 0 auto;
-		text-align: center;
-
-		li {
-			display: inline-block;
-			margin: 12px;
-			font-weight: 500;
-			font-size: 22px;
-			width: 320px;
-			padding: 4px;
-			white-space: nowrap;
-			overflow: hidden;
-			span.abbreviation {
-				font-weight: 900;
-				text-transform: uppercase;
-			}
-		}
-	}
-
-	ul.courses {
-		list-style-type: none;
-		width: calc(~"100% - 128px");
-		margin: 0 auto;
-		text-align: center;
-
-		li {
-			display: block;
-			margin: 18px auto;
-			font-weight: 500;
-			font-size: 22px;
-			width: 500px;
-			padding: 4px;
-			span.abbreviation {
-				font-weight: 900;
-				text-transform: uppercase;
-			}
-		}
-	}
-
-	ul.classes {
-		font-family: 'Open Sans';
-		list-style-type: none;
-		width: calc(~"100% - 128px");
-		max-width: 800px;
-		margin: 0 auto;
-		padding: 0;
-		text-align: center;
-
-		li {
-			h1 {
-				display:inline-block;
-				margin: 0 0 0 -16px;
-				font-family: 'Open Sans';
-				font-weight: 900;
-				font-size: 32px;
-				border-left: 8px solid @primary-color;
-				padding-left: 8px;
-			}
-			padding: 16px;
-			font-weight: 500;
-			text-align: left;
-			display: block;
-			margin: 32px auto;
-			width: 95%;
-			background-color: #fff;
-			color: #000;
-
-			table {
-				th {
-					font-weight: 900;
-					text-transform: uppercase;
-					text-align: left;
-					padding: 0 6px;
-				}
-				td {
-					text-align: left;
-					padding: 6px;
-				}
-			}
-		}
+	pre {
+		display:inline-block;
+		text-align:left;
 	}
 }

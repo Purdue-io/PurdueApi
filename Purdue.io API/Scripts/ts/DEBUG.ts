@@ -1,1 +1,1 @@
-﻿DataSource.APIURL = "http://api-dev.purdue.io/odata/";
+﻿QueryTester.APIURL = "";
