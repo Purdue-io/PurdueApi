@@ -1,4 +1,5 @@
 ﻿using PurdueIo.Models;
+using PurdueIo.Utils;
 using PurdueIoDb;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace PurdueIo.Controllers
 {
 	[EnableCors(origins: "*", headers: "*", methods: "*")]
 	[RoutePrefix("Student")]
+	[RequireHttps]
     public class StudentController : ApiController
     {
 		private ApplicationDbContext _Db = new ApplicationDbContext();
