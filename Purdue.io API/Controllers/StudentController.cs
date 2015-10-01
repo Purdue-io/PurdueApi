@@ -40,7 +40,7 @@ namespace PurdueIo.Controllers
 			bool correct = false;
 			try
 			{
-				correct = await api.HasValidCredentials();
+				correct = api.IsAuthenticated;
 			}
 			catch (Exception e)
 			{
@@ -133,7 +133,7 @@ namespace PurdueIo.Controllers
 			bool correct = false;
 			try
 			{
-				correct = await api.HasValidCredentials();
+				correct = api.IsAuthenticated;
 			}
 			catch (Exception e)
 			{
@@ -200,7 +200,7 @@ namespace PurdueIo.Controllers
 			bool correct = false;
 			try
 			{
-				correct = await api.HasValidCredentials();
+				correct = api.IsAuthenticated;
 			}
 			catch (Exception e)
 			{

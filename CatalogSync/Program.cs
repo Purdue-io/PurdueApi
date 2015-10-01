@@ -30,7 +30,7 @@ namespace CatalogSync
 
 		Program(string user, string pass) {
 			Api = new CatalogApi.CatalogApi(user, pass);
-			var login = Api.HasValidCredentials().Result;
+			var login = Api.Authenticate().Result;
 			if (!login) {
 				throw new UnauthorizedAccessException("Could not authenticate to myPurdue with the supplied credentials.");
 			}
@@ -76,6 +76,8 @@ namespace CatalogSync
 				{
 					await Task.Delay(RETRY_DELAY_MS);
 					Console.Write("retrying... ");
+                    Api.ResetConnection();
+                    await Api.Authenticate();
 					await SyncSubject(term, subject, retries + 1);
 				}
 				else
