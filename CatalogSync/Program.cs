@@ -23,8 +23,9 @@ namespace CatalogSync
 		{
 			var appSettings = ConfigurationManager.AppSettings;
 			var p = new Program(appSettings["MyPurdueUser"], appSettings["MyPurduePass"]); // Credentials go here.
-			Database.SetInitializer<ApplicationDbContext>(new MigrateDatabaseToLatestVersion<ApplicationDbContext, PurdueIoDb.Migrations.Configuration>()); 
-			p.Synchronize().GetAwaiter().GetResult();
+			Database.SetInitializer<ApplicationDbContext>(new MigrateDatabaseToLatestVersion<ApplicationDbContext, PurdueIoDb.Migrations.Configuration>());
+            p.Synchronize().GetAwaiter().GetResult();
+            //p.SyncSubject(new MyPurdueTerm() { Id = "201620", Name = "Spring 2016" }, new MyPurdueSubject() { SubjectCode = "MGMT", SubjectName = "Management" }).GetAwaiter().GetResult();
 			return 0;
 		}
 

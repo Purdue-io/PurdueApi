@@ -90,11 +90,11 @@ namespace CatalogApi.Parsers
 				meeting.StartTime = startEndTimes.Item1;
 				meeting.EndTime = startEndTimes.Item2;
 
-				// Parse dates
-				var dates = HtmlEntity.DeEntitize(node.SelectSingleNode("td[21]").InnerText);
-				var startEndDates = ParseUtility.ParseStartEndDate(dates, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: Not hard-code time zone
-				meeting.StartDate = startEndDates.Item1;
-				meeting.EndDate = startEndDates.Item2;
+				// Parse dates (removed - no year present, not reliable)
+				//var dates = HtmlEntity.DeEntitize(node.SelectSingleNode("td[21]").InnerText);
+				//var startEndDates = ParseUtility.ParseStartEndDate(dates, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: Not hard-code time zone
+				//meeting.StartDate = startEndDates.Item1;
+				//meeting.EndDate = startEndDates.Item2;
 
 				// Update meeting location (building short name)
 				var loc = HtmlEntity.DeEntitize(node.SelectSingleNode("td[22]").InnerText).Trim();
