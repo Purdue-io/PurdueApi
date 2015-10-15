@@ -82,7 +82,7 @@ namespace CatalogSync
             foreach (var subject in subjects)
             {
                 Console.Write(DateTimeOffset.Now.ToString("G") + " Synchronizing " + subject.SubjectCode + " / " + subject.SubjectName + ": ");
-                //await SyncSubject(term, subject);
+                await SyncSubject(term, subject);
                 Console.WriteLine("");
             }
             using (var db = new ApplicationDbContext())
