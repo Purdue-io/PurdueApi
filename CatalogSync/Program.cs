@@ -40,19 +40,66 @@ namespace CatalogSync
 		{
 			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Beginning synchronization...");
 			var terms = await Api.FetchTermList();
-			// Let's synchronize the first term that isn't STAR
-			var selectedTerm = terms.Where(t => !t.Name.ToUpper().StartsWith("STAR")).FirstOrDefault();
-			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronizing term '" + selectedTerm.Name + "'...");
-			var subjects = await Api.FetchSubjectList(selectedTerm.Id);
-			Console.WriteLine("Found " + subjects.Count + " subjects");
-			foreach (var subject in subjects)
-			{
-				Console.Write(DateTimeOffset.Now.ToString("G") + " Synchronizing " + subject.SubjectCode + " / " + subject.SubjectName + ": ");
-				await SyncSubject(selectedTerm, subject);
-				Console.WriteLine("");
-			}
-			Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronization of term '" + selectedTerm.Name + "' complete.");
+            Console.WriteLine("Found terms:");
+            foreach (var term in terms)
+            {
+                Console.WriteLine("\t " + term.Id + ": " + term.Name);
+            }
+            // Take STAR out of the list. We don't sync STAR.
+            terms = terms.Where(t => !t.Name.ToUpper().StartsWith("STAR")).ToList();
+            List<MyPurdueTerm> termsToSync = new List<MyPurdueTerm>();
+            using (var db = new ApplicationDbContext())
+            {
+                var dbTerms = db.Terms.ToList();
+                foreach (var term in terms)
+                {
+                    var dbTerm = dbTerms.SingleOrDefault(t => t.TermCode == term.Id);
+                    if (dbTerm == null 
+                        || dbTerm.EndDate > DateTimeOffset.Now
+                        || dbTerm.StartDate == DateTimeOffset.MinValue
+                        || dbTerm.EndDate == DateTimeOffset.MinValue)
+                    {
+                        termsToSync.Add(term);
+                    }
+                }
+            }
+            Console.WriteLine("Synchronizing these terms:");
+            foreach (var term in termsToSync)
+            {
+                Console.WriteLine("\t " + term.Id + ": " + term.Name);
+            }
+            foreach (var term in termsToSync)
+            {
+                await SyncTerm(term);
+            }
 		}
+
+        public async Task SyncTerm(MyPurdueTerm term)
+        {
+            Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronizing term '" + term.Name + "'...");
+            var subjects = await Api.FetchSubjectList(term.Id);
+            Console.WriteLine("Found " + subjects.Count + " subjects");
+            foreach (var subject in subjects)
+            {
+                Console.Write(DateTimeOffset.Now.ToString("G") + " Synchronizing " + subject.SubjectCode + " / " + subject.SubjectName + ": ");
+                //await SyncSubject(term, subject);
+                Console.WriteLine("");
+            }
+            using (var db = new ApplicationDbContext())
+            {
+                var dbTerm = db.Terms.SingleOrDefault(t => t.TermCode == term.Id);
+                var earliestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).OrderBy(s => s.StartDate).FirstOrDefault();
+                var latestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).OrderByDescending(s => s.EndDate).FirstOrDefault();
+                if (earliestSection != null && latestSection != null)
+                {
+                    dbTerm.StartDate = earliestSection.StartDate;
+                    dbTerm.EndDate = latestSection.EndDate;
+                    db.SaveChanges();
+                    Console.WriteLine("Updating term dates: " + dbTerm.StartDate.ToString("d") + " - " + dbTerm.EndDate.ToString("d"));
+                }
+            }
+            Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronization of term '" + term.Name + "' complete.");
+        }
 
 		public async Task SyncSubject(MyPurdueTerm term, MyPurdueSubject subject, int retries = 0)
 		{
