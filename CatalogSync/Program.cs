@@ -88,14 +88,17 @@ namespace CatalogSync
             using (var db = new ApplicationDbContext())
             {
                 var dbTerm = db.Terms.SingleOrDefault(t => t.TermCode == term.Id);
-                var earliestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).OrderBy(s => s.StartDate).FirstOrDefault();
-                var latestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).OrderByDescending(s => s.EndDate).FirstOrDefault();
-                if (earliestSection != null && latestSection != null)
+                if (dbTerm != null)
                 {
-                    dbTerm.StartDate = earliestSection.StartDate;
-                    dbTerm.EndDate = latestSection.EndDate;
-                    db.SaveChanges();
-                    Console.WriteLine("Updating term dates: " + dbTerm.StartDate.ToString("d") + " - " + dbTerm.EndDate.ToString("d"));
+                    var earliestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).OrderBy(s => s.StartDate).FirstOrDefault();
+                    var latestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).OrderByDescending(s => s.EndDate).FirstOrDefault();
+                    if (earliestSection != null && latestSection != null)
+                    {
+                        dbTerm.StartDate = earliestSection.StartDate;
+                        dbTerm.EndDate = latestSection.EndDate;
+                        db.SaveChanges();
+                        Console.WriteLine("Updating term dates: " + dbTerm.StartDate.ToString("d") + " - " + dbTerm.EndDate.ToString("d"));
+                    }
                 }
             }
             Console.WriteLine(DateTimeOffset.Now.ToString("G") + " Synchronization of term '" + term.Name + "' complete.");
