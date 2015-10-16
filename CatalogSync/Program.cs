@@ -25,7 +25,7 @@ namespace CatalogSync
 			var p = new Program(appSettings["MyPurdueUser"], appSettings["MyPurduePass"]); // Credentials go here.
 			Database.SetInitializer<ApplicationDbContext>(new MigrateDatabaseToLatestVersion<ApplicationDbContext, PurdueIoDb.Migrations.Configuration>());
             p.Synchronize().GetAwaiter().GetResult();
-            //p.SyncSubject(new MyPurdueTerm() { Id = "201620", Name = "Spring 2016" }, new MyPurdueSubject() { SubjectCode = "MGMT", SubjectName = "Management" }).GetAwaiter().GetResult();
+            //p.SyncSubject(new MyPurdueTerm() { Id = "201410", Name = "Fall 2013" }, new MyPurdueSubject() { SubjectCode = "EAPS", SubjectName = "Earth Atmos Planetary Sci" }).GetAwaiter().GetResult();
 			return 0;
 		}
 
@@ -91,8 +91,8 @@ namespace CatalogSync
                 var dbTerm = db.Terms.SingleOrDefault(t => t.TermCode == term.Id);
                 if (dbTerm != null)
                 {
-                    var earliestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).OrderBy(s => s.StartDate).FirstOrDefault();
-                    var latestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).OrderByDescending(s => s.EndDate).FirstOrDefault();
+                    var earliestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).Where(s => s.StartDate != DateTimeOffset.MinValue).OrderBy(s => s.StartDate).FirstOrDefault();
+                    var latestSection = db.Sections.Where(s => s.Class.Term.TermId == dbTerm.TermId).Where(s => s.EndDate != DateTimeOffset.MinValue).OrderByDescending(s => s.EndDate).FirstOrDefault();
                     if (earliestSection != null && latestSection != null)
                     {
                         dbTerm.StartDate = earliestSection.StartDate;
@@ -279,8 +279,11 @@ namespace CatalogSync
 						// Update all the information (whether it exists or not)
 						dbSection.Class = dbClass;
 						dbSection.Type = section.Type;
-						dbSection.StartDate = section.Meetings.OrderBy(m => m.StartDate).Select(m => m.StartDate).First();
-						dbSection.EndDate = section.Meetings.OrderByDescending(m => m.EndDate).Select(m => m.EndDate).First();
+                        if (section.Meetings.Count > 0)
+                        {
+                            dbSection.StartDate = section.Meetings.OrderBy(m => m.StartDate).Select(m => m.StartDate).First();
+                            dbSection.EndDate = section.Meetings.OrderByDescending(m => m.EndDate).Select(m => m.EndDate).First();
+                        }
 						dbSection.Capacity = section.Capacity;
 						dbSection.Enrolled = section.Enrolled;
 						dbSection.RemainingSpace = section.RemainingSpace;
