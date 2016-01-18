@@ -37,9 +37,15 @@ namespace PurdueIoDb.Catalog
 		[StringLength(10)]
 		public string CRN { get; set; }
 
+        /// <summary>
+        /// ID of the class to which this section belongs.
+        /// </summary>
+        public Guid ClassId { get; set; }
+
 		/// <summary>
 		/// The class to which this section belongs.
 		/// </summary>
+        [ForeignKey("ClassId")]
 		[InverseProperty("Sections")]
 		public virtual Class Class { get; set; }
 

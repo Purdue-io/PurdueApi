@@ -30,10 +30,16 @@ namespace PurdueIoDb.Catalog
 		[StringLength(8)]
 		public string Number { get; set; }
 
+        /// <summary>
+        /// ID of the subject to which this course belongs.
+        /// </summary>
+        public Guid SubjectId { get; set; }
+
 		/// <summary>
 		/// Reference to the subject to which this course belongs.
 		/// e.g. MA or CS subjects.
 		/// </summary>
+        [ForeignKey("SubjectId")]
 		[InverseProperty("Courses")]
 		public virtual Subject Subject { get; set; }
 
