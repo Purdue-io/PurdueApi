@@ -39,12 +39,7 @@ namespace CatalogSync
 
         public void Start()
         {
-            try {
-                Task.Run(Synchronize).Wait();
-            } catch (Exception e)
-            {
-                throw e;
-            }
+            Synchronize().Wait();
         }
 
 		public async Task Synchronize()
