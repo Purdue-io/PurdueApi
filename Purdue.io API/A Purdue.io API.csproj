@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -279,6 +278,7 @@
     <Content Include="Content\css\Functions.min.css">
       <DependentUpon>Functions.css</DependentUpon>
     </Content>
+    <Content Include="Content\css\style.css" />
     <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.eot" />
     <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.ttf" />
     <Content Include="Content\fonts\OpenSans-ExtraBold-webfont.woff" />
@@ -327,12 +327,16 @@
     <Compile Include="Startup.cs" />
     <Compile Include="Utils\RequiteHttpsAttribute.cs" />
     <Compile Include="Utils\Utils.cs" />
+    <Content Include="Content\script\app.js" />
+    <Content Include="Content\script\es6-promise-2.0.1.js" />
     <Content Include="Content\svg\arrow_forward_white.svg" />
     <Content Include="Content\svg\progress_stripe.svg" />
+    <Content Include="gruntfile.js" />
     <Content Include="Properties\webjobs-list.json" />
     <Content Include="Properties\webjobs.props" />
     <Content Include="Content\svg\arrow_back_white.svg" />
-    <Content Include="Scripts\es6-promise-2.0.1.js" />
+    <Content Include="Scripts\js\es6-promise-2.0.1.js" />
+    <Content Include="Scripts\ts\typings\es6-promise\es6-promise.d.ts" />
     <Content Include="Views\Home\Index.cshtml">
       <SubType>
       </SubType>
@@ -382,7 +386,6 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\CollectionModelDescription.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
-    <Content Include="Scripts\_references.js" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Web.config">
       <SubType>Designer</SubType>
@@ -414,19 +417,15 @@
     <Content Include="packages.config">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="package.json" />
     <None Include="Project_Readme.html" />
   </ItemGroup>
-  <ItemGroup>
-    <TypeScriptCompile Include="Scripts\ts\DEBUG.ts" />
-    <TypeScriptCompile Include="Scripts\ts\JsonRequest.ts" />
-    <TypeScriptCompile Include="Scripts\ts\QueryTester.ts" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
   <Target Name="MvcBuildViews" AfterTargets="AfterBuild" Condition="'$(MvcBuildViews)'=='true'">

@@ -4,6 +4,15 @@
 # Ignore catalog config containing myPurdue credentials
 CatalogSync/App.config
 
+# Node
+node_modules
+
+# Typescript
+.tscache
+
+# Visual Studio 2015 stuff
+.vs
+
 # Ignore Webjob Deploy Files
 **/App_Data/jobs/*
 **/App_Data/jobs/**/*
@@ -13,6 +22,10 @@ CatalogSync/App.config
 **/Scripts/ts/*.js.map
 **/Scripts/ts/**/*.js
 **/Scripts/ts/**/*.js.map
+**/Content/script/*
+
+# Ignore compiled LESS
+**/Content/css/*.css
 
 # User-specific files
 *.suo

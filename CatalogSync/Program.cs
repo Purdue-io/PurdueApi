@@ -25,7 +25,6 @@ namespace CatalogSync
 			var p = new Program(appSettings["MyPurdueUser"], appSettings["MyPurduePass"]); // Credentials go here.
 			Database.SetInitializer<ApplicationDbContext>(new MigrateDatabaseToLatestVersion<ApplicationDbContext, PurdueIoDb.Migrations.Configuration>());
             p.Start();
-            //p.SyncSubject(new MyPurdueTerm() { Id = "201410", Name = "Fall 2013" }, new MyPurdueSubject() { SubjectCode = "EAPS", SubjectName = "Earth Atmos Planetary Sci" }).GetAwaiter().GetResult();
 			return 0;
 		}
 
