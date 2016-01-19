@@ -80,6 +80,7 @@ namespace CatalogSync
                     await termSync.Synchronize();
                 }
             }
+            Console.WriteLine("Sync complete.");
         }
 	}
 }

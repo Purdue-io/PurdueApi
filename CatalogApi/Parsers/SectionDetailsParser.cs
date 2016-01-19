@@ -16,7 +16,17 @@ namespace CatalogApi.Parsers
 	{
 		public Dictionary<string, MyPurdueSection> ParseHtml(string content)
 		{
-			HtmlDocument document = new HtmlDocument();
+            // Prepare section list
+            var sections = new Dictionary<string, MyPurdueSection>();
+            MyPurdueSection section = null;
+
+            // Check if we didn't return any classes
+            if (content.Contains("No classes were found that meet your search criteria"))
+            {
+                return sections;
+            }
+
+            HtmlDocument document = new HtmlDocument();
 			document.LoadHtml(content);
 			HtmlNode docRoot = document.DocumentNode;
 
@@ -26,12 +36,8 @@ namespace CatalogApi.Parsers
 				throw new ApplicationException("Could not parse data from section details request.");
 			}
 
-			// Prepare section list
-			var sections = new Dictionary<string, MyPurdueSection>();
-			MyPurdueSection section = null;
-
-			// Loop through table rows
-			for (var i = 0; i < sectionNodes.Count; i++)
+            // Loop through table rows
+            for (var i = 0; i < sectionNodes.Count; i++)
 			{
 				var node = sectionNodes[i];
 				var crnNode = node.SelectSingleNode("td[2]");

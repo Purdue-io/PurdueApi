@@ -19,7 +19,16 @@ namespace CatalogApi.Parsers
 	{
 		public Dictionary<string,MyPurdueSection> ParseHtml(string content)
 		{
-			HtmlDocument document = new HtmlDocument();
+            // Prepare section list
+            var sections = new Dictionary<string, MyPurdueSection>();
+
+            // Check if we didn't return any classes
+            if (content.Contains("No classes were found that meet your search criteria"))
+            {
+                return sections;
+            }
+
+            HtmlDocument document = new HtmlDocument();
 			document.LoadHtml(content);
 			HtmlNode docRoot = document.DocumentNode;
 
@@ -30,10 +39,7 @@ namespace CatalogApi.Parsers
 			// Prepare regex to parse title
 			string strRegex = @"^(?<title>.*) - (?<crn>\d{5}) - (?<subj>[A-Z]{2,5}) (?<number>\d{5}) - (?<section>\w{3})(&nbsp;&nbsp;Link Id: (?<selflink>\w{0,12})&nbsp;&nbsp;Linked Sections Required\((?<otherlink>\w{0,12})\))?";
 			var regexTitle = new Regex(strRegex);
-
-			// Prepare section list
-			var sections = new Dictionary<string, MyPurdueSection>();
-
+            
 			// Loop through each listing and parse it out
 			for (var i = 0; i < termSelectNodes.Count; i += 2) // NOTE +=2 HERE
 			{
