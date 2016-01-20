@@ -305,6 +305,7 @@ namespace CatalogSync
                         // First, delete any meetings that don't exist in the latest MyPurdue pull
                         foreach (var meeting in dbSection.Meetings.ToList())
                         {
+                            meeting.Room = null; // Prevent EF from trying to attach the entity
                             // TODO: compare instructors
                             var matches = section.Meetings.Where(m =>
                                     m.Type == meeting.Type &&
