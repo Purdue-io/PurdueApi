@@ -110,11 +110,21 @@ namespace CatalogApi.Parsers
 					meeting.BuildingName = "TBA";
 					meeting.RoomNumber = "TBA";
 				}
-				else if (loc.Length > 0 && loc.Contains(" "))
+				else if (loc.Length > 0)
 				{
-					meeting.BuildingCode = loc.Substring(0, loc.IndexOf(" ")).Trim();
-					meeting.RoomNumber = loc.Substring(loc.IndexOf(" ") + 1).Trim();
-				}
+                    if (loc.Contains(" "))
+                    {
+                        meeting.BuildingCode = loc.Substring(0, loc.IndexOf(" ")).Trim();
+                        meeting.RoomNumber = loc.Substring(loc.IndexOf(" ") + 1).Trim();
+                    } else
+                    {
+                        meeting.BuildingCode = loc;
+                        meeting.RoomNumber = "";
+                    }
+				} else
+                {
+                    throw new ApplicationException("Could not parse location data for section CRN " + section.Crn + ".");
+                }
 
 				// Updating meeting type
 				meeting.Type = HtmlEntity.DeEntitize(node.SelectSingleNode("td[23]").InnerText).Trim();
