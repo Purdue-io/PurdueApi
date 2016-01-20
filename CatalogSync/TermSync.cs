@@ -291,6 +291,7 @@ namespace CatalogSync
                             || dbSection.WaitlistSpace != section.WaitlistSpace)
                         {
                             dbSection.ClassId = (Guid)dbClassId;
+                            dbSection.Class = null; // Prevent EF from trying to find the entity
                             dbSection.Type = section.Type;
                             dbSection.Capacity = section.Capacity;
                             dbSection.Enrolled = section.Enrolled;
