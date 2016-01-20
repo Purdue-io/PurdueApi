@@ -303,7 +303,7 @@ namespace CatalogSync
 
                         // Update meetings
                         // First, delete any meetings that don't exist in the latest MyPurdue pull
-                        foreach (var meeting in dbSection.Meetings)
+                        foreach (var meeting in dbSection.Meetings.ToList())
                         {
                             // TODO: compare instructors
                             var matches = section.Meetings.Where(m =>
