@@ -291,7 +291,6 @@ namespace CatalogSync
                             || dbSection.WaitlistSpace != section.WaitlistSpace)
                         {
                             dbSection.ClassId = (Guid)dbClassId;
-                            dbSection.Class = null; // Prevent EF from trying to find the entity
                             dbSection.Type = section.Type;
                             dbSection.Capacity = section.Capacity;
                             dbSection.Enrolled = section.Enrolled;
@@ -378,6 +377,7 @@ namespace CatalogSync
                         // If we've made any changes, flag this for committing to the DB later
                         if (sectionChanged)
                         {
+                            dbSection.Class = null; // Prevent EF from trying to find the entity
                             if (section.Meetings.Count > 0)
                             {
                                 var startDate = section.Meetings.OrderBy(m => m.StartDate).Select(m => m.StartDate).First();
