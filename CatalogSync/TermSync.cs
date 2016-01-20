@@ -365,7 +365,7 @@ namespace CatalogSync
                                     Instructors = instructors,
                                     RoomId = dbRoomId,
                                     DaysOfWeek = meeting.DaysOfWeek,
-                                    Section = dbSection,
+                                    SectionId = dbSection.SectionId,
                                     StartDate = meeting.StartDate,
                                     EndDate = meeting.EndDate
                                 };
