@@ -16,7 +16,17 @@ namespace CatalogApi.Parsers
 	{
 		public Dictionary<string, MyPurdueSection> ParseHtml(string content)
 		{
-			HtmlDocument document = new HtmlDocument();
+            // Prepare section list
+            var sections = new Dictionary<string, MyPurdueSection>();
+            MyPurdueSection section = null;
+
+            // Check if we didn't return any classes
+            if (content.Contains("No classes were found that meet your search criteria"))
+            {
+                return sections;
+            }
+
+            HtmlDocument document = new HtmlDocument();
 			document.LoadHtml(content);
 			HtmlNode docRoot = document.DocumentNode;
 
@@ -26,12 +36,8 @@ namespace CatalogApi.Parsers
 				throw new ApplicationException("Could not parse data from section details request.");
 			}
 
-			// Prepare section list
-			var sections = new Dictionary<string, MyPurdueSection>();
-			MyPurdueSection section = null;
-
-			// Loop through table rows
-			for (var i = 0; i < sectionNodes.Count; i++)
+            // Loop through table rows
+            for (var i = 0; i < sectionNodes.Count; i++)
 			{
 				var node = sectionNodes[i];
 				var crnNode = node.SelectSingleNode("td[2]");
@@ -90,11 +96,11 @@ namespace CatalogApi.Parsers
 				meeting.StartTime = startEndTimes.Item1;
 				meeting.EndTime = startEndTimes.Item2;
 
-				// Parse dates
-				var dates = HtmlEntity.DeEntitize(node.SelectSingleNode("td[21]").InnerText);
-				var startEndDates = ParseUtility.ParseStartEndDate(dates, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: Not hard-code time zone
-				meeting.StartDate = startEndDates.Item1;
-				meeting.EndDate = startEndDates.Item2;
+				// Parse dates (removed - no year present, not reliable)
+				//var dates = HtmlEntity.DeEntitize(node.SelectSingleNode("td[21]").InnerText);
+				//var startEndDates = ParseUtility.ParseStartEndDate(dates, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: Not hard-code time zone
+				//meeting.StartDate = startEndDates.Item1;
+				//meeting.EndDate = startEndDates.Item2;
 
 				// Update meeting location (building short name)
 				var loc = HtmlEntity.DeEntitize(node.SelectSingleNode("td[22]").InnerText).Trim();
@@ -104,11 +110,21 @@ namespace CatalogApi.Parsers
 					meeting.BuildingName = "TBA";
 					meeting.RoomNumber = "TBA";
 				}
-				else if (loc.Length > 0 && loc.Contains(" "))
+				else if (loc.Length > 0)
 				{
-					meeting.BuildingCode = loc.Substring(0, loc.IndexOf(" ")).Trim();
-					meeting.RoomNumber = loc.Substring(loc.IndexOf(" ") + 1).Trim();
-				}
+                    if (loc.Contains(" "))
+                    {
+                        meeting.BuildingCode = loc.Substring(0, loc.IndexOf(" ")).Trim();
+                        meeting.RoomNumber = loc.Substring(loc.IndexOf(" ") + 1).Trim();
+                    } else
+                    {
+                        meeting.BuildingCode = loc;
+                        meeting.RoomNumber = "";
+                    }
+				} else
+                {
+                    throw new ApplicationException("Could not parse location data for section CRN " + section.Crn + ".");
+                }
 
 				// Updating meeting type
 				meeting.Type = HtmlEntity.DeEntitize(node.SelectSingleNode("td[23]").InnerText).Trim();

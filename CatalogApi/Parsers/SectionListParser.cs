@@ -19,7 +19,16 @@ namespace CatalogApi.Parsers
 	{
 		public Dictionary<string,MyPurdueSection> ParseHtml(string content)
 		{
-			HtmlDocument document = new HtmlDocument();
+            // Prepare section list
+            var sections = new Dictionary<string, MyPurdueSection>();
+
+            // Check if we didn't return any classes
+            if (content.Contains("No classes were found that meet your search criteria"))
+            {
+                return sections;
+            }
+
+            HtmlDocument document = new HtmlDocument();
 			document.LoadHtml(content);
 			HtmlNode docRoot = document.DocumentNode;
 
@@ -30,10 +39,7 @@ namespace CatalogApi.Parsers
 			// Prepare regex to parse title
 			string strRegex = @"^(?<title>.*) - (?<crn>\d{5}) - (?<subj>[A-Z]{2,5}) (?<number>\d{5}) - (?<section>\w{3})(&nbsp;&nbsp;Link Id: (?<selflink>\w{0,12})&nbsp;&nbsp;Linked Sections Required\((?<otherlink>\w{0,12})\))?";
 			var regexTitle = new Regex(strRegex);
-
-			// Prepare section list
-			var sections = new Dictionary<string, MyPurdueSection>();
-
+            
 			// Loop through each listing and parse it out
 			for (var i = 0; i < termSelectNodes.Count; i += 2) // NOTE +=2 HERE
 			{
@@ -73,59 +79,62 @@ namespace CatalogApi.Parsers
 				}
 
 				var meetingNodes = info.SelectNodes("table[@class='datadisplaytable'][1]/tr[ not( th ) ]");
-				foreach (var meetingNode in meetingNodes)
-				{
-					var meeting = new MyPurdueMeeting();
+                if (meetingNodes != null) // yes, apparently there is a rare case of a section not having any meetings.
+                {
+                    foreach (var meetingNode in meetingNodes)
+                    {
+                        var meeting = new MyPurdueMeeting();
 
-					// Parse times
-					var times = HtmlEntity.DeEntitize(meetingNode.SelectSingleNode("td[2]").InnerText);
-					var startEndTimes = ParseUtility.ParseStartEndTime(times, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: not hard code time zones
-					meeting.StartTime = startEndTimes.Item1;
-					meeting.EndTime = startEndTimes.Item2;
+                        // Parse times
+                        var times = HtmlEntity.DeEntitize(meetingNode.SelectSingleNode("td[2]").InnerText);
+                        var startEndTimes = ParseUtility.ParseStartEndTime(times, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: not hard code time zones
+                        meeting.StartTime = startEndTimes.Item1;
+                        meeting.EndTime = startEndTimes.Item2;
 
-					// Parse days of week
-					var daysOfWeek = HtmlEntity.DeEntitize(meetingNode.SelectSingleNode("td[3]").InnerText);
-					meeting.DaysOfWeek = ParseUtility.ParseDaysOfWeek(daysOfWeek);
+                        // Parse days of week
+                        var daysOfWeek = HtmlEntity.DeEntitize(meetingNode.SelectSingleNode("td[3]").InnerText);
+                        meeting.DaysOfWeek = ParseUtility.ParseDaysOfWeek(daysOfWeek);
 
-					// Parse building / room
-					var room = HtmlEntity.DeEntitize(meetingNode.SelectSingleNode("td[4]").InnerText);
-					if (room.Equals("TBA"))
-					{
-						meeting.RoomNumber = "TBA";
-						meeting.BuildingName = "TBA";
-						meeting.BuildingCode = "TBA";
-					}
-					else
-					{
-						var index = room.LastIndexOf(" ");
-						meeting.BuildingName = room.Substring(0, index);
-						meeting.RoomNumber = room.Substring(index + 1, room.Length - index - 1);
-					}
+                        // Parse building / room
+                        var room = HtmlEntity.DeEntitize(meetingNode.SelectSingleNode("td[4]").InnerText);
+                        if (room.Equals("TBA"))
+                        {
+                            meeting.RoomNumber = "TBA";
+                            meeting.BuildingName = "TBA";
+                            meeting.BuildingCode = "TBA";
+                        }
+                        else
+                        {
+                            var index = room.LastIndexOf(" ");
+                            meeting.BuildingName = room.Substring(0, index);
+                            meeting.RoomNumber = room.Substring(index + 1, room.Length - index - 1);
+                        }
 
-					// Parse dates
-					var dates = HtmlEntity.DeEntitize(meetingNode.SelectSingleNode("td[5]").InnerText);
-					var startEndDates = ParseUtility.ParseStartEndDate(dates, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: not hard code time zones
-					meeting.StartDate = startEndDates.Item1;
-					meeting.EndDate = startEndDates.Item2;
+                        // Parse dates
+                        var dates = HtmlEntity.DeEntitize(meetingNode.SelectSingleNode("td[5]").InnerText);
+                        var startEndDates = ParseUtility.ParseStartEndDate(dates, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: not hard code time zones
+                        meeting.StartDate = startEndDates.Item1;
+                        meeting.EndDate = startEndDates.Item2;
 
-					// Parse type
-					var type = meetingNode.SelectSingleNode("td[6]").InnerText.Replace("&nbsp;", " ");
-					meeting.Type = type;
+                        // Parse type
+                        var type = meetingNode.SelectSingleNode("td[6]").InnerText.Replace("&nbsp;", " ");
+                        meeting.Type = type;
 
-					// Parse instructors
-					var instructorNodes = meetingNode.SelectNodes("td[7]/a");
-					if (instructorNodes != null)
-					{
-						foreach (var instructorNode in instructorNodes)
-						{
-							var email = instructorNode.Attributes["href"].Value.Replace("mailto:", "");
-							var name = instructorNode.Attributes["target"].Value;
-							meeting.Instructors.Add(new Tuple<string, string>(name, email));
-						}
-					}
+                        // Parse instructors
+                        var instructorNodes = meetingNode.SelectNodes("td[7]/a");
+                        if (instructorNodes != null)
+                        {
+                            foreach (var instructorNode in instructorNodes)
+                            {
+                                var email = instructorNode.Attributes["href"].Value.Replace("mailto:", "");
+                                var name = instructorNode.Attributes["target"].Value;
+                                meeting.Instructors.Add(new Tuple<string, string>(name, email));
+                            }
+                        }
 
-					section.Meetings.Add(meeting);
-				}
+                        section.Meetings.Add(meeting);
+                    }
+                }
 
 				sections.Add(section.Crn, section);
 			}

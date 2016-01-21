@@ -1,0 +1,10 @@
+{
+	"version": "1.0.0",
+	"name": "PurdueIo",
+	"private": true,
+  "devDependencies": {
+    "grunt-ts": "^5.3.2",
+    "grunt-contrib-less": "^1.1.0",
+    "grunt-contrib-copy": "^0.8.2"
+  }
+}

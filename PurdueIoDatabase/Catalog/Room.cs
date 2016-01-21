@@ -26,9 +26,15 @@ namespace PurdueIoDb.Catalog
 		/// </summary>
 		public string Number { get; set; }
 
+        /// <summary>
+        /// ID of the building to which this room belongs.
+        /// </summary>
+        public Guid BuildingId { get; set; }
+
 		/// <summary>
 		/// The building to which this room belongs.
 		/// </summary>
+        [ForeignKey("BuildingId")]
 		[InverseProperty("Rooms")]
 		public virtual Building Building { get; set; }
 

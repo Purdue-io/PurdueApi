@@ -27,9 +27,15 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid MeetingId { get; set; }
 
+        /// <summary>
+        /// ID of the section this meeting is a part of.
+        /// </summary>
+        public Guid SectionId { get; set; }
+
 		/// <summary>
 		/// The section this meeting is a part of.
 		/// </summary>
+        [ForeignKey("SectionId")]
 		[InverseProperty("Meetings")]
 		public virtual Section Section { get; set; }
 
@@ -69,9 +75,15 @@ namespace PurdueIoDb.Catalog
 		/// </summary>
 		public TimeSpan Duration { get; set; }
 
+        /// <summary>
+        /// ID of the room in which this meeting occurs.
+        /// </summary>
+        public Guid? RoomId { get; set; }
+
 		/// <summary>
 		/// The room in which this meeting occurs.
 		/// </summary>
+        [ForeignKey("RoomId")]
 		[InverseProperty("Meetings")]
 		public virtual Room Room { get; set; }
 

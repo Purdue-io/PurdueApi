@@ -21,9 +21,15 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid BuildingId { get; set; }
 
+        /// <summary>
+        /// ID of the campus on which this building is located.
+        /// </summary>
+        public Guid CampusId { get; set; }
+
 		/// <summary>
 		/// The campus on which this building is located.
 		/// </summary>
+        [ForeignKey("CampusId")]
 		[InverseProperty("Buildings")]
 		public virtual Campus Campus { get; set; }
 

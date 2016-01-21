@@ -1,6 +1,4 @@
-﻿var APIURL = "http://api.purdue.io/odata/";
-
-enum httpMethod {
+﻿enum httpMethod {
 	GET,
 	POST
 };

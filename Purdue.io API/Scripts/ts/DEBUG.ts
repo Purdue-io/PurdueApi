@@ -1,1 +1,3 @@
-﻿QueryTester.APIURL = "";
+﻿/// <reference path="QueryTester.ts" />
+
+QueryTester.APIURL = "";

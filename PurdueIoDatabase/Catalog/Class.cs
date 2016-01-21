@@ -22,21 +22,39 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid ClassId { get; set; }
 
+        /// <summary>
+        /// ID of the course to which this class belongs.
+        /// </summary>
+        public Guid CourseId { get; set; }
+
 		/// <summary>
 		/// The course to which this class belongs.
 		/// </summary>
+        [ForeignKey("CourseId")]
 		[InverseProperty("Classes")]
 		public virtual Course Course { get; set; }
+
+        /// <summary>
+        /// ID of the term that this class belongs to.
+        /// </summary>
+        public Guid TermId { get; set; }
 
 		/// <summary>
 		/// The term (e.g. semester) that this class belongs to.
 		/// </summary>
+        [ForeignKey("TermId")]
 		[InverseProperty("Classes")]
 		public virtual Term Term { get; set; }
+
+        /// <summary>
+        /// ID of the campus on which this class is taught.
+        /// </summary>
+        public Guid CampusId { get; set; }
 
 		/// <summary>
 		/// The campus on which this class is taught.
 		/// </summary>
+        [ForeignKey("CampusId")]
 		public virtual Campus Campus { get; set; }
 
 		/// <summary>
