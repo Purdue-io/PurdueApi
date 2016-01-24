@@ -22,7 +22,7 @@ namespace PurdueIo.Controllers
 
 		[Route("Authenticate")]
 		[HttpGet]
-		public async Task<IHttpActionResult> GetAuthenticate()
+		public IHttpActionResult GetAuthenticate()
 		{
 			string[] creds;
 			try
@@ -195,7 +195,7 @@ namespace PurdueIo.Controllers
 		//Not used anymore, it actually does not save any space or reduce work since
 		//new code need to be written to handel the output
 		//just keeping this here in case I later want to go back and abstract it
-		private async Task<string> Authenticate(CatalogApi.CatalogApi api)
+		private string Authenticate(CatalogApi.CatalogApi api)
 		{
 			bool correct = false;
 			try
