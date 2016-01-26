@@ -26,7 +26,7 @@ namespace PurdueIoDb.Migrations
                         Room_RoomId = c.Guid(),
                         Section_SectionId = c.Guid(),
                     })
-                .PrimaryKey(t => t.MeetingId)
+                .PrimaryKey(t => t.MeetingId, clustered: false)
                 .ForeignKey("dbo.Rooms", t => t.Room_RoomId)
                 .ForeignKey("dbo.Sections", t => t.Section_SectionId)
                 .Index(t => t.Room_RoomId)
@@ -39,7 +39,7 @@ namespace PurdueIoDb.Migrations
                         Instructor_InstructorId = c.Guid(nullable: false),
                         Meeting_MeetingId = c.Guid(nullable: false),
                     })
-                .PrimaryKey(t => new { t.Instructor_InstructorId, t.Meeting_MeetingId })
+                .PrimaryKey(t => new { t.Instructor_InstructorId, t.Meeting_MeetingId }, clustered: false)
                 .ForeignKey("dbo.Instructors", t => t.Instructor_InstructorId, cascadeDelete: true)
                 .ForeignKey("dbo.Meetings", t => t.Meeting_MeetingId, cascadeDelete: true)
                 .Index(t => t.Instructor_InstructorId)
