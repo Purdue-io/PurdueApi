@@ -21,10 +21,17 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid CampusId { get; set; }
 
-		/// <summary>
-		/// A short code to refer to this campus. e.g. "PWL"
-		/// </summary>
-		[Index]
+        /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int CampusClusterId { get; set; }
+
+        /// <summary>
+        /// A short code to refer to this campus. e.g. "PWL"
+        /// </summary>
+        [Index]
 		[StringLength(12)]
 		public string Code { get; set; }
 

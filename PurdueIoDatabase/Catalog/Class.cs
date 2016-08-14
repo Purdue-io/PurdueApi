@@ -23,6 +23,13 @@ namespace PurdueIoDb.Catalog
 		public Guid ClassId { get; set; }
 
         /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int ClassClusterId { get; set; }
+
+        /// <summary>
         /// ID of the course to which this class belongs.
         /// </summary>
         public Guid CourseId { get; set; }

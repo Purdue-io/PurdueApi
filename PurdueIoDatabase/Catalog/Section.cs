@@ -30,10 +30,17 @@ namespace PurdueIoDb.Catalog
 		/// </summary>
 		public Guid SectionId { get; set; }
 
-		/// <summary>
-		/// Reference number used by Purdue to refer to sections.
-		/// </summary>
-		[Index]
+        /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int SectionClusterId { get; set; }
+
+        /// <summary>
+        /// Reference number used by Purdue to refer to sections.
+        /// </summary>
+        [Index]
 		[StringLength(10)]
 		public string CRN { get; set; }
 

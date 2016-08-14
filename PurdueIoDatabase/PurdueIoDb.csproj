@@ -97,6 +97,10 @@
     <Compile Include="Migrations\201601161017129_NavigationKeys.Designer.cs">
       <DependentUpon>201601161017129_NavigationKeys.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201608140043246_ClusteredIds.cs" />
+    <Compile Include="Migrations\201608140043246_ClusteredIds.Designer.cs">
+      <DependentUpon>201608140043246_ClusteredIds.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -127,6 +131,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201601161017129_NavigationKeys.resx">
       <DependentUpon>201601161017129_NavigationKeys.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201608140043246_ClusteredIds.resx">
+      <DependentUpon>201608140043246_ClusteredIds.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

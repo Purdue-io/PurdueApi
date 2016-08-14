@@ -22,10 +22,17 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid TermId { get; set; }
 
-		/// <summary>
-		/// Short term code such as "fall14" referred to by course catalog.
-		/// </summary>
-		[Index]
+        /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int TermClusterId { get; set; }
+
+        /// <summary>
+        /// Short term code such as "fall14" referred to by course catalog.
+        /// </summary>
+        [Index]
 		[StringLength(12)]
 		public string TermCode { get; set; }
 

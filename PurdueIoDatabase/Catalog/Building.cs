@@ -22,6 +22,13 @@ namespace PurdueIoDb.Catalog
 		public Guid BuildingId { get; set; }
 
         /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int BuildingClusterId { get; set; }
+
+        /// <summary>
         /// ID of the campus on which this building is located.
         /// </summary>
         public Guid CampusId { get; set; }
