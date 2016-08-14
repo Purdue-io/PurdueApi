@@ -21,10 +21,17 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid SubjectId { get; set; }
 
-		/// <summary>
-		/// The full name of the subject, e.g. "Computer Science".
-		/// </summary>
-		public string Name { get; set; }
+        /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int SubjectClusterId { get; set; }
+
+        /// <summary>
+        /// The full name of the subject, e.g. "Computer Science".
+        /// </summary>
+        public string Name { get; set; }
 
 		/// <summary>
 		/// The 2-4 character abbreviation of the subject, e.g. "CS" or "ENG".

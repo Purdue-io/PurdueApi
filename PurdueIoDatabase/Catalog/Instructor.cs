@@ -21,11 +21,18 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid InstructorId { get; set; }
 
-		/// <summary>
-		/// Instructor's full name as listed in MyPurdue.
-		/// TODO: Additional parsing for first, last, etc.
-		/// </summary>
-		public string Name { get; set; }
+        /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int InstructorClusterId { get; set; }
+
+        /// <summary>
+        /// Instructor's full name as listed in MyPurdue.
+        /// TODO: Additional parsing for first, last, etc.
+        /// </summary>
+        public string Name { get; set; }
 
 		/// <summary>
 		/// Instructor's e-mail address

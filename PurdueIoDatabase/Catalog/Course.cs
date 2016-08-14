@@ -22,11 +22,18 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid CourseId { get; set; }
 
-		/// <summary>
-		/// 6 digit code used to identify this course inside of a subject.
-		/// e.g. '26500' would be the code representing MA26500. 
-		/// </summary>
-		[Index]
+        /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int CourseClusterId { get; set; }
+
+        /// <summary>
+        /// 6 digit code used to identify this course inside of a subject.
+        /// e.g. '26500' would be the code representing MA26500. 
+        /// </summary>
+        [Index]
 		[StringLength(8)]
 		public string Number { get; set; }
 

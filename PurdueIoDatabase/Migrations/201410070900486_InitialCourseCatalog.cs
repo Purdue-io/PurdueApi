@@ -16,7 +16,7 @@ namespace PurdueIoDb.Migrations
                         ShortCode = c.String(maxLength: 8),
                         Campus_CampusId = c.Guid(),
                     })
-                .PrimaryKey(t => t.BuildingId)
+                .PrimaryKey(t => t.BuildingId, clustered: false)
                 .ForeignKey("dbo.Campus", t => t.Campus_CampusId)
                 .Index(t => t.ShortCode)
                 .Index(t => t.Campus_CampusId);
@@ -29,7 +29,7 @@ namespace PurdueIoDb.Migrations
                         Name = c.String(),
                         ZipCode = c.String(maxLength: 5),
                     })
-                .PrimaryKey(t => t.CampusId);
+                .PrimaryKey(t => t.CampusId, clustered: false);
             
             CreateTable(
                 "dbo.Rooms",
@@ -39,7 +39,7 @@ namespace PurdueIoDb.Migrations
                         Number = c.String(),
                         Building_BuildingId = c.Guid(),
                     })
-                .PrimaryKey(t => t.RoomId)
+                .PrimaryKey(t => t.RoomId, clustered: false)
                 .ForeignKey("dbo.Buildings", t => t.Building_BuildingId)
                 .Index(t => t.Building_BuildingId);
             
@@ -65,7 +65,7 @@ namespace PurdueIoDb.Migrations
                         Instructor_InstructorId = c.Guid(),
                         Room_RoomId = c.Guid(),
                     })
-                .PrimaryKey(t => t.SectionId)
+                .PrimaryKey(t => t.SectionId, clustered: false)
                 .ForeignKey("dbo.Classes", t => t.Class_ClassId)
                 .ForeignKey("dbo.Instructors", t => t.Instructor_InstructorId)
                 .ForeignKey("dbo.Rooms", t => t.Room_RoomId)
@@ -83,7 +83,7 @@ namespace PurdueIoDb.Migrations
                         Course_CourseId = c.Guid(),
                         Term_TermId = c.Guid(),
                     })
-                .PrimaryKey(t => t.ClassId)
+                .PrimaryKey(t => t.ClassId, clustered: false)
                 .ForeignKey("dbo.Campus", t => t.Campus_CampusId)
                 .ForeignKey("dbo.Courses", t => t.Course_CourseId)
                 .ForeignKey("dbo.Terms", t => t.Term_TermId)
@@ -102,7 +102,7 @@ namespace PurdueIoDb.Migrations
                         Description = c.String(),
                         Subject_SubjectId = c.Guid(),
                     })
-                .PrimaryKey(t => t.CourseId)
+                .PrimaryKey(t => t.CourseId, clustered: false)
                 .ForeignKey("dbo.Subjects", t => t.Subject_SubjectId)
                 .Index(t => t.Number)
                 .Index(t => t.Subject_SubjectId);
@@ -115,7 +115,7 @@ namespace PurdueIoDb.Migrations
                         Name = c.String(),
                         Abbreviation = c.String(maxLength: 5),
                     })
-                .PrimaryKey(t => t.SubjectId)
+                .PrimaryKey(t => t.SubjectId, clustered: false)
                 .Index(t => t.Abbreviation);
             
             CreateTable(
@@ -127,7 +127,7 @@ namespace PurdueIoDb.Migrations
                         StartDate = c.DateTime(nullable: false),
                         EndDate = c.DateTime(nullable: false),
                     })
-                .PrimaryKey(t => t.TermId)
+                .PrimaryKey(t => t.TermId, clustered: false)
                 .Index(t => t.TermCode);
             
             CreateTable(
@@ -138,7 +138,7 @@ namespace PurdueIoDb.Migrations
                         Name = c.String(),
                         Email = c.String(maxLength: 254),
                     })
-                .PrimaryKey(t => t.InstructorId)
+                .PrimaryKey(t => t.InstructorId, clustered: false)
                 .Index(t => t.Email);
             
             CreateTable(
@@ -148,7 +148,7 @@ namespace PurdueIoDb.Migrations
                         Id = c.String(nullable: false, maxLength: 128),
                         Name = c.String(nullable: false, maxLength: 256),
                     })
-                .PrimaryKey(t => t.Id)
+                .PrimaryKey(t => t.Id, clustered: false)
                 .Index(t => t.Name, unique: true, name: "RoleNameIndex");
             
             CreateTable(

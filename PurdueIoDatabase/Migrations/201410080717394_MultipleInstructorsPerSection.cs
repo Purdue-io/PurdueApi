@@ -16,7 +16,7 @@ namespace PurdueIoDb.Migrations
                         Instructor_InstructorId = c.Guid(nullable: false),
                         Section_SectionId = c.Guid(nullable: false),
                     })
-                .PrimaryKey(t => new { t.Instructor_InstructorId, t.Section_SectionId })
+                .PrimaryKey(t => new { t.Instructor_InstructorId, t.Section_SectionId }, clustered: false)
                 .ForeignKey("dbo.Instructors", t => t.Instructor_InstructorId, cascadeDelete: true)
                 .ForeignKey("dbo.Sections", t => t.Section_SectionId, cascadeDelete: true)
                 .Index(t => t.Instructor_InstructorId)

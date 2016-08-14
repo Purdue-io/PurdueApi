@@ -21,10 +21,17 @@ namespace PurdueIoDb.Catalog
 		[Key]
 		public Guid RoomId { get; set; }
 
-		/// <summary>
-		/// The room number. e.g. B156, 1142.
-		/// </summary>
-		public string Number { get; set; }
+        /// <summary>
+        /// Cluster ID for this entity, for query performance.
+        /// </summary>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Index(IsClustered = true, IsUnique = true)]
+        public int RoomClusterId { get; set; }
+
+        /// <summary>
+        /// The room number. e.g. B156, 1142.
+        /// </summary>
+        public string Number { get; set; }
 
         /// <summary>
         /// ID of the building to which this room belongs.
