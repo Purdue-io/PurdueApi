@@ -235,6 +235,8 @@ namespace PurdueIo.Controllers
                             CRN = crn
                         };
                     }
+                    dbSection.Class = null; // Null out navigational properties
+                    dbSection.Meetings = null; // Null out navigational properties
                     dbSection.Capacity = seats.Capacity;
                     dbSection.Enrolled = seats.Enrolled;
                     dbSection.RemainingSpace = seats.RemainingSpace;
