@@ -227,6 +227,8 @@ namespace PurdueIo.Controllers
                 var seats = await api.FetchSectionSeats(termCode, crn);
                 using (var db = new ApplicationDbContext())
                 {
+                    db.Configuration.ProxyCreationEnabled = false;
+                    db.Configuration.LazyLoadingEnabled = false;
                     var dbSection = db.Sections.AsNoTracking().SingleOrDefault(s => s.CRN == crn && s.Class.Term.TermCode == termCode);
                     if (dbSection == null)
                     {
