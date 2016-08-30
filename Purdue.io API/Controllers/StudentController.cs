@@ -40,7 +40,7 @@ namespace PurdueIo.Controllers
 			bool correct = false;
 			try
 			{
-				correct = api.IsAuthenticated;
+				correct = api.Authenticate().Result;
 			}
 			catch (Exception e)
 			{
@@ -71,7 +71,23 @@ namespace PurdueIo.Controllers
 
 			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
 
-			Dictionary<string, List<string>> sch;
+            //Checks to see if the credentials are correct
+            bool correct = false;
+            try
+            {
+                correct = api.Authenticate().Result;
+            }
+            catch (Exception e)
+            {
+                return BadRequest("And error occured trying to verify credentials: " + e.ToString());
+            }
+
+            if (!correct)
+            {
+                return BadRequest("Invalid Credentials");
+            }
+
+            Dictionary<string, List<string>> sch;
 			try
 			{
 				sch = await api.UserSchedule();
@@ -133,7 +149,7 @@ namespace PurdueIo.Controllers
 			bool correct = false;
 			try
 			{
-				correct = api.IsAuthenticated;
+				correct = api.Authenticate().Result;
 			}
 			catch (Exception e)
 			{
@@ -165,6 +181,78 @@ namespace PurdueIo.Controllers
 		{
 			return null;
 		}
+
+        /// <summary>
+        /// This endpoint is used to get up-to-date information on a particular CRN.
+        /// Useful for monitoring for class openings and such.
+        /// </summary>
+        /// <param name="termCode">Term code (e.g. 201710)</param>
+        /// <param name="crn">CRN of section (e.g. 42908)</param>
+        /// <returns>Section object with latest seating information</returns>
+        [Route("Crn/{termCode}/{crn}")]
+        [HttpGet]
+        public async Task<IHttpActionResult> GetCrn(string termCode, string crn)
+        {
+            string[] creds;
+            try
+            {
+                creds = ParseAuthorization(Request);
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Invalid header: " + e.ToString());
+            }
+
+            CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
+
+            //Checks to see if the credentials are correct
+            bool correct = false;
+            try
+            {
+                correct = await api.Authenticate();
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An error occured trying to verify credentials: " + e.ToString());
+            }
+
+            if (!correct)
+            {
+                return BadRequest("Invalid credentials");
+            }
+
+            //Attemps to grab the up-to-date info
+            try
+            {
+                var seats = await api.FetchSectionSeats(termCode, crn);
+                using (var db = new ApplicationDbContext())
+                {
+                    db.Configuration.ProxyCreationEnabled = false;
+                    db.Configuration.LazyLoadingEnabled = false;
+                    var dbSection = db.Sections.AsNoTracking().SingleOrDefault(s => s.CRN == crn && s.Class.Term.TermCode == termCode);
+                    if (dbSection == null)
+                    {
+                        dbSection = new PurdueIoDb.Catalog.Section()
+                        {
+                            CRN = crn
+                        };
+                    }
+                    dbSection.Class = null; // Null out navigational properties
+                    dbSection.Meetings = null; // Null out navigational properties
+                    dbSection.Capacity = seats.Capacity;
+                    dbSection.Enrolled = seats.Enrolled;
+                    dbSection.RemainingSpace = seats.RemainingSpace;
+                    dbSection.WaitlistCapacity = seats.WaitlistCapacity;
+                    dbSection.WaitlistCount = seats.WaitlistCount;
+                    dbSection.WaitlistSpace = seats.WaitlistSpace;
+                    return Ok(dbSection);
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest("An exception occured: " + e);
+            }
+        }
 
 		private string[] ParseAuthorization(HttpRequestMessage request)
 		{
@@ -200,7 +288,7 @@ namespace PurdueIo.Controllers
 			bool correct = false;
 			try
 			{
-				correct = api.IsAuthenticated;
+				correct = api.Authenticate().Result;
 			}
 			catch (Exception e)
 			{
