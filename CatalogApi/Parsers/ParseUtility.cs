@@ -35,7 +35,7 @@ namespace CatalogApi.Parsers
 				var startTzOffset = timeZone.GetUtcOffset(start);
 				var startDto = new DateTimeOffset(start, startTzOffset);
 				
-				var end = DateTime.Parse(times[0].Trim());
+				var end = DateTime.Parse(times[1].Trim());
 				var endTzOffset = timeZone.GetUtcOffset(end);
 				var endDto = new DateTimeOffset(end, endTzOffset);
 
