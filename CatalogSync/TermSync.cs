@@ -273,6 +273,8 @@ namespace CatalogSync
                 var updatedSections = new List<Section>();
                 var newSections = new List<Section>();
                 var instructorEntities = new Dictionary<Guid, Instructor>();
+                var newMeetings = new List<Meeting>();
+                var deleteMeetings = new List<Meeting>();
                 foreach (var section in classGroup)
                 {
                     Section dbSection;
@@ -317,6 +319,7 @@ namespace CatalogSync
                             if (matches.Count() <= 0)
                             {
                                 dbSection.Meetings.Remove(meeting);
+                                deleteMeetings.Add(meeting);
                                 sectionChanged = true;
                             }
                         }
@@ -370,6 +373,7 @@ namespace CatalogSync
                                     EndDate = meeting.EndDate
                                 };
                                 dbSection.Meetings.Add(newMeeting);
+                                newMeetings.Add(newMeeting);
                                 sectionChanged = true;
                             }
                         }
@@ -446,6 +450,8 @@ namespace CatalogSync
                                 EndDate = meeting.EndDate
                             };
                             dbSection.Meetings.Add(newMeeting);
+                            // We don't need to add to newMeetings here because this is a new section
+                            // and EF will take care of adding new related entities.
                         }
 
                         if (section.Meetings.Count > 0)
@@ -469,8 +475,18 @@ namespace CatalogSync
                     }
                     foreach (var s in updatedSections)
                     {
-                        //db.Sections.Attach(s);
                         db.Entry(s).State = EntityState.Modified;
+                    }
+                    foreach (var m in deleteMeetings)
+                    {
+                        //db.Meetings.Remove(db.Meetings.Find(m.MeetingId)); // Requires hitting DB twice.
+                        var mid = new Meeting() { MeetingId = m.MeetingId };
+                        db.Meetings.Attach(mid);
+                        db.Meetings.Remove(mid);
+                    }
+                    foreach (var m in newMeetings)
+                    {
+                        db.Meetings.Add(m);
                     }
                     foreach (var s in newSections)
                     {
