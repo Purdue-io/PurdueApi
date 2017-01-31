@@ -59,32 +59,32 @@ namespace PurdueIo.Controllers
 		[HttpGet]
 		public async Task<IHttpActionResult> GetSchedule()
 		{
-			string[] creds;
-			try
-			{
-				creds = ParseAuthorization(Request);
-			}
-			catch (Exception e)
-			{
-				return BadRequest("Invalid header: " + e.ToString());
-			}
+            string[] creds;
+            try
+            {
+                creds = ParseAuthorization(Request);
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Invalid header: " + e.ToString());
+            }
 
-			CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
+            CatalogApi.CatalogApi api = new CatalogApi.CatalogApi(creds[0], creds[1]);
 
             //Checks to see if the credentials are correct
             bool correct = false;
             try
             {
-                correct = api.Authenticate().Result;
+                correct = await api.Authenticate();
             }
             catch (Exception e)
             {
-                return BadRequest("And error occured trying to verify credentials: " + e.ToString());
+                return BadRequest("An error occured trying to verify credentials: " + e.ToString());
             }
 
             if (!correct)
             {
-                return BadRequest("Invalid Credentials");
+                return BadRequest("Invalid credentials");
             }
 
             Dictionary<string, List<string>> sch;
