@@ -5,7 +5,7 @@ The goal of this project is to make Purdue's course catalog easily accessible
 to any developer, and by doing so, providing a better course registration / browsing
 experience for Purdue students.
 
-###This project contains the Purdue.io API only. Front-end applications can be found in other repositories.
+### This project contains the Purdue.io API only. Front-end applications can be found in other repositories.
 
 ## How do I use it?
 
@@ -34,10 +34,12 @@ Check out the [wiki](https://github.com/Purdue-io/PurdueApi/wiki/)!
 You can run the [sample queries](https://github.com/Purdue-io/PurdueApi/wiki/OData-Queries#example-queries)
 there through the query tester at [http://api.purdue.io/](http://api.purdue.io/).
 
-##Pull Requests
+## Pull Requests
+
 Pull requests will be accepted / merged on the dev branch only. 
 
-##Build Status
+## Build Status
+
 <table>
 	<tr>
 		<td>master</td>
@@ -51,5 +53,6 @@ Pull requests will be accepted / merged on the dev branch only.
 	</tr>
 </table>
 
-#Contributing
+# Contributing
+
 See the [contributing](https://github.com/Purdue-io/PurdueApi/wiki/Contributing) wiki page!
