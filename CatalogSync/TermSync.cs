@@ -161,6 +161,7 @@ namespace CatalogSync
             Dictionary<string, Section> dbSectionCache;
             using (var db = new ApplicationDbContext())
             {
+                db.Configuration.ProxyCreationEnabled = false;
                 dbSectionCache = db.Sections.AsNoTracking().Include(s => s.Class).Include(s => s.Meetings.Select(m => m.Room.Building))
                     .Where(s => s.Class.TermId == TermId && s.Class.Course.SubjectId == dbSubjectId)
                     .ToDictionary(s => s.CRN);
@@ -466,6 +467,7 @@ namespace CatalogSync
                 }
                 using (var db = new ApplicationDbContext())
                 {
+                    db.Configuration.ProxyCreationEnabled = false;
                     Console.WriteLine("\t\t\t{0} inserted / {1} updated sections", newSections.Count, updatedSections.Count);
                     // Attach all instructors as unchanged
                     foreach (var i in instructorEntities.Values)
