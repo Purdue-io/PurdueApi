@@ -21,9 +21,9 @@
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
     <NuGetPackageImportStamp>d517b676</NuGetPackageImportStamp>
-    <TypeScriptToolsVersion>1.0</TypeScriptToolsVersion>
     <UseGlobalApplicationHostFile />
     <TargetFrameworkProfile />
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -291,15 +291,11 @@
     <Compile Include="Utils\RequiteHttpsAttribute.cs" />
     <Compile Include="Utils\Utils.cs" />
     <Content Include="Content\script\app.js" />
-    <Content Include="Content\script\es6-promise-2.0.1.js" />
     <Content Include="Content\svg\arrow_forward_white.svg" />
     <Content Include="Content\svg\progress_stripe.svg" />
-    <Content Include="gruntfile.js" />
     <Content Include="Properties\webjobs-list.json" />
     <Content Include="Properties\webjobs.props" />
     <Content Include="Content\svg\arrow_back_white.svg" />
-    <Content Include="Scripts\js\es6-promise-2.0.1.js" />
-    <Content Include="Scripts\ts\typings\es6-promise\es6-promise.d.ts" />
     <Content Include="Views\Home\Index.cshtml">
       <SubType>
       </SubType>
@@ -358,9 +354,17 @@
     </Content>
     <Content Include="package.json" />
     <None Include="Project_Readme.html" />
+    <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Scripts\ts\JsonRequest.ts" />
+    <None Include="Scripts\ts\queryTester.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

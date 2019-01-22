@@ -1,4 +1,6 @@
-﻿enum httpMethod {
+﻿import { Promise } from "es6-promise";
+
+enum httpMethod {
 	GET,
 	POST
 };
@@ -7,7 +9,7 @@
  * This class exists to provide an easy way to make HTTP requests
  * And get JSON objects in response.
  */
-class JsonRequest {
+export class JsonRequest {
 
 	/**
 	 * Internal method to send an http request to some URL and
