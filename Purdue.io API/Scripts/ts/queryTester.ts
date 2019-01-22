@@ -1,4 +1,6 @@
-﻿class QueryTester {
+﻿import { JsonRequest } from "./JsonRequest";
+
+class QueryTester {
 	public static APIURL: string;
 	private formElement: HTMLFormElement;
 	private resultsElement: HTMLElement;
