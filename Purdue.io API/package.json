@@ -3,7 +3,7 @@
   "name": "purdue-io",
   "private": true,
   "scripts": {
-    "prepare": "webpack --mode=production && lessc Content/css/Demo.less Content/css/style.css"
+    "build": "webpack --mode=production && lessc Content/css/Demo.less Content/css/style.css"
   },
   "devDependencies": {
     "@types/es6-promise": "^3.3.0",
