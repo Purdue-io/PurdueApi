@@ -16,7 +16,7 @@ namespace CatalogApi.Parsers
 			HtmlDocument document = new HtmlDocument();
 			document.LoadHtml(content);
 			HtmlNode root = document.DocumentNode;
-			HtmlNodeCollection termSelectNodes = root.SelectNodes("//select[@id='term_input_id'][1]/option");
+			HtmlNodeCollection termSelectNodes = root.SelectNodes("//select[@name='p_term']/option");
 			var terms = new List<MyPurdueTerm>();
 			foreach (var node in termSelectNodes)
 			{
