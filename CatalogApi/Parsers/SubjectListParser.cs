@@ -20,7 +20,7 @@ namespace CatalogApi.Parsers
 			foreach (var node in termSelectNodes)
 			{
 				var code = HtmlEntity.DeEntitize(node.Attributes["VALUE"].Value).Trim();
-				var name = HtmlEntity.DeEntitize(node.NextSibling.InnerText).Trim();
+				var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
 				name = name.Substring(name.IndexOf("-")+1);
 				subjects.Add(new MyPurdueSubject()
 				{

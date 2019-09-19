@@ -24,7 +24,7 @@ namespace CatalogApi.Parsers
 				if (id.Length <= 0) continue;
 
 				// Remove stuff in parenthesis...
-				var name = HtmlEntity.DeEntitize(node.NextSibling.InnerText).Trim();
+				var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
 				Regex parenRegex = new Regex(@"\([^)]*\)", RegexOptions.None);
 				name = parenRegex.Replace(name, @"").Trim();
 
