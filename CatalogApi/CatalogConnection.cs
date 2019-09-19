@@ -170,7 +170,8 @@ namespace CatalogApi
                     System.Diagnostics.Debug.WriteLine("\t\t" + c);
                     if (c.StartsWith("SESSID") && !c.Contains("expires"))
                     {
-                        var sessidCookie = new Cookie("SESSID", c.Substring(c.IndexOf('=') + 1));
+                        var sessidCookieValue = c.Substring(c.IndexOf('=') + 1, (c.IndexOf(';') - c.IndexOf('=') - 1));
+                        var sessidCookie = new Cookie("SESSID", sessidCookieValue);
                         sessidCookie.Domain = new Uri(url).Host;
                         sessidCookie.Path = "/";
                         cookies.Add(sessidCookie);
