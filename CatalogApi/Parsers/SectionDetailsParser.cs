@@ -30,7 +30,7 @@ namespace CatalogApi.Parsers
 			document.LoadHtml(content);
 			HtmlNode docRoot = document.DocumentNode;
 
-			HtmlNodeCollection sectionNodes = docRoot.SelectNodes("/html/body/div[@class='pagebodydiv'][1]/table[@class='datadisplaytable'][1]/tr[ not ( th ) ]");
+			HtmlNodeCollection sectionNodes = docRoot.SelectNodes("/html/body/div[@class='pagebodydiv'][1]//table[@class='datadisplaytable'][1]/tr[ not ( th ) ]");
 			if (sectionNodes == null)
 			{
 				throw new ApplicationException("Could not parse data from section details request.");
