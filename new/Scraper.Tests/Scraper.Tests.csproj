@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- Packages -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="xunit" Version="2.4.1" />
@@ -19,6 +20,12 @@
     </PackageReference>
   </ItemGroup>
 
+  <!-- Embedded Resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Pages\*.html" />
+  </ItemGroup>
+
+  <!-- References -->
   <ItemGroup>
     <ProjectReference Include="..\Scraper\Scraper.csproj" />
   </ItemGroup>
