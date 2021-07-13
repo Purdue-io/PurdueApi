@@ -22,6 +22,9 @@ namespace PurdueIo.Scraper.Models
         // Type of section (e.g. Lecture)
         public string Type { get; init; }
 
+        // Title of the course (e.g. Introduction to Computers)
+        public string CourseTitle { get; init; }
+
         // Description of the course
         public string Description { get; init; }
 
@@ -46,7 +49,7 @@ namespace PurdueIo.Scraper.Models
         // This section's enrollment count (referred to as 'Actual' by MyPurdue)
         public int Enrolled { get; init; }
 
-        // Remaining space for enrollment (usually Capacity - Enrolled)
+        // Remaining space for enrollment (usually `Capacity - Enrolled`)
         public int RemainingSpace { get; init; }
 
         // Wait list capacity
@@ -55,7 +58,7 @@ namespace PurdueIo.Scraper.Models
         // How many students are on the wait list
         public int WaitListCount { get; init; }
 
-        // How much space is currently available on the wait list (usually Capacity - Count)
+        // How much space is currently available on the wait list (usually `Capacity - Count`)
         public int WaitListSpace { get; init; }
     }
 }
