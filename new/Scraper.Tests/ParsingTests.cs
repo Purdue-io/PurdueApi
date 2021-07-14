@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using PurdueIo.Scraper.Models;
@@ -77,7 +78,42 @@ namespace PurdueIo.Scraper.Tests
             Assert.Equal("BRNG", spotCheckMeeting.BuildingCode);
             Assert.Equal("Beering Hall of Lib Arts & Ed", spotCheckMeeting.BuildingName);
             Assert.Equal("1222", spotCheckMeeting.RoomNumber);
-            
+        }
+
+        [Fact]
+        public async Task SubjectParsing()
+        {
+            var connection = new MockMyPurdueConnection();
+            var scraper = new MyPurdueScraper(connection);
+            ICollection<Subject> subjects = await scraper.GetSubjectsAsync("202210");
+
+            // Spot check a few subjects
+            Assert.Contains(subjects,
+                (s => s.Code == "AAE" && s.Name == "Aero & Astro Engineering"));
+            Assert.Contains(subjects,
+                (s => s.Code == "CS" && s.Name == "Computer Sciences"));
+            Assert.Contains(subjects,
+                (s => s.Code == "EAPS" && s.Name == "Earth Atmos Planetary Sci"));
+            Assert.Contains(subjects,
+                (s => s.Code == "HSOP" && s.Name == "Hlth,Srvcs,Outcomes&Polic"));
+            Assert.Contains(subjects,
+                (s => s.Code == "PSY" && s.Name == "Psychological Sciences"));
+            Assert.Contains(subjects,
+                (s => s.Code == "WGSS" && s.Name == "Women Gend&Sexuality Std"));
+        }
+
+        [Fact]
+        public async Task TermParsing()
+        {
+            var connection = new MockMyPurdueConnection();
+            var scraper = new MyPurdueScraper(connection);
+            ICollection<Term> terms = await scraper.GetTermsAsync();
+
+            // Spot check a few terms
+            Assert.Contains(terms, (t => t.Id == "202210" && t.Name == "Fall 2021"));
+            Assert.Contains(terms, (t => t.Id == "201520" && t.Name == "Spring 2015")); // 🎓
+            Assert.Contains(terms, (t => t.Id == "201210" && t.Name == "Fall 2011")); // 🎒
+            Assert.Contains(terms, (t => t.Id == "200910" && t.Name == "Fall 2008"));
         }
     }
 }

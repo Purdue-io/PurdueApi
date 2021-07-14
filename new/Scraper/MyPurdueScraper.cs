@@ -18,7 +18,8 @@ namespace PurdueIo.Scraper
             this.connection = connection;
         }
 
-        public async Task<ICollection<Section>> GetSectionsAsync(string termCode, string subjectCode)
+        public async Task<ICollection<Section>> GetSectionsAsync(string termCode,
+            string subjectCode)
         {
             // The section information we need from MyPurdue is split between two pages:
             // the "section list" page (bwckschd.p_get_crse_unsec) and the "section details" page
@@ -95,14 +96,58 @@ namespace PurdueIo.Scraper
             return mergedSections;
         }
 
-        public Task<ICollection<Subject>> GetSubjectsAsync(string termCode)
+        public async Task<ICollection<Subject>> GetSubjectsAsync(string termCode)
         {
-            throw new System.NotImplementedException();
+            string subjectListPageContent = await connection.GetSubjectListPageAsync(termCode);
+            var subjects = new List<Subject>();
+            HtmlDocument document = new HtmlDocument();
+            document.LoadHtml(subjectListPageContent);
+            HtmlNode root = document.DocumentNode;
+            HtmlNodeCollection termSelectNodes =
+                root.SelectNodes("//select[@id='subj_id'][1]/option");
+            foreach (var node in termSelectNodes)
+            {
+                var code = HtmlEntity.DeEntitize(node.Attributes["VALUE"].Value).Trim();
+                var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
+                name = name.Substring(name.IndexOf("-")+1);
+                subjects.Add(new Subject()
+                {
+                    Code = code,
+                    Name = name
+                });
+            }
+            return subjects;
         }
 
-        public Task<ICollection<Term>> GetTermsAsync()
+        public async Task<ICollection<Term>> GetTermsAsync()
         {
-            throw new System.NotImplementedException();
+            string termListPageContent = await connection.GetTermListPageAsync();
+            var terms = new List<Term>();
+            HtmlDocument document = new HtmlDocument();
+            document.LoadHtml(termListPageContent);
+            HtmlNode root = document.DocumentNode;
+            HtmlNodeCollection termSelectNodes = 
+                root.SelectNodes("//select[@name='p_term']/option");
+            foreach (var node in termSelectNodes)
+            {
+                var id = node.Attributes["VALUE"].Value;
+                if (id.Length <= 0)
+                {
+                    continue;
+                }
+
+                // Remove stuff in parenthesis...
+                var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
+                Regex parenRegex = new Regex(@"\([^)]*\)", RegexOptions.None);
+                name = parenRegex.Replace(name, @"").Trim();
+
+                terms.Add(new Term()
+                {
+                    Id = id,
+                    Name = name
+                });
+            }
+            return terms;
         }
 
         private async Task<Dictionary<Crn, SectionListInfo>> FetchSectionListAsync(string termCode,
@@ -382,12 +427,15 @@ namespace PurdueIo.Scraper
                 // Now, update meeting data for this row
                 // Update meeting days of the week
                 // Parse days of week
-                var daysOfWeek = HtmlEntity.DeEntitize(node.SelectSingleNode("td[9]").InnerText).Trim();
+                var daysOfWeek = HtmlEntity.DeEntitize(
+                    node.SelectSingleNode("td[9]").InnerText).Trim();
                 DaysOfWeek parsedMeetingDaysOfWeek = ParsingUtilities.ParseDaysOfWeek(daysOfWeek);
 
                 // Parse times
                 var times = HtmlEntity.DeEntitize(node.SelectSingleNode("td[10]").InnerText).Trim();
-                var startEndTimes = ParsingUtilities.ParseStartEndTime(times, TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")); // TODO: Not hard-code time zone
+                // TODO: Don't hard-code time zone
+                var startEndTimes = ParsingUtilities.ParseStartEndTime(times,
+                    TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"));
                 DateTimeOffset parsedMeetingStartTime = startEndTimes.Item1;
                 DateTimeOffset parsedMeetingEndTime = startEndTimes.Item2;
 
@@ -416,11 +464,13 @@ namespace PurdueIo.Scraper
                     }
                 } else
                 {
-                    throw new ApplicationException("Could not parse location data for section CRN " + section.Crn + ".");
+                    throw new ApplicationException(
+                        $"Could not parse location data for section CRN {section.Crn}.");
                 }
 
                 // Updating meeting type
-                string parsedMeetingType = HtmlEntity.DeEntitize(node.SelectSingleNode("td[23]").InnerText).Trim();
+                string parsedMeetingType = HtmlEntity.DeEntitize(
+                    node.SelectSingleNode("td[23]").InnerText).Trim();
 
                 // Add the meeting
                 section.Meetings.Add(new SectionDetailsMeetingInfo()
