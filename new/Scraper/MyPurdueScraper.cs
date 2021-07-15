@@ -18,6 +18,60 @@ namespace PurdueIo.Scraper
             this.connection = connection;
         }
 
+        public async Task<ICollection<Term>> GetTermsAsync()
+        {
+            string termListPageContent = await connection.GetTermListPageAsync();
+            var terms = new List<Term>();
+            HtmlDocument document = new HtmlDocument();
+            document.LoadHtml(termListPageContent);
+            HtmlNode root = document.DocumentNode;
+            HtmlNodeCollection termSelectNodes = 
+                root.SelectNodes("//select[@name='p_term']/option");
+            foreach (var node in termSelectNodes)
+            {
+                var id = node.Attributes["VALUE"].Value;
+                if (id.Length <= 0)
+                {
+                    continue;
+                }
+
+                // Remove stuff in parenthesis...
+                var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
+                Regex parenRegex = new Regex(@"\([^)]*\)", RegexOptions.None);
+                name = parenRegex.Replace(name, @"").Trim();
+
+                terms.Add(new Term()
+                {
+                    Id = id,
+                    Name = name
+                });
+            }
+            return terms;
+        }
+
+        public async Task<ICollection<Subject>> GetSubjectsAsync(string termCode)
+        {
+            string subjectListPageContent = await connection.GetSubjectListPageAsync(termCode);
+            var subjects = new List<Subject>();
+            HtmlDocument document = new HtmlDocument();
+            document.LoadHtml(subjectListPageContent);
+            HtmlNode root = document.DocumentNode;
+            HtmlNodeCollection termSelectNodes =
+                root.SelectNodes("//select[@id='subj_id'][1]/option");
+            foreach (var node in termSelectNodes)
+            {
+                var code = HtmlEntity.DeEntitize(node.Attributes["VALUE"].Value).Trim();
+                var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
+                name = name.Substring(name.IndexOf("-")+1);
+                subjects.Add(new Subject()
+                {
+                    Code = code,
+                    Name = name
+                });
+            }
+            return subjects;
+        }
+
         public async Task<ICollection<Section>> GetSectionsAsync(string termCode,
             string subjectCode)
         {
@@ -94,60 +148,6 @@ namespace PurdueIo.Scraper
             }
 
             return mergedSections;
-        }
-
-        public async Task<ICollection<Subject>> GetSubjectsAsync(string termCode)
-        {
-            string subjectListPageContent = await connection.GetSubjectListPageAsync(termCode);
-            var subjects = new List<Subject>();
-            HtmlDocument document = new HtmlDocument();
-            document.LoadHtml(subjectListPageContent);
-            HtmlNode root = document.DocumentNode;
-            HtmlNodeCollection termSelectNodes =
-                root.SelectNodes("//select[@id='subj_id'][1]/option");
-            foreach (var node in termSelectNodes)
-            {
-                var code = HtmlEntity.DeEntitize(node.Attributes["VALUE"].Value).Trim();
-                var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
-                name = name.Substring(name.IndexOf("-")+1);
-                subjects.Add(new Subject()
-                {
-                    Code = code,
-                    Name = name
-                });
-            }
-            return subjects;
-        }
-
-        public async Task<ICollection<Term>> GetTermsAsync()
-        {
-            string termListPageContent = await connection.GetTermListPageAsync();
-            var terms = new List<Term>();
-            HtmlDocument document = new HtmlDocument();
-            document.LoadHtml(termListPageContent);
-            HtmlNode root = document.DocumentNode;
-            HtmlNodeCollection termSelectNodes = 
-                root.SelectNodes("//select[@name='p_term']/option");
-            foreach (var node in termSelectNodes)
-            {
-                var id = node.Attributes["VALUE"].Value;
-                if (id.Length <= 0)
-                {
-                    continue;
-                }
-
-                // Remove stuff in parenthesis...
-                var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
-                Regex parenRegex = new Regex(@"\([^)]*\)", RegexOptions.None);
-                name = parenRegex.Replace(name, @"").Trim();
-
-                terms.Add(new Term()
-                {
-                    Id = id,
-                    Name = name
-                });
-            }
-            return terms;
         }
 
         private async Task<Dictionary<Crn, SectionListInfo>> FetchSectionListAsync(string termCode,
