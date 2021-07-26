@@ -7,7 +7,7 @@ namespace PurdueIo.Database.Models
     public class Section
     {
         public Guid Id { get; set; }
-        
+
         // Class reference number (CRN) used to uniquely identify a section on MyPurdue
         [StringLength(16)]
         public string Crn { get; set; }
