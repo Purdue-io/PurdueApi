@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database", "Database\Databa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogSync", "CatalogSync\CatalogSync.csproj", "{A06E5A44-C447-4D17-BF41-C4DC1C45A4E6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogSync.Tests", "CatalogSync.Tests\CatalogSync.Tests.csproj", "{92637F18-6A8E-4158-9CFE-ADD39320BAC1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,5 +74,17 @@ Global
 		{A06E5A44-C447-4D17-BF41-C4DC1C45A4E6}.Release|x64.Build.0 = Release|Any CPU
 		{A06E5A44-C447-4D17-BF41-C4DC1C45A4E6}.Release|x86.ActiveCfg = Release|Any CPU
 		{A06E5A44-C447-4D17-BF41-C4DC1C45A4E6}.Release|x86.Build.0 = Release|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Debug|x64.Build.0 = Debug|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Debug|x86.Build.0 = Debug|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Release|x64.ActiveCfg = Release|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Release|x64.Build.0 = Release|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Release|x86.ActiveCfg = Release|Any CPU
+		{92637F18-6A8E-4158-9CFE-ADD39320BAC1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

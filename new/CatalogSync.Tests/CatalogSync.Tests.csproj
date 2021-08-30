@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Scraper\Scraper.csproj" />
     <ProjectReference Include="..\CatalogSync\CatalogSync.csproj" />
   </ItemGroup>
 

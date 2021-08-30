@@ -37,10 +37,13 @@ namespace PurdueIo.Database
         public DbSet<Instructor> Instructors { get; set; }
 
         // Default constructor will use SQLite local database
-        public ApplicationDbContext() : 
+        public ApplicationDbContext(string sqliteFilePath = "purdueio.sqlite") : 
             base(new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseSqlite("Data Source=purdueio.sqlite").Options)
-        { }
+                .UseSqlite($"Data Source={sqliteFilePath}").Options)
+        {
+            // Migrate by default
+            Database.Migrate();
+        }
 
         public ApplicationDbContext([NotNullAttribute] DbContextOptions options) : 
             base(options)
