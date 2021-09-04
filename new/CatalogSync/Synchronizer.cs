@@ -265,6 +265,8 @@ namespace PurdueIo.CatalogSync
                     .SingleOrDefault(c => c.Crn == section.Crn) ??
                 dbContext.Sections
                     .Include(s => s.Meetings)
+                    .ThenInclude(m => m.Instructors)
+                    .Include(s => s.Meetings)
                     .ThenInclude(m => m.Room)
                     .ThenInclude(m => m.Building)
                     .SingleOrDefault(c => c.Crn == section.Crn);
@@ -288,7 +290,6 @@ namespace PurdueIo.CatalogSync
                     Id = Guid.NewGuid(),
                     Crn = section.Crn,
                     ClassId = dbClass.Id,
-                    // Class = dbClass,
                     Meetings = new List<DatabaseMeeting>(),
                     Type = section.Type,
                     RegistrationStatus = RegistrationStatus.NotAvailable,
@@ -380,6 +381,7 @@ namespace PurdueIo.CatalogSync
                         <= MEETING_TIME_EQUALITY_TOLERANCE));
 
                 var dbRoom = UpdateMeetingRoom(dbSection, meeting);
+                var dbInstructors = UpdateMeetingInstructors(meeting);
 
                 if (dbMeeting == null)
                 {
@@ -387,7 +389,6 @@ namespace PurdueIo.CatalogSync
                     {
                         Id = Guid.NewGuid(),
                         SectionId = dbSection.Id,
-                        // Section = dbSection,
                         Type = meeting.Type,
                         Instructors = new List<DatabaseInstructor>(),
                         StartDate = meeting.StartDate,
@@ -396,10 +397,25 @@ namespace PurdueIo.CatalogSync
                         StartTime = meeting.StartTime,
                         Duration = meetingDuration,
                         RoomId = dbRoom.Id,
-                        // Room = dbRoom,
                     };
                     dbContext.Meetings.Add(dbMeeting);
                 }
+
+                var instructorsToRemove = dbMeeting.Instructors.Where(i => 
+                    dbInstructors.SingleOrDefault(di => di.Id == i.Id) == null);
+                foreach (var dbInstructor in dbInstructors)
+                {
+                    if (dbMeeting.Instructors.SingleOrDefault(i => 
+                        (i.Id == dbInstructor.Id)) == null)
+                    {
+                        dbMeeting.Instructors.Add(dbInstructor);
+                    }
+                }
+                foreach (var removeInstructor in instructorsToRemove)
+                {
+                    dbMeeting.Instructors.Remove(removeInstructor);
+                }
+
                 foundMeetingIds.Add(dbMeeting.Id);
             }
             
@@ -430,9 +446,8 @@ namespace PurdueIo.CatalogSync
                     Id = Guid.NewGuid(),
                     Number = scrapedMeeting.RoomNumber,
                     BuildingId = dbBuilding.Id,
-                    //Building = dbBuilding,
                 };
-                dbContext.Rooms.Add(dbRoom); // Don't need this since it's referenced by the meeting?
+                dbContext.Rooms.Add(dbRoom);
             }
             return dbRoom;
         }
@@ -455,14 +470,39 @@ namespace PurdueIo.CatalogSync
                 {
                     Id = Guid.NewGuid(),
                     CampusId = dbSection.Class.CampusId,
-                    //Campus = dbSection.Class.Campus,
                     Name = scrapedMeeting.BuildingName,
                     ShortCode = scrapedMeeting.BuildingCode,
                     Rooms = new List<DatabaseRoom>(),
                 };
-                dbContext.Buildings.Add(dbBuilding); // Don't need this since it's referenced by the room?
+                dbContext.Buildings.Add(dbBuilding);
             }
             return dbBuilding;
+        }
+
+        private ICollection<DatabaseInstructor> UpdateMeetingInstructors(ScrapedMeeting meeting)
+        {
+            var returnVal = new List<DatabaseInstructor>();
+            foreach (var scrapedInstructor in meeting.Instructors)
+            {
+                var dbInstructor =
+                    dbContext.Instructors.Local.SingleOrDefault(i =>
+                        (i.Email == scrapedInstructor.email)) ??
+                    dbContext.Instructors.SingleOrDefault(i =>
+                        (i.Email == scrapedInstructor.email));
+                if (dbInstructor == null)
+                {
+                    dbInstructor = new DatabaseInstructor()
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = scrapedInstructor.name,
+                        Email = scrapedInstructor.email,
+                        Meetings = new List<DatabaseMeeting>(),
+                    };
+                    dbContext.Instructors.Add(dbInstructor);
+                }
+                returnVal.Add(dbInstructor);
+            }
+            return returnVal;
         }
     }
 }
