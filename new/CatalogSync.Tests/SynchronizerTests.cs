@@ -20,380 +20,78 @@ namespace PurdueIo.CatalogSync.Tests
     public class SynchronizerTests
     {
         [Fact]
-        public async Task BasicSynchronizationTest()
+        public async Task BasicSectionSyncTest()
         {
-            var termCode = "202210";
-            var termName = "Fall 2021";
-            var terms = new List<ScrapedTerm>()
+            using (var dbContext = GetDbContext())
             {
-                new ScrapedTerm()
-                {
-                    Id = termCode,
-                    Name = termName,
-                },
-            };
+                var testSection = GenerateSection();
+                var testMeeting = testSection.Section.Meetings.FirstOrDefault();
+                var scraper = GetScraper(new List<ScrapedSection>() { testSection.Section });
+                var term = (await scraper.GetTermsAsync()).FirstOrDefault();
+                var subject = (await scraper.GetSubjectsAsync(term.Id)).FirstOrDefault();
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
 
-            var subjectCode = "TEST";
-            var subjectName = "Test Subject";
-            var subjects = new List<ScrapedSubject>()
-            {
-                new ScrapedSubject()
-                {
-                    Code = subjectCode,
-                    Name = subjectName,
-                },
-            };
-
-            var courseNumber = "10100";
-            var courseName = "Intro to Test";
-            var courseDescription = "How to test things";
-            var courseCreditHours = 1.0d;
-            var campusName = "Test Campus";
-            var campusCode = "TC";
-            var timeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-            var firstBuilding = (code: "TB", name: "Test Building");
-            var secondBuilding = (code: "OB", name: "Other Building");
-            var firstRoomNumber = "543";
-            var secondRoomNumber = "321";
-            var thirdRoomNumber = "111";
-            var firstInstructor = (name: "Hayden McAfee", email: "haydenmc@test.com");
-            var secondInstructor = (name: "Mayden HcAfee", email: "maydenhc@test.com");
-            var sections = new List<ScrapedSection>()
-            {
-                new ScrapedSection()
-                {
-                    Crn = "12345",
-                    SectionCode = "000",
-                    Meetings = new ScrapedMeeting[]
-                    {
-                        new ScrapedMeeting()
-                        {
-                            Type = "Lecture",
-                            Instructors = new (string name, string email)[]
-                            {
-                                firstInstructor,
-                            },
-                            StartDate = new DateTimeOffset(2021, 8, 23, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndDate = new DateTimeOffset(2021, 12, 11, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            DaysOfWeek =
-                                (DaysOfWeek.Monday | DaysOfWeek.Wednesday),
-                            StartTime = new DateTimeOffset(2021, 8, 30, 7, 30, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndTime = new DateTimeOffset(2021, 8, 30, 8, 20, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            BuildingCode = firstBuilding.code,
-                            BuildingName = firstBuilding.name,
-                            RoomNumber = firstRoomNumber,
-                        },
-                    },
-                    SubjectCode = subjectCode,
-                    CourseNumber = courseNumber,
-                    Type = "Lecture",
-                    CourseTitle = courseName,
-                    Description = courseDescription,
-                    CreditHours = courseCreditHours,
-                    LinkSelf = "A0",
-                    LinkOther = "A2",
-                    CampusCode = campusCode,
-                    CampusName = campusName,
-                    Capacity = 32,
-                    Enrolled = 16,
-                    RemainingSpace = 16,
-                    WaitListCapacity = 8,
-                    WaitListCount = 4,
-                    WaitListSpace = 4,
-                },
-                new ScrapedSection()
-                {
-                    Crn = "12346",
-                    SectionCode = "001",
-                    Meetings = new ScrapedMeeting[]
-                    {
-                        new ScrapedMeeting()
-                        {
-                            Type = "Recitation",
-                            Instructors = new (string name, string email)[]
-                            {
-                                secondInstructor,
-                            },
-                            StartDate = new DateTimeOffset(2021, 8, 23, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndDate = new DateTimeOffset(2021, 12, 11, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            DaysOfWeek =
-                                (DaysOfWeek.Tuesday | DaysOfWeek.Thursday),
-                            StartTime = new DateTimeOffset(2021, 8, 30, 12, 30, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndTime = new DateTimeOffset(2021, 8, 30, 13, 20, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            BuildingCode = secondBuilding.code,
-                            BuildingName = secondBuilding.name,
-                            RoomNumber = secondRoomNumber,
-                        },
-                    },
-                    SubjectCode = subjectCode,
-                    CourseNumber = courseNumber,
-                    Type = "Recitation",
-                    CourseTitle = courseName,
-                    Description = courseDescription,
-                    CreditHours = courseCreditHours,
-                    LinkSelf = "A2",
-                    LinkOther = "A1",
-                    CampusCode = campusCode,
-                    CampusName = campusName,
-                    Capacity = 16,
-                    Enrolled = 8,
-                    RemainingSpace = 8,
-                    WaitListCapacity = 4,
-                    WaitListCount = 2,
-                    WaitListSpace = 2,
-                },
-                new ScrapedSection()
-                {
-                    Crn = "12347",
-                    SectionCode = "002",
-                    Meetings = new ScrapedMeeting[]
-                    {
-                        new ScrapedMeeting()
-                        {
-                            Type = "Laboratory",
-                            Instructors = new (string name, string email)[]
-                            {
-                                secondInstructor,
-                            },
-                            StartDate = new DateTimeOffset(2021, 8, 23, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndDate = new DateTimeOffset(2021, 12, 11, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            DaysOfWeek = DaysOfWeek.Friday,
-                            StartTime = new DateTimeOffset(2021, 8, 30, 14, 30, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndTime = new DateTimeOffset(2021, 8, 30, 16, 20, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            BuildingCode = secondBuilding.code,
-                            BuildingName = secondBuilding.name,
-                            RoomNumber = thirdRoomNumber,
-                        },
-                    },
-                    SubjectCode = subjectCode,
-                    CourseNumber = courseNumber,
-                    Type = "Laboratory",
-                    CourseTitle = courseName,
-                    Description = courseDescription,
-                    CreditHours = courseCreditHours,
-                    LinkSelf = "A1",
-                    LinkOther = "A0",
-                    CampusCode = campusCode,
-                    CampusName = campusName,
-                    Capacity = 8,
-                    Enrolled = 4,
-                    RemainingSpace = 4,
-                    WaitListCapacity = 2,
-                    WaitListCount = 1,
-                    WaitListSpace = 1,
-                }
-            };
-            
-            IScraper scraper = new MockScraper(terms, subjects, sections);
-            var dbContext = new ApplicationDbContext(Path.GetTempFileName());
-            await Synchronizer.SynchronizeAsync(scraper, dbContext);
-
-            var dbTerm = dbContext.Terms.SingleOrDefault(t => 
-                (t.Code == termCode) &&
-                (t.Name == termName));
-            Assert.NotNull(dbTerm);
-
-            var dbSubject = dbContext.Subjects.SingleOrDefault(s => 
-                (s.Abbreviation == subjectCode) &&
-                (s.Name == subjectName));
-            Assert.NotNull(dbSubject);
-
-            var dbCourse = dbContext.Courses.SingleOrDefault(c => 
-                (c.Subject.Abbreviation == subjectCode) &&
-                (c.Subject.Name == subjectName) &&
-                (c.Number == courseNumber) && 
-                (c.Title == courseName) &&
-                (c.CreditHours == courseCreditHours) &&
-                (c.Description == courseDescription));
-            Assert.NotNull(dbCourse);
-
-            var dbCampus = dbContext.Campuses.SingleOrDefault(c =>
-                (c.Code == campusCode) &&
-                (c.Name == campusName));
-            Assert.NotNull(dbCampus);
-
-            var dbClass = dbContext.Classes.SingleOrDefault(c =>
-                (c.CourseId == dbCourse.Id) &&
-                (c.TermId == dbTerm.Id) &&
-                (c.CampusId == dbCampus.Id));
-            Assert.NotNull(dbClass);
-
-            var dbFirstBuilding = dbContext.Buildings.SingleOrDefault(b => 
-                (b.ShortCode == firstBuilding.code) &&
-                (b.Name == firstBuilding.name));
-            Assert.NotNull(dbFirstBuilding);
-            var dbSecondBuilding = dbContext.Buildings.SingleOrDefault(b => 
-                (b.ShortCode == secondBuilding.code) &&
-                (b.Name == secondBuilding.name));
-            Assert.NotNull(dbSecondBuilding);
-
-            var dbFirstRoom = dbContext.Rooms.SingleOrDefault(r =>
-                (r.BuildingId == dbFirstBuilding.Id) &&
-                (r.Number == firstRoomNumber));
-            Assert.NotNull(dbFirstRoom);
-            var dbSecondRoom = dbContext.Rooms.SingleOrDefault(r =>
-                (r.BuildingId == dbSecondBuilding.Id) &&
-                (r.Number == secondRoomNumber));
-            Assert.NotNull(dbSecondRoom);
-            var dbThirdRoom = dbContext.Rooms.SingleOrDefault(r =>
-                (r.BuildingId == dbSecondBuilding.Id) &&
-                (r.Number == thirdRoomNumber));
-            Assert.NotNull(dbThirdRoom);
-
-            var lectureSection = dbContext.Sections.SingleOrDefault(s =>
-                (s.ClassId == dbClass.Id) &&
-                (s.Type == "Lecture"));
-            Assert.NotNull(lectureSection);
-            var recitationSection = dbContext.Sections.SingleOrDefault(s =>
-                (s.ClassId == dbClass.Id) &&
-                (s.Type == "Recitation"));
-            Assert.NotNull(recitationSection);
-            var labSection = dbContext.Sections.SingleOrDefault(s =>
-                (s.ClassId == dbClass.Id) &&
-                (s.Type == "Laboratory"));
-            Assert.NotNull(labSection);
-
-            var lectureMeeting = dbContext.Meetings
-                .SingleOrDefault(m =>
-                    (m.SectionId == lectureSection.Id) && 
-                    (m.Type == "Lecture") &&
-                    (m.RoomId == dbFirstRoom.Id));
-            Assert.NotNull(lectureMeeting);
-            var recitationMeeting = dbContext.Meetings.SingleOrDefault(m =>
-                (m.SectionId == recitationSection.Id) && 
-                (m.Type == "Recitation") &&
-                (m.RoomId == dbSecondRoom.Id));
-            Assert.NotNull(recitationMeeting);
-            var labMeeting = dbContext.Meetings.SingleOrDefault(m =>
-                (m.SectionId == labSection.Id) && 
-                (m.Type == "Laboratory") &&
-                (m.RoomId == dbThirdRoom.Id));
-            Assert.NotNull(labMeeting);
-
-            var lectureInstructor = dbContext.Meetings
-                .Include(m => m.Instructors)
-                .SingleOrDefault(m => (m.Id == lectureMeeting.Id))
-                ?.Instructors.SingleOrDefault(i => 
-                    (i.Name == firstInstructor.name) &&
-                    (i.Email == firstInstructor.email));
-            Assert.NotNull(lectureInstructor);
-            var recitationInstructor = dbContext.Meetings
-                .Include(m => m.Instructors)
-                .SingleOrDefault(m => (m.Id == recitationMeeting.Id))
-                ?.Instructors.SingleOrDefault(i => 
-                    (i.Name == secondInstructor.name) &&
-                    (i.Email == secondInstructor.email));
-            Assert.NotNull(recitationInstructor);
-            var labInstructor = dbContext.Meetings
-                .Include(m => m.Instructors)
-                .SingleOrDefault(m => (m.Id == labMeeting.Id))
-                ?.Instructors.SingleOrDefault(i => 
-                    (i.Name == secondInstructor.name) &&
-                    (i.Email == secondInstructor.email));
-            Assert.NotNull(labInstructor);
-        }
-
-        [Fact]
-        public async Task InstructorSynchronizationTest()
-        {
-            var termCode = "202210";
-            var termName = "Fall 2021";
-            var terms = new List<ScrapedTerm>()
-            {
-                new ScrapedTerm()
-                {
-                    Id = termCode,
-                    Name = termName,
-                },
-            };
-
-            var subjectCode = "TEST";
-            var subjectName = "Test Subject";
-            var subjects = new List<ScrapedSubject>()
-            {
-                new ScrapedSubject()
-                {
-                    Code = subjectCode,
-                    Name = subjectName,
-                },
-            };
-
-            var courseNumber = "10100";
-            var courseName = "Intro to Test";
-            var courseDescription = "How to test things";
-            var courseCreditHours = 1.0d;
-            var campusName = "Test Campus";
-            var campusCode = "TC";
-            var timeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-            var firstInstructor = (name: "Hayden McAfee", email: "haydenmc@test.com");
-            var secondInstructor = (name: "Mayden HcAfee", email: "maydenhc@test.com");
-            var building = (code: "TB", name: "Test Building");
-            var roomNumber = "543";
-            var sections = new List<ScrapedSection>()
-            {
-                new ScrapedSection()
-                {
-                    Crn = "12345",
-                    SectionCode = "000",
-                    Meetings = new ScrapedMeeting[]
-                    {
-                        new ScrapedMeeting()
-                        {
-                            Type = "Lecture",
-                            Instructors = new (string name, string email)[]
-                            {
-                                firstInstructor,
-                                secondInstructor,
-                            },
-                            StartDate = new DateTimeOffset(2021, 8, 23, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndDate = new DateTimeOffset(2021, 12, 11, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            DaysOfWeek =
-                                (DaysOfWeek.Monday | DaysOfWeek.Wednesday),
-                            StartTime = new DateTimeOffset(2021, 8, 30, 7, 30, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndTime = new DateTimeOffset(2021, 8, 30, 8, 20, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            BuildingCode = building.code,
-                            BuildingName = building.name,
-                            RoomNumber = roomNumber,
-                        },
-                    },
-                    SubjectCode = subjectCode,
-                    CourseNumber = courseNumber,
-                    Type = "Lecture",
-                    CourseTitle = courseName,
-                    Description = courseDescription,
-                    CreditHours = courseCreditHours,
-                    LinkSelf = "A0",
-                    LinkOther = "A2",
-                    CampusCode = campusCode,
-                    CampusName = campusName,
-                    Capacity = 32,
-                    Enrolled = 16,
-                    RemainingSpace = 16,
-                    WaitListCapacity = 8,
-                    WaitListCount = 4,
-                    WaitListSpace = 4,
-                },
-            };
-
-            IScraper scraper = new MockScraper(terms, subjects, sections);
-            var dbContext = new ApplicationDbContext(Path.GetTempFileName());
-            await Synchronizer.SynchronizeAsync(scraper, dbContext);
+                // Ensure the section and all related entities are properly persisted in the DB
+                // Term
+                Assert.NotNull(dbContext.Terms.SingleOrDefault(t => t.Code == term.Id));
+                // Subject
+                Assert.NotNull(dbContext.Subjects.SingleOrDefault(s => 
+                    (s.Abbreviation == subject.Code) && (s.Name == subject.Name)));
+                // Course
+                Assert.NotNull(dbContext.Courses.SingleOrDefault(c =>
+                    (c.Number == testSection.Course.Number) &&
+                    (c.Title == testSection.Course.Name) &&
+                    (c.CreditHours == testSection.Course.CreditHours) &&
+                    (c.Description == testSection.Course.Description) &&
+                    (c.Subject.Abbreviation == subject.Code)));
+                // Campus
+                Assert.NotNull(dbContext.Campuses.SingleOrDefault(c => 
+                    (c.Code == testSection.Campus.Code) &&
+                    (c.Name == testSection.Campus.Name)));
+                // Class
+                Assert.NotNull(dbContext.Classes.SingleOrDefault(c => 
+                    (c.Term.Code == term.Id) &&
+                    (c.Campus.Code == testSection.Campus.Code) &&
+                    (c.Course.Number == testSection.Course.Number) &&
+                    (c.Course.Title == testSection.Course.Name) &&
+                    (c.Course.Subject.Abbreviation == subject.Code)));
+                // Building
+                Assert.NotNull(dbContext.Buildings.SingleOrDefault(b =>
+                    (b.Name == testSection.Room.Building.Name) &&
+                    (b.ShortCode == testSection.Room.Building.Code)));
+                // Room
+                Assert.NotNull(dbContext.Rooms.SingleOrDefault(r =>
+                    (r.Building.ShortCode == testSection.Room.Building.Code) &&
+                    (r.Number == testSection.Room.Number)));
+                // Section
+                Assert.NotNull(dbContext.Sections.SingleOrDefault(s =>
+                    (s.Crn == testSection.Section.Crn) &&
+                    (s.Type == testSection.Section.Type) &&
+                    (s.StartDate == testMeeting.StartDate) &&
+                    (s.EndDate == testMeeting.EndDate) &&
+                    (s.Capacity == testSection.Section.Capacity) &&
+                    (s.Enrolled == testSection.Section.Enrolled) &&
+                    (s.RemainingSpace == testSection.Section.RemainingSpace) &&
+                    (s.WaitListCapacity == testSection.Section.WaitListCapacity) &&
+                    (s.WaitListCount == testSection.Section.WaitListCount) &&
+                    (s.WaitListSpace == testSection.Section.WaitListSpace)));
+                // Instructor
+                Assert.NotNull(dbContext.Instructors.SingleOrDefault(i =>
+                    (i.Email == testMeeting.Instructors.First().email) &&
+                    (i.Name == testMeeting.Instructors.First().name)));
+                // Meeting
+                Assert.NotNull(dbContext.Meetings.SingleOrDefault(m => 
+                    (m.Section.Crn == testSection.Section.Crn) &&
+                    (m.Instructors.First().Email == testMeeting.Instructors.First().email) &&
+                    (m.Type == testMeeting.Type) &&
+                    (m.StartDate == testMeeting.StartDate) &&
+                    (m.EndDate == testMeeting.EndDate) &&
+                    ((DaysOfWeek)m.DaysOfWeek == testMeeting.DaysOfWeek) &&
+                    (m.StartTime == testMeeting.StartTime) &&
+                    (m.Duration == testMeeting.EndTime.Subtract(testMeeting.StartTime)) &&
+                    (m.Room.Number == testSection.Room.Number) &&
+                    (m.Room.Building.ShortCode == testSection.Room.Building.Code)));
+            }
         }
 
         private class TestSubject
@@ -421,15 +119,67 @@ namespace PurdueIo.CatalogSync.Tests
         {
             public ICollection<TestInstructor> Instructors;
             public TestCourse Course;
+            public TestCampus Campus;
+            public TestRoom Room;
             public ScrapedSection Section;
+        }
+
+        private class TestCampus
+        {
+            public string Name;
+            public string Code;
+        }
+
+        private class TestBuilding
+        {
+            public string Name;
+            public string Code;
+        }
+
+        private class TestRoom
+        {
+            public string Number;
+            public TestBuilding Building;
         }
 
         private char lastGeneratedSubjectCodeSuffix = 'A';
         private int lastGeneratedCourseNumber = 0;
         private int lastGeneratedCrnNumber = 0;
         private char lastGeneratedInstructorSuffix = 'A';
+        private char lastGeneratedCampusSuffix = 'A';
+        private char lastGeneratedBuildingSuffix = 'A';
+        private int lastGeneratedRoomNumber = 0;
+        private readonly (string name, string code) DefaultTerm = ("Fall 2021", "202210");
+        private readonly (string name, string code) DefaultSubject = ("Test Subject", "TEST");
         private readonly TimeZoneInfo timeZone =
             TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+
+        private ApplicationDbContext GetDbContext()
+        {
+            return new ApplicationDbContext(Path.GetTempFileName());
+        }
+
+        private IScraper GetScraper(ICollection<ScrapedSection> sections)
+        {
+            return new MockScraper(
+                new List<ScrapedTerm>()
+                {
+                    new ScrapedTerm()
+                    {
+                        Id = DefaultTerm.code,
+                        Name = DefaultTerm.name,
+                    }
+                },
+                new List<ScrapedSubject>()
+                {
+                    new ScrapedSubject()
+                    {
+                        Code = DefaultSubject.code,
+                        Name = DefaultSubject.name,
+                    }
+                },
+                sections);
+        }
 
         private TestSubject GenerateSubject()
         {
@@ -469,8 +219,43 @@ namespace PurdueIo.CatalogSync.Tests
             };
         }
 
+        private TestCampus GenerateCampus()
+        {
+            var campusSuffix = lastGeneratedCampusSuffix++;
+            return new TestCampus()
+            {
+                Name = $"Campus {campusSuffix}",
+                Code = $"C{campusSuffix}",
+            };
+        }
+
+        private TestBuilding GenerateBuilding()
+        {
+            var buildingSuffix = lastGeneratedBuildingSuffix++;
+            return new TestBuilding()
+            {
+                Name = $"Test Building {buildingSuffix}",
+                Code = $"B{buildingSuffix}",
+            };
+        }
+
+        private TestRoom GenerateRoom(TestBuilding building = null)
+        {
+            var roomNumber = lastGeneratedRoomNumber++;
+            if (building == null)
+            {
+                building = GenerateBuilding();
+            }
+            return new TestRoom()
+            {
+                Number = $"{roomNumber}",
+                Building = building,
+            };
+        }
+
         private TestSection GenerateSection(ICollection<TestInstructor> instructors = null,
-            TestCourse course = null, string type = "Lecture")
+            TestCourse course = null, TestCampus campus = null, string type = "Lecture",
+            TestRoom room = null)
         {
             var crn = lastGeneratedCrnNumber++;
             if (instructors == null)
@@ -484,11 +269,21 @@ namespace PurdueIo.CatalogSync.Tests
             {
                 course = GenerateCourse();
             }
+            if (campus == null)
+            {
+                campus = GenerateCampus();
+            }
+            if (room == null)
+            {
+                room = GenerateRoom();
+            }
 
             return new TestSection()
             {
                 Instructors = instructors,
                 Course = course,
+                Campus = campus,
+                Room = room,
                 Section = new ScrapedSection()
                 {
                     Crn = $"{crn}",
@@ -510,21 +305,21 @@ namespace PurdueIo.CatalogSync.Tests
                                 timeZone.BaseUtcOffset),
                             EndTime = new DateTimeOffset(2021, 8, 30, 8, 20, 0, 0,
                                 timeZone.BaseUtcOffset),
-                            BuildingCode = building.code,
-                            BuildingName = building.name,
-                            RoomNumber = roomNumber,
+                            BuildingCode = room.Building.Code,
+                            BuildingName = room.Building.Name,
+                            RoomNumber = room.Number,
                         },
                     },
-                    SubjectCode = subjectCode,
-                    CourseNumber = courseNumber,
+                    SubjectCode = course.Subject.Code,
+                    CourseNumber = course.Number,
                     Type = type,
-                    CourseTitle = courseName,
-                    Description = courseDescription,
-                    CreditHours = courseCreditHours,
-                    LinkSelf = "A0",
-                    LinkOther = "A2",
-                    CampusCode = campusCode,
-                    CampusName = campusName,
+                    CourseTitle = course.Name,
+                    Description = course.Description,
+                    CreditHours = course.CreditHours,
+                    LinkSelf = "",
+                    LinkOther = "",
+                    CampusCode = campus.Code,
+                    CampusName = campus.Name,
                     Capacity = 32,
                     Enrolled = 16,
                     RemainingSpace = 16,
@@ -532,8 +327,7 @@ namespace PurdueIo.CatalogSync.Tests
                     WaitListCount = 4,
                     WaitListSpace = 4,
                 },
-            }
-            
+            };
         }
     }
 }
