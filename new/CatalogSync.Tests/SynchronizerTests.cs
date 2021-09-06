@@ -26,7 +26,7 @@ namespace PurdueIo.CatalogSync.Tests
             {
                 var testSection = GenerateSection();
                 var testMeeting = testSection.Section.Meetings.FirstOrDefault();
-                var scraper = GetScraper(new List<ScrapedSection>() { testSection.Section });
+                var scraper = GetScraper(testSection.Section);
                 var term = (await scraper.GetTermsAsync()).FirstOrDefault();
                 var subject = (await scraper.GetSubjectsAsync(term.Id)).FirstOrDefault();
                 await Synchronizer.SynchronizeAsync(scraper, dbContext);
@@ -34,6 +34,10 @@ namespace PurdueIo.CatalogSync.Tests
                 // Ensure the section and all related entities are properly persisted in the DB
                 // Term
                 Assert.NotNull(dbContext.Terms.SingleOrDefault(t => t.Code == term.Id));
+                Assert.Equal(testMeeting.StartDate,
+                    dbContext.Terms.SingleOrDefault(t => t.Code == term.Id).StartDate);
+                Assert.Equal(testMeeting.EndDate,
+                    dbContext.Terms.SingleOrDefault(t => t.Code == term.Id).EndDate);
                 // Subject
                 Assert.NotNull(dbContext.Subjects.SingleOrDefault(s => 
                     (s.Abbreviation == subject.Code) && (s.Name == subject.Name)));
@@ -91,6 +95,115 @@ namespace PurdueIo.CatalogSync.Tests
                     (m.Duration == testMeeting.EndTime.Subtract(testMeeting.StartTime)) &&
                     (m.Room.Number == testSection.Room.Number) &&
                     (m.Room.Building.ShortCode == testSection.Room.Building.Code)));
+            }
+        }
+
+        [Fact]
+        public async Task MultipleSectionClassSyncTest()
+        {
+            using (var dbContext = GetDbContext())
+            {
+                var lectureSection = GenerateSection(type: "Lecture", linkSelf: "A0",
+                    linkOther: "A1");
+                var recitationSection = GenerateSection(course: lectureSection.Course,
+                    campus: lectureSection.Campus, type: "Recitation", linkSelf: "A1",
+                    linkOther: "A2");
+                var labSection = GenerateSection(course: lectureSection.Course,
+                    campus: lectureSection.Campus, type: "Laboratory", linkSelf: "A2",
+                    linkOther: "A0");
+                var scraper = GetScraper(new List<ScrapedSection>() {
+                    lectureSection.Section, recitationSection.Section, labSection.Section });
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
+
+                Assert.NotNull(dbContext.Courses.SingleOrDefault(c =>
+                    (c.Number == lectureSection.Course.Number) &&
+                    (c.Title == lectureSection.Course.Name)));
+
+                Assert.NotNull(dbContext.Classes.SingleOrDefault(c =>
+                    (c.Course.Number == lectureSection.Course.Number) &&
+                    (c.Course.Title == lectureSection.Course.Name) &&
+                    (c.Sections.Any(s => (s.Crn == lectureSection.Section.Crn))) &&
+                    (c.Sections.Any(s => (s.Crn == recitationSection.Section.Crn))) &&
+                    (c.Sections.Any(s => (s.Crn == labSection.Section.Crn)))));
+            }
+        }
+
+        [Fact]
+        public async Task InstructorAddRemoveSyncTest()
+        {
+            using (var dbContext = GetDbContext())
+            {
+                var instructors = new List<TestInstructor>()
+                {
+                    GenerateInstructor(),
+                    GenerateInstructor(),
+                    GenerateInstructor(),
+                };
+                var section = GenerateSection(instructors: instructors);
+                var scraper = GetScraper(section.Section);
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
+
+                // Confirm that all instructors were synchronized
+                var dbSection = dbContext.Sections
+                    .Include(s => s.Meetings)
+                    .ThenInclude(m => m.Instructors)
+                    .SingleOrDefault(s => s.Crn == section.Section.Crn);
+                Assert.NotNull(dbSection);
+                var dbMeeting = dbSection.Meetings.FirstOrDefault();
+                Assert.NotNull(dbMeeting);
+                foreach (var instructor in instructors)
+                {
+                    Assert.Single(dbMeeting.Instructors, i => (i.Email == instructor.Email));
+                }
+
+                // Remove an instructor and sync again
+                var removedInstructor = instructors.LastOrDefault();
+                instructors.RemoveAt(instructors.Count - 1);
+                section.Section.Meetings[0] = section.Section.Meetings[0] with { 
+                    Instructors = section.Section.Meetings[0].Instructors
+                        .Where(i => (i.email != removedInstructor.Email)).ToArray() };
+                scraper = GetScraper(section.Section);
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
+
+                // Confirm that the instructor was removed
+                dbSection = dbContext.Sections
+                    .Include(s => s.Meetings)
+                    .ThenInclude(m => m.Instructors)
+                    .SingleOrDefault(s => s.Crn == section.Section.Crn);
+                Assert.NotNull(dbSection);
+                dbMeeting = dbSection.Meetings.FirstOrDefault();
+                Assert.NotNull(dbMeeting);
+                Assert.Equal(instructors.Count, dbMeeting.Instructors.Count);
+                foreach (var instructor in instructors)
+                {
+                    Assert.Single(dbMeeting.Instructors, i => (i.Email == instructor.Email));
+                }
+                Assert.DoesNotContain(dbMeeting.Instructors,
+                    i => (i.Email == removedInstructor.Email));
+
+                // Add a new instructor and sync again
+                var newInstructor = GenerateInstructor();
+                instructors.Add(newInstructor);
+                section.Section.Meetings[0] = section.Section.Meetings[0] with { 
+                    Instructors = section.Section.Meetings[0].Instructors
+                        .Concat(new (string name, string email)[] {
+                            (newInstructor.Name, newInstructor.Email) }).ToArray() };
+                scraper = GetScraper(section.Section);
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
+
+                // Confirm all the expected instructors were synchronized
+                dbSection = dbContext.Sections
+                    .Include(s => s.Meetings)
+                    .ThenInclude(m => m.Instructors)
+                    .SingleOrDefault(s => s.Crn == section.Section.Crn);
+                Assert.NotNull(dbSection);
+                dbMeeting = dbSection.Meetings.FirstOrDefault();
+                Assert.NotNull(dbMeeting);
+                Assert.Equal(instructors.Count, dbMeeting.Instructors.Count);
+                foreach (var instructor in instructors)
+                {
+                    Assert.Single(dbMeeting.Instructors, i => (i.Email == instructor.Email));
+                }
             }
         }
 
@@ -157,6 +270,11 @@ namespace PurdueIo.CatalogSync.Tests
         private ApplicationDbContext GetDbContext()
         {
             return new ApplicationDbContext(Path.GetTempFileName());
+        }
+
+        private IScraper GetScraper(ScrapedSection section)
+        {
+            return GetScraper(new List<ScrapedSection>() { section });
         }
 
         private IScraper GetScraper(ICollection<ScrapedSection> sections)
@@ -255,7 +373,7 @@ namespace PurdueIo.CatalogSync.Tests
 
         private TestSection GenerateSection(ICollection<TestInstructor> instructors = null,
             TestCourse course = null, TestCampus campus = null, string type = "Lecture",
-            TestRoom room = null)
+            TestRoom room = null, string linkSelf = "", string linkOther = "")
         {
             var crn = lastGeneratedCrnNumber++;
             if (instructors == null)
@@ -316,8 +434,8 @@ namespace PurdueIo.CatalogSync.Tests
                     CourseTitle = course.Name,
                     Description = course.Description,
                     CreditHours = course.CreditHours,
-                    LinkSelf = "",
-                    LinkOther = "",
+                    LinkSelf = linkSelf,
+                    LinkOther = linkOther,
                     CampusCode = campus.Code,
                     CampusName = campus.Name,
                     Capacity = 32,

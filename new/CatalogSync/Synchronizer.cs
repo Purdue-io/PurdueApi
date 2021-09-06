@@ -82,6 +82,19 @@ namespace PurdueIo.CatalogSync
             {
                 await SynchronizeTermSubjectAsync(dbTerm, subject);
             }
+
+            // Update term's start and end date to match the earliest and latest meeting
+            dbTerm.StartDate = dbContext.Sections
+                .Where(s => s.Class.TermId == dbTerm.Id)
+                .OrderBy(s => s.StartDate)
+                .First()
+                .StartDate;
+            dbTerm.EndDate = dbContext.Sections
+                .Where(s => s.Class.TermId == dbTerm.Id)
+                .OrderByDescending(s => s.EndDate)
+                .First()
+                .EndDate;
+            dbContext.SaveChanges();
         }
         
         private async Task SynchronizeTermSubjectAsync(DatabaseTerm dbTerm,
@@ -402,7 +415,8 @@ namespace PurdueIo.CatalogSync
                 }
 
                 var instructorsToRemove = dbMeeting.Instructors.Where(i => 
-                    dbInstructors.SingleOrDefault(di => di.Id == i.Id) == null);
+                    dbInstructors.SingleOrDefault(di => di.Id == i.Id) == null)
+                    .ToList();
                 foreach (var dbInstructor in dbInstructors)
                 {
                     if (dbMeeting.Instructors.SingleOrDefault(i => 

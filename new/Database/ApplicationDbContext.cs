@@ -1,6 +1,9 @@
 using PurdueIo.Database.Models;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace PurdueIo.Database
 {
@@ -155,6 +158,34 @@ namespace PurdueIo.Database
                 .HasIndex(i => i.Name);
             modelBuilder.Entity<Instructor>()
                 .HasIndex(i => i.Email);
+
+            // SQLite does not have proper support for DateTimeOffset via Entity Framework Core:
+            // https://docs.microsoft.com/en-us/ef/core/providers/sqlite/limitations
+            //
+            // To work around this, when the Sqlite database provider is used, all model properties
+            // of type DateTimeOffset use the DateTimeOffsetToBinaryConverter based on:
+            // https://github.com/aspnet/EntityFrameworkCore/issues/10784#issuecomment-415769754
+            //
+            // NOTE: This only supports millisecond precision, and datetimes across different zones
+            // are not sorted correctly.
+            //
+            // Thanks Georg Dangl for this workaround
+            // @ https://blog.dangl.me/archive/handling-datetimeoffset-in-sqlite-with-entity-framework-core/
+            if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+            {
+                foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+                {
+                    var properties = entityType.ClrType.GetProperties()
+                        .Where(p => p.PropertyType == typeof(DateTimeOffset));
+                    foreach (var property in properties)
+                    {
+                        modelBuilder
+                            .Entity(entityType.Name)
+                            .Property(property.Name)
+                            .HasConversion(new DateTimeOffsetToBinaryConverter());
+                    }
+                }
+            }
         }
     }
 }
