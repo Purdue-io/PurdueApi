@@ -32,6 +32,13 @@ namespace PurdueIo.CatalogSync
             return new Synchronizer(scraper, dbContext).SynchronizeInternalAsync();
         }
 
+        public static Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
+            string termCode, string subjectAbbreviation)
+        {
+            return new Synchronizer(scraper, dbContext)
+                .SynchronizeInternalAsync(termCode, subjectAbbreviation);
+        }
+
         private readonly TimeSpan MEETING_TIME_EQUALITY_TOLERANCE = TimeSpan.FromMinutes(1);
 
         private IScraper scraper;
@@ -53,7 +60,18 @@ namespace PurdueIo.CatalogSync
             }
         }
 
-        private async Task SynchronizeTermInternalAsync(ScrapedTerm scrapedTerm)
+        private async Task SynchronizeInternalAsync(string termCode, string subjectAbbreviation)
+        {
+            var terms = await scraper.GetTermsAsync();
+            var selectedTerm = terms.SingleOrDefault(t => (t.Id == termCode));
+            if (selectedTerm == null)
+            {
+                throw new ArgumentException($"Scraper could not find term code {termCode}.");
+            }
+            await SynchronizeTermInternalAsync(selectedTerm, subjectAbbreviation);
+        }
+
+        private async Task SynchronizeTermInternalAsync(ScrapedTerm scrapedTerm, string subjectAbbreviation = "")
         {
             // Check the local EF view for newly added but un-saved terms before
             // querying the real database.
@@ -77,9 +95,22 @@ namespace PurdueIo.CatalogSync
             }
 
             var subjects = await scraper.GetSubjectsAsync(dbTerm.Code);
-            foreach (var subject in subjects)
+            if (subjectAbbreviation == "")
             {
-                await SynchronizeTermSubjectAsync(dbTerm, subject);
+                foreach (var subject in subjects)
+                {
+                    await SynchronizeTermSubjectAsync(dbTerm, subject);
+                }
+            }
+            else
+            {
+                var selectedSubject = subjects.SingleOrDefault(s => (s.Code == subjectAbbreviation));
+                if (selectedSubject == null)
+                {
+                    throw new ArgumentException(
+                        $"Scraper did not find any subjects with abbreviation ${subjectAbbreviation}.");
+                }
+                await SynchronizeTermSubjectAsync(dbTerm, selectedSubject);
             }
 
             // Update term's start and end date to match the earliest and latest meeting
@@ -193,12 +224,10 @@ namespace PurdueIo.CatalogSync
             var dbCampus =
                 dbContext.Campuses.Local
                     .SingleOrDefault(c => 
-                        c.Code.Equals(campusCode, StringComparison.OrdinalIgnoreCase) && 
-                        c.Name.Equals(campusName, StringComparison.OrdinalIgnoreCase)) ??
+                        c.Code.Equals(campusCode, StringComparison.OrdinalIgnoreCase)) ??
                 dbContext.Campuses
                     .SingleOrDefault(c => 
-                        EF.Functions.Like(c.Code, campusCode) &&
-                        EF.Functions.Like(c.Name, campusName));
+                        EF.Functions.Like(c.Code, campusCode));
             if (dbCampus == null)
             {
                 dbCampus = new Campus()
@@ -208,6 +237,13 @@ namespace PurdueIo.CatalogSync
                     Name = campusName
                 };
                 dbContext.Campuses.Add(dbCampus);
+            }
+            else
+            {
+                if ((dbCampus.Name.Length <= 0) && (campusName.Length > 0))
+                {
+                    dbCampus.Name = campusName;
+                }
             }
             return dbCampus;
         }
@@ -272,7 +308,6 @@ namespace PurdueIo.CatalogSync
                     CourseId = dbCourse.Id,
                     TermId = dbTerm.Id,
                     CampusId = dbCampus.Id,
-                    Campus = dbCampus,
                     Sections = new List<DatabaseSection>(),
                 };
                 dbContext.Classes.Add(dbClass);

@@ -207,7 +207,9 @@ namespace PurdueIo.Scraper
                 HtmlNode info = termSelectNodes[i + 1].SelectSingleNode("td");
                 // TODO: Deal with white space...
                 string parsedDescription = HtmlEntity.DeEntitize(info.FirstChild.InnerText).Trim();
-                HtmlNode additionalInfo = info.SelectSingleNode("span[@class='fieldlabeltext'][4]");
+                HtmlNode additionalInfo = info
+                    .SelectSingleNode("span[@class='fieldlabeltext'][last()]")
+                    ?.NextSibling?.NextSibling;
                 while (additionalInfo != null)
                 {
                     if (additionalInfo.InnerText.Contains("Campus"))

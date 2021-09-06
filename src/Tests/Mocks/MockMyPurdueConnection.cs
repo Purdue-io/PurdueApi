@@ -19,12 +19,20 @@ namespace PurdueIo.Tests.Mocks
 
         public async Task<string> GetSectionListPageAsync(string termCode, string subjectCode)
         {
-            return await GetPageContentFromResourceAsync("bwckschd.p_get_crse_unsec.html");
+            if (termCode == "202210" && subjectCode == "COM")
+            {
+                return await GetPageContentFromResourceAsync("bwckschd.p_get_crse_unsec.html");
+            }
+            return await GetPageContentFromResourceAsync("empty_bwckschd.p_get_crse_unsec.html");
         }
 
         public async Task<string> GetSectionDetailsPageAsync(string termCode, string subjectCode)
         {
-            return await GetPageContentFromResourceAsync("bwskfcls.P_GetCrse_Advanced.html");
+            if (termCode == "202210" && subjectCode == "COM")
+            {
+                return await GetPageContentFromResourceAsync("bwskfcls.P_GetCrse_Advanced.html");
+            }
+            return await GetPageContentFromResourceAsync("empty_bwskfcls.P_GetCrse_Advanced.html");
         }
 
         // Retrieves page content from resource data embedded in the assembly
