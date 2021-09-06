@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PurdueIo.CatalogSync.Tests.Mocks;
 using PurdueIo.Database;
 using PurdueIo.Scraper;
@@ -207,6 +208,79 @@ namespace PurdueIo.CatalogSync.Tests
             }
         }
 
+        [Fact]
+        public async Task SectionAddRemoveSyncTest()
+        {
+            using (var dbContext = GetDbContext())
+            {
+                // Sync a class with two sections
+                var lectureSection = GenerateSection(type: "Lecture", linkSelf: "A0",
+                    linkOther: "A1");
+                var recitationSection = GenerateSection(course: lectureSection.Course,
+                    campus: lectureSection.Campus, type: "Recitation", linkSelf: "A1",
+                    linkOther: "A0");
+                var scraper = GetScraper(new List<ScrapedSection>() {
+                    lectureSection.Section, recitationSection.Section });
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
+
+                // Confirm class w/ two sections was properly synced
+                Assert.NotNull(dbContext.Courses.SingleOrDefault(c =>
+                    (c.Number == lectureSection.Course.Number) &&
+                    (c.Title == lectureSection.Course.Name)));
+                Assert.NotNull(dbContext.Classes.SingleOrDefault(c =>
+                    (c.Course.Number == lectureSection.Course.Number) &&
+                    (c.Course.Title == lectureSection.Course.Name) &&
+                    (c.Sections.Count == 2) &&
+                    (c.Sections.Any(s => (s.Crn == lectureSection.Section.Crn))) &&
+                    (c.Sections.Any(s => (s.Crn == recitationSection.Section.Crn)))));
+
+                // Add a new section to the class and sync again
+                var labSection = GenerateSection(course: lectureSection.Course,
+                    campus: lectureSection.Campus, type: "Laboratory", linkSelf: "A2",
+                    linkOther: "A0");
+                recitationSection.Section = recitationSection.Section with { LinkOther = "A2" };
+                scraper = GetScraper(new List<ScrapedSection>() {
+                    lectureSection.Section, recitationSection.Section, labSection.Section });
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
+
+                // Confirm all three sections are synced
+                Assert.NotNull(dbContext.Classes.SingleOrDefault(c =>
+                    (c.Course.Number == lectureSection.Course.Number) &&
+                    (c.Course.Title == lectureSection.Course.Name) &&
+                    (c.Sections.Count == 3) &&
+                    (c.Sections.Any(s => (s.Crn == lectureSection.Section.Crn))) &&
+                    (c.Sections.Any(s => (s.Crn == recitationSection.Section.Crn))) &&
+                    (c.Sections.Any(s => (s.Crn == labSection.Section.Crn)))));
+
+                // Remove a section and sync again
+                labSection.Section = labSection.Section with { LinkSelf = "A1", LinkOther = "A0" };
+                scraper = GetScraper(new List<ScrapedSection>() {
+                    lectureSection.Section, labSection.Section });
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
+
+                // Confirm only two sections are now part of the class, and that the third has
+                // been removed.
+                Assert.NotNull(dbContext.Classes.SingleOrDefault(c =>
+                    (c.Course.Number == lectureSection.Course.Number) &&
+                    (c.Course.Title == lectureSection.Course.Name) &&
+                    (c.Sections.Count == 2) &&
+                    (c.Sections.Any(s => (s.Crn == lectureSection.Section.Crn))) &&
+                    (c.Sections.Any(s => (s.Crn == labSection.Section.Crn)))));
+                Assert.Null(dbContext.Sections
+                    .SingleOrDefault(s => (s.Crn == recitationSection.Section.Crn)));
+
+                // Remove all sections and sync again
+                scraper = GetScraper(new List<ScrapedSection>() { });
+                await Synchronizer.SynchronizeAsync(scraper, dbContext);
+
+                // Confirm that there are no more sections, and the class has been removed
+                Assert.Equal(0, dbContext.Sections.Count());
+                Assert.Null(dbContext.Classes.SingleOrDefault(c => 
+                    (c.Course.Number == lectureSection.Course.Number) && 
+                    (c.Course.Title == lectureSection.Course.Name)));
+            }
+        }
+
         private class TestSubject
         {
             public string Code;
@@ -269,7 +343,10 @@ namespace PurdueIo.CatalogSync.Tests
 
         private ApplicationDbContext GetDbContext()
         {
-            return new ApplicationDbContext(Path.GetTempFileName());
+            var loggerFactory = new LoggerFactory(new[] { 
+                new Microsoft.Extensions.Logging.Debug.DebugLoggerProvider()
+            });
+            return new ApplicationDbContext(Path.GetTempFileName(), loggerFactory);
         }
 
         private IScraper GetScraper(ScrapedSection section)

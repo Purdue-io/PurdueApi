@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using PurdueIo.Database;
 using PurdueIo.Database.Models;
 using PurdueIo.Scraper;
-using PurdueIo.Scraper.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -84,17 +83,20 @@ namespace PurdueIo.CatalogSync
             }
 
             // Update term's start and end date to match the earliest and latest meeting
-            dbTerm.StartDate = dbContext.Sections
-                .Where(s => s.Class.TermId == dbTerm.Id)
-                .OrderBy(s => s.StartDate)
-                .First()
-                .StartDate;
-            dbTerm.EndDate = dbContext.Sections
-                .Where(s => s.Class.TermId == dbTerm.Id)
-                .OrderByDescending(s => s.EndDate)
-                .First()
-                .EndDate;
-            dbContext.SaveChanges();
+            if (dbContext.Sections.Where(s => s.Class.TermId == dbTerm.Id).Count() > 0)
+            {
+                dbTerm.StartDate = dbContext.Sections
+                    .Where(s => s.Class.TermId == dbTerm.Id)
+                    .OrderBy(s => s.StartDate)
+                    .First()
+                    .StartDate;
+                dbTerm.EndDate = dbContext.Sections
+                    .Where(s => s.Class.TermId == dbTerm.Id)
+                    .OrderByDescending(s => s.EndDate)
+                    .First()
+                    .EndDate;
+                dbContext.SaveChanges();
+            }
         }
         
         private async Task SynchronizeTermSubjectAsync(DatabaseTerm dbTerm,
@@ -107,6 +109,8 @@ namespace PurdueIo.CatalogSync
 
             ICollection<ICollection<ScrapedSection>> groupedSections = 
                 SectionLinker.GroupLinkedSections(scrapedSections);
+
+            var syncedCrns = new HashSet<string>();
 
             foreach (var sectionGroup in groupedSections)
             {
@@ -143,9 +147,19 @@ namespace PurdueIo.CatalogSync
                 foreach (var section in sectionGroup)
                 {
                     UpdateSection(section, dbClass);
+                    syncedCrns.Add(section.Crn);
                 }
             }
 
+            // Clean up any CRNs that were not present in the latest sync
+            dbContext.Sections.RemoveRange(dbContext.Sections.Where(s =>
+                (s.Class.Term.Id == dbTerm.Id) &&
+                (s.Class.Course.Subject.Id == dbSubject.Id) &&
+                (!syncedCrns.Contains(s.Crn))));
+            dbContext.SaveChanges();
+
+            // Clean up any classes that have no sections
+            dbContext.Classes.RemoveRange(dbContext.Classes.Where(c => (c.Sections.Count == 0)));
             dbContext.SaveChanges();
         }
 

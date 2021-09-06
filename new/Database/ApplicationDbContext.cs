@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace PurdueIo.Database
 {
@@ -39,11 +41,16 @@ namespace PurdueIo.Database
         /// All instructors in the catalog.
         public DbSet<Instructor> Instructors { get; set; }
 
+        private readonly ILoggerFactory loggerFactory;
+
         // Default constructor will use SQLite local database
-        public ApplicationDbContext(string sqliteFilePath = "purdueio.sqlite") : 
+        public ApplicationDbContext(string sqliteFilePath = "purdueio.sqlite",
+            ILoggerFactory loggerFactory = null) : 
             base(new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseSqlite($"Data Source={sqliteFilePath}").Options)
         {
+            this.loggerFactory = loggerFactory;
+
             // Migrate by default
             Database.Migrate();
         }
@@ -51,6 +58,17 @@ namespace PurdueIo.Database
         public ApplicationDbContext([NotNullAttribute] DbContextOptions options) : 
             base(options)
         { }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (loggerFactory != null)
+            {
+                if (Debugger.IsAttached)
+                {
+                    optionsBuilder.UseLoggerFactory(loggerFactory);
+                }
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
