@@ -66,6 +66,7 @@ namespace PurdueIo.Database
                 if (Debugger.IsAttached)
                 {
                     optionsBuilder.UseLoggerFactory(loggerFactory);
+                    optionsBuilder.EnableSensitiveDataLogging(true);
                 }
             }
         }
