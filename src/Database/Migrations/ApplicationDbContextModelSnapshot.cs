@@ -16,21 +16,6 @@ namespace Database.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "5.0.8");
 
-            modelBuilder.Entity("InstructorMeeting", b =>
-                {
-                    b.Property<Guid>("InstructorsId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("MeetingsId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("InstructorsId", "MeetingsId");
-
-                    b.HasIndex("MeetingsId");
-
-                    b.ToTable("InstructorMeeting");
-                });
-
             modelBuilder.Entity("PurdueIo.Database.Models.Building", b =>
                 {
                     b.Property<Guid>("Id")
@@ -180,8 +165,8 @@ namespace Database.Migrations
                     b.Property<TimeSpan>("Duration")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("EndDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("EndDate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid?>("RoomId")
                         .HasColumnType("TEXT");
@@ -189,11 +174,11 @@ namespace Database.Migrations
                     b.Property<Guid>("SectionId")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("StartDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("StartDate")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("StartTime")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("StartTime")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Type")
                         .HasColumnType("TEXT");
@@ -205,6 +190,21 @@ namespace Database.Migrations
                     b.HasIndex("SectionId");
 
                     b.ToTable("Meetings");
+                });
+
+            modelBuilder.Entity("PurdueIo.Database.Models.MeetingInstructor", b =>
+                {
+                    b.Property<Guid>("MeetingId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("InstructorId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("MeetingId", "InstructorId");
+
+                    b.HasIndex("InstructorId");
+
+                    b.ToTable("MeetingInstructor");
                 });
 
             modelBuilder.Entity("PurdueIo.Database.Models.Room", b =>
@@ -244,8 +244,8 @@ namespace Database.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("EndDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("EndDate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Enrolled")
                         .HasColumnType("INTEGER");
@@ -256,8 +256,8 @@ namespace Database.Migrations
                     b.Property<int>("RemainingSpace")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("StartDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("StartDate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Type")
                         .HasColumnType("TEXT");
@@ -314,14 +314,14 @@ namespace Database.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("EndDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("EndDate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("StartDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("StartDate")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -332,21 +332,6 @@ namespace Database.Migrations
                         .IsUnique();
 
                     b.ToTable("Terms");
-                });
-
-            modelBuilder.Entity("InstructorMeeting", b =>
-                {
-                    b.HasOne("PurdueIo.Database.Models.Instructor", null)
-                        .WithMany()
-                        .HasForeignKey("InstructorsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PurdueIo.Database.Models.Meeting", null)
-                        .WithMany()
-                        .HasForeignKey("MeetingsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("PurdueIo.Database.Models.Building", b =>
@@ -413,6 +398,25 @@ namespace Database.Migrations
                     b.Navigation("Room");
 
                     b.Navigation("Section");
+                });
+
+            modelBuilder.Entity("PurdueIo.Database.Models.MeetingInstructor", b =>
+                {
+                    b.HasOne("PurdueIo.Database.Models.Instructor", "Instructor")
+                        .WithMany()
+                        .HasForeignKey("InstructorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PurdueIo.Database.Models.Meeting", "Meeting")
+                        .WithMany()
+                        .HasForeignKey("MeetingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Instructor");
+
+                    b.Navigation("Meeting");
                 });
 
             modelBuilder.Entity("PurdueIo.Database.Models.Room", b =>

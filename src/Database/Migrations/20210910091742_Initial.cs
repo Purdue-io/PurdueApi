@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Database.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -54,8 +54,8 @@ namespace Database.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Code = table.Column<string>(type: "TEXT", maxLength: 16, nullable: true),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
-                    StartDate = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    EndDate = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    StartDate = table.Column<long>(type: "INTEGER", nullable: false),
+                    EndDate = table.Column<long>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -164,8 +164,8 @@ namespace Database.Migrations
                     ClassId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Type = table.Column<string>(type: "TEXT", nullable: true),
                     RegistrationStatus = table.Column<int>(type: "INTEGER", nullable: false),
-                    StartDate = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    EndDate = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    StartDate = table.Column<long>(type: "INTEGER", nullable: false),
+                    EndDate = table.Column<long>(type: "INTEGER", nullable: false),
                     Capacity = table.Column<int>(type: "INTEGER", nullable: false),
                     Enrolled = table.Column<int>(type: "INTEGER", nullable: false),
                     RemainingSpace = table.Column<int>(type: "INTEGER", nullable: false),
@@ -191,10 +191,10 @@ namespace Database.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     SectionId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Type = table.Column<string>(type: "TEXT", nullable: true),
-                    StartDate = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    EndDate = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    StartDate = table.Column<long>(type: "INTEGER", nullable: false),
+                    EndDate = table.Column<long>(type: "INTEGER", nullable: false),
                     DaysOfWeek = table.Column<byte>(type: "INTEGER", nullable: false),
-                    StartTime = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    StartTime = table.Column<long>(type: "INTEGER", nullable: false),
                     Duration = table.Column<TimeSpan>(type: "TEXT", nullable: false),
                     RoomId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
@@ -216,24 +216,24 @@ namespace Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "InstructorMeeting",
+                name: "MeetingInstructor",
                 columns: table => new
                 {
-                    InstructorsId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    MeetingsId = table.Column<Guid>(type: "TEXT", nullable: false)
+                    MeetingId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    InstructorId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_InstructorMeeting", x => new { x.InstructorsId, x.MeetingsId });
+                    table.PrimaryKey("PK_MeetingInstructor", x => new { x.MeetingId, x.InstructorId });
                     table.ForeignKey(
-                        name: "FK_InstructorMeeting_Instructors_InstructorsId",
-                        column: x => x.InstructorsId,
+                        name: "FK_MeetingInstructor_Instructors_InstructorId",
+                        column: x => x.InstructorId,
                         principalTable: "Instructors",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_InstructorMeeting_Meetings_MeetingsId",
-                        column: x => x.MeetingsId,
+                        name: "FK_MeetingInstructor_Meetings_MeetingId",
+                        column: x => x.MeetingId,
                         principalTable: "Meetings",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -299,11 +299,6 @@ namespace Database.Migrations
                 column: "Title");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InstructorMeeting_MeetingsId",
-                table: "InstructorMeeting",
-                column: "MeetingsId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Instructors_Email",
                 table: "Instructors",
                 column: "Email");
@@ -312,6 +307,11 @@ namespace Database.Migrations
                 name: "IX_Instructors_Name",
                 table: "Instructors",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MeetingInstructor_InstructorId",
+                table: "MeetingInstructor",
+                column: "InstructorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Meetings_RoomId",
@@ -371,7 +371,7 @@ namespace Database.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "InstructorMeeting");
+                name: "MeetingInstructor");
 
             migrationBuilder.DropTable(
                 name: "Instructors");

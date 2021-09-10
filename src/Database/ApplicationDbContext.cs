@@ -152,7 +152,13 @@ namespace PurdueIo.Database
                 .HasKey(m => m.Id);
             modelBuilder.Entity<Meeting>()
                 .HasMany<Instructor>(m => m.Instructors)
-                .WithMany(i => i.Meetings);
+                .WithMany(i => i.Meetings)
+                .UsingEntity<MeetingInstructor>(
+                    mi => mi.HasOne(mii => mii.Instructor).WithMany()
+                        .HasForeignKey(mii => mii.InstructorId),
+                    mi => mi.HasOne(mii => mii.Meeting).WithMany()
+                        .HasForeignKey(mii => mii.MeetingId))
+                .HasKey(mi => new { mi.MeetingId, mi.InstructorId });
             modelBuilder.Entity<Meeting>()
                 .HasOne<Room>(m => m.Room)
                 .WithMany()
