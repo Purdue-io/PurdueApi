@@ -25,6 +25,8 @@ namespace PurdueIo.CatalogSync
 {
     public class FastSync
     {
+        public record SyncProgress (double? Progress, string Description);
+
         public enum TermSyncBehavior
         {
             SyncAllTerms,
@@ -32,23 +34,26 @@ namespace PurdueIo.CatalogSync
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms)
+            TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
+            IProgress<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(termSyncBehavior);
+            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(termSyncBehavior,
+                progress: progress);
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            string termCode)
+            string termCode, IProgress<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(TermSyncBehavior.SyncAllTerms,
-                termCode);
+            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(
+                TermSyncBehavior.SyncAllTerms, termCode, progress: progress);
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            string termCode, string subjectCode)
+            string termCode, string subjectCode,
+            IProgress<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(TermSyncBehavior.SyncAllTerms,
-                termCode, subjectCode);
+            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(
+                TermSyncBehavior.SyncAllTerms, termCode, subjectCode, progress);
         }
 
         private IScraper scraper;
@@ -56,6 +61,10 @@ namespace PurdueIo.CatalogSync
         private ApplicationDbContext dbContext;
 
         private readonly TimeSpan MEETING_TIME_EQUALITY_TOLERANCE = TimeSpan.FromMinutes(1);
+
+        private const double PROGRESS_UPDATING_TERM_LIST = 0.05;
+
+        private const double PROGRESS_UPDATING_TERM_SECTIONS = 0.95;
         
         private FastSync(IScraper scraper, ApplicationDbContext dbContext)
         {
@@ -68,12 +77,14 @@ namespace PurdueIo.CatalogSync
         }
 
         private async Task InternalSynchronizeAsync(TermSyncBehavior termSyncBehavior,
-            string termCode = "", string subjectCode = "")
+            string termCode = "", string subjectCode = "",
+            IProgress<SyncProgress> progress = null)
         {
             // Fetch existing terms from DB
             var terms = dbContext.Terms.ToDictionary(t => t.Code);
 
             // Scrape new terms from service
+            progress?.Report(new (0, "Updating term list..."));
             var scrapedTerms = await scraper.GetTermsAsync();
 
             // Add any new terms to the database
@@ -99,8 +110,10 @@ namespace PurdueIo.CatalogSync
                 }
             }
             dbContext.SaveChanges();
+            progress?.Report(new (PROGRESS_UPDATING_TERM_LIST, $"Updated {terms.Count} terms"));
 
             // Sync each term
+            int numTermsSynced = 0;
             foreach (var termPair in terms)
             {
                 // If a term code was specified, filter to that term only
@@ -108,7 +121,13 @@ namespace PurdueIo.CatalogSync
                 {
                     continue;
                 }
+                progress?.Report(new (null, $"Synchronizing {termPair.Key}"));
                 await InternalSynchronizeTermAsync(termPair.Value, subjectCode);
+                ++numTermsSynced;
+                progress?.Report(new (
+                    PROGRESS_UPDATING_TERM_LIST + 
+                        (PROGRESS_UPDATING_TERM_SECTIONS / terms.Count) * (double)numTermsSynced,
+                    $"Synchronized {termPair.Key}"));
             }
         }
 
