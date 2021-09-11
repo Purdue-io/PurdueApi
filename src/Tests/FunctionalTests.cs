@@ -4,6 +4,7 @@ using PurdueIo.Database;
 using PurdueIo.Scraper;
 using PurdueIo.Tests.Mocks;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -18,8 +19,7 @@ namespace PurdueIo.Tests
             {
                 var connection = new MockMyPurdueConnection();
                 var scraper = new MyPurdueScraper(connection);
-                await FastSync.SynchronizeAsync(scraper, dbContext, "202210", "COM");
-                //, 
+                await FastSync.SynchronizeAsync(scraper, dbContext);
             }
         }
 

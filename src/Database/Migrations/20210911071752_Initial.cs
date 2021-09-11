@@ -240,21 +240,20 @@ namespace Database.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Buildings_CampusId",
+                name: "IX_Buildings_CampusId_ShortCode",
                 table: "Buildings",
-                column: "CampusId");
+                columns: new[] { "CampusId", "ShortCode" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Buildings_Name",
                 table: "Buildings",
-                column: "Name",
-                unique: true);
+                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Buildings_ShortCode",
                 table: "Buildings",
-                column: "ShortCode",
-                unique: true);
+                column: "ShortCode");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Campuses_Code",

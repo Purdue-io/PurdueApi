@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using PurdueIo.Scraper.Connections;
@@ -19,20 +20,29 @@ namespace PurdueIo.Tests.Mocks
 
         public async Task<string> GetSectionListPageAsync(string termCode, string subjectCode)
         {
-            if (termCode == "202210" && subjectCode == "COM")
+            var pageName = $"{termCode}.{subjectCode}.bwckschd.p_get_crse_unsec.html";
+            if (PageResourceExists(pageName))
             {
-                return await GetPageContentFromResourceAsync("bwckschd.p_get_crse_unsec.html");
+                return await GetPageContentFromResourceAsync(pageName);
             }
             return await GetPageContentFromResourceAsync("empty_bwckschd.p_get_crse_unsec.html");
         }
 
         public async Task<string> GetSectionDetailsPageAsync(string termCode, string subjectCode)
         {
-            if (termCode == "202210" && subjectCode == "COM")
+            var pageName = $"{termCode}.{subjectCode}.bwskfcls.P_GetCrse_Advanced.html";
+            if (PageResourceExists(pageName))
             {
-                return await GetPageContentFromResourceAsync("bwskfcls.P_GetCrse_Advanced.html");
+                return await GetPageContentFromResourceAsync(pageName);
             }
             return await GetPageContentFromResourceAsync("empty_bwskfcls.P_GetCrse_Advanced.html");
+        }
+
+        private bool PageResourceExists(string pageName)
+        {
+            pageName = $"Tests.Resources.Pages.{pageName}";
+            var assembly = this.GetType().GetTypeInfo().Assembly;
+            return assembly.GetManifestResourceNames().Any(r => (r == pageName));
         }
 
         // Retrieves page content from resource data embedded in the assembly

@@ -93,10 +93,11 @@ namespace PurdueIo.Database
             modelBuilder.Entity<Building>()
                 .HasKey(b => b.Id);
             modelBuilder.Entity<Building>()
-                .HasIndex(b => b.Name)
-                .IsUnique();
+                .HasIndex(b => b.Name);
             modelBuilder.Entity<Building>()
-                .HasIndex(b => b.ShortCode)
+                .HasIndex(b => b.ShortCode);
+            modelBuilder.Entity<Building>()
+                .HasIndex(b => new { b.CampusId, b.ShortCode })
                 .IsUnique();
             modelBuilder.Entity<Building>()
                 .HasMany<Room>(b => b.Rooms)

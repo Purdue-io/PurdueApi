@@ -33,12 +33,11 @@ namespace Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CampusId");
+                    b.HasIndex("Name");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("ShortCode");
 
-                    b.HasIndex("ShortCode")
+                    b.HasIndex("CampusId", "ShortCode")
                         .IsUnique();
 
                     b.ToTable("Buildings");

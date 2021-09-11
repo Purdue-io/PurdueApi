@@ -9,7 +9,7 @@ using PurdueIo.Database;
 namespace Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210910091742_Initial")]
+    [Migration("20210911071752_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,12 +35,11 @@ namespace Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CampusId");
+                    b.HasIndex("Name");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("ShortCode");
 
-                    b.HasIndex("ShortCode")
+                    b.HasIndex("CampusId", "ShortCode")
                         .IsUnique();
 
                     b.ToTable("Buildings");

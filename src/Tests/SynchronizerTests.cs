@@ -24,15 +24,19 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task BasicSectionSyncTest()
         {
-            using (var dbContext = GetDbContext())
+            var dbContextFactory = GetDbContextFactory();
+            var testSection = GenerateSection();
+            var testMeeting = testSection.Section.Meetings.FirstOrDefault();
+            var scraper = GetScraper(testSection.Section);
+            var term = (await scraper.GetTermsAsync()).FirstOrDefault();
+            var subject = (await scraper.GetSubjectsAsync(term.Id)).FirstOrDefault();
+            using (var dbContext = dbContextFactory())
             {
-                var testSection = GenerateSection();
-                var testMeeting = testSection.Section.Meetings.FirstOrDefault();
-                var scraper = GetScraper(testSection.Section);
-                var term = (await scraper.GetTermsAsync()).FirstOrDefault();
-                var subject = (await scraper.GetSubjectsAsync(term.Id)).FirstOrDefault();
                 await FastSync.SynchronizeAsync(scraper, dbContext);
+            }
 
+            using (var dbContext = dbContextFactory())
+            {
                 // Ensure the section and all related entities are properly persisted in the DB
                 // Term
                 Assert.NotNull(dbContext.Terms.SingleOrDefault(t => t.Code == term.Id));
@@ -103,20 +107,25 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task MultipleSectionClassSyncTest()
         {
-            using (var dbContext = GetDbContext())
-            {
-                var lectureSection = GenerateSection(type: "Lecture", linkSelf: "A0",
-                    linkOther: "A1");
-                var recitationSection = GenerateSection(course: lectureSection.Course,
-                    campus: lectureSection.Campus, type: "Recitation", linkSelf: "A1",
-                    linkOther: "A2");
-                var labSection = GenerateSection(course: lectureSection.Course,
-                    campus: lectureSection.Campus, type: "Laboratory", linkSelf: "A2",
-                    linkOther: "A0");
-                var scraper = GetScraper(new List<ScrapedSection>() {
-                    lectureSection.Section, recitationSection.Section, labSection.Section });
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+            var dbContextFactory = GetDbContextFactory();
+            var lectureSection = GenerateSection(type: "Lecture", linkSelf: "A0",
+                linkOther: "A1");
+            var recitationSection = GenerateSection(course: lectureSection.Course,
+                campus: lectureSection.Campus, type: "Recitation", linkSelf: "A1",
+                linkOther: "A2");
+            var labSection = GenerateSection(course: lectureSection.Course,
+                campus: lectureSection.Campus, type: "Laboratory", linkSelf: "A2",
+                linkOther: "A0");
+            var scraper = GetScraper(new List<ScrapedSection>() {
+                lectureSection.Section, recitationSection.Section, labSection.Section });
 
+            using (var dbContext = dbContextFactory())
+            {
+                await FastSync.SynchronizeAsync(scraper, dbContext);
+            }
+
+            using (var dbContext = dbContextFactory())
+            {
                 Assert.NotNull(dbContext.Courses.SingleOrDefault(c =>
                     (c.Number == lectureSection.Course.Number) &&
                     (c.Title == lectureSection.Course.Name)));
@@ -133,7 +142,7 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task InstructorAddRemoveSyncTest()
         {
-            var dbPath = Path.GetTempFileName();
+            var dbContextFactory = GetDbContextFactory();
             var instructors = new List<TestInstructor>()
             {
                 GenerateInstructor(),
@@ -142,13 +151,13 @@ namespace PurdueIo.Tests
             };
             var section = GenerateSection(instructors: instructors);
             var scraper = GetScraper(section.Section);
-            using (var dbContext = GetDbContext(dbPath))
+            using (var dbContext = dbContextFactory())
             {
                 await FastSync.SynchronizeAsync(scraper, dbContext);
             }
 
             // Confirm that all instructors were synchronized
-            using (var dbContext = GetDbContext(dbPath))
+            using (var dbContext = dbContextFactory())
             {
                 var dbSection = dbContext.Sections
                     .Include(s => s.Meetings)
@@ -170,13 +179,13 @@ namespace PurdueIo.Tests
                 Instructors = section.Section.Meetings[0].Instructors
                     .Where(i => (i.email != removedInstructor.Email)).ToArray() };
             scraper = GetScraper(section.Section);
-            using (var dbContext = GetDbContext(dbPath))
+            using (var dbContext = dbContextFactory())
             {
                 await FastSync.SynchronizeAsync(scraper, dbContext);
             }
 
             // Confirm that the instructor was removed
-            using (var dbContext = GetDbContext(dbPath))
+            using (var dbContext = dbContextFactory())
             {
                 var dbSection = dbContext.Sections
                     .Include(s => s.Meetings)
@@ -202,13 +211,13 @@ namespace PurdueIo.Tests
                     .Concat(new (string name, string email)[] {
                         (newInstructor.Name, newInstructor.Email) }).ToArray() };
             scraper = GetScraper(section.Section);
-            using (var dbContext = GetDbContext(dbPath))
+            using (var dbContext = dbContextFactory())
             {
                 await FastSync.SynchronizeAsync(scraper, dbContext);
             }
 
             // Confirm all the expected instructors were synchronized
-            using (var dbContext = GetDbContext(dbPath))
+            using (var dbContext = dbContextFactory())
             {
                 var dbSection = dbContext.Sections
                     .Include(s => s.Meetings)
@@ -228,19 +237,24 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task SectionAddRemoveSyncTest()
         {
-            using (var dbContext = GetDbContext())
+            var dbContextFactory = GetDbContextFactory();
+            
+            // Sync a class with two sections
+            var lectureSection = GenerateSection(type: "Lecture", linkSelf: "A0",
+                linkOther: "A1");
+            var recitationSection = GenerateSection(course: lectureSection.Course,
+                campus: lectureSection.Campus, type: "Recitation", linkSelf: "A1",
+                linkOther: "A0");
+            var scraper = GetScraper(new List<ScrapedSection>() {
+                lectureSection.Section, recitationSection.Section });
+            using (var dbContext = dbContextFactory())
             {
-                // Sync a class with two sections
-                var lectureSection = GenerateSection(type: "Lecture", linkSelf: "A0",
-                    linkOther: "A1");
-                var recitationSection = GenerateSection(course: lectureSection.Course,
-                    campus: lectureSection.Campus, type: "Recitation", linkSelf: "A1",
-                    linkOther: "A0");
-                var scraper = GetScraper(new List<ScrapedSection>() {
-                    lectureSection.Section, recitationSection.Section });
                 await FastSync.SynchronizeAsync(scraper, dbContext);
+            }
 
-                // Confirm class w/ two sections was properly synced
+            // Confirm class w/ two sections was properly synced
+            using (var dbContext = dbContextFactory())
+            {
                 Assert.NotNull(dbContext.Courses.SingleOrDefault(c =>
                     (c.Number == lectureSection.Course.Number) &&
                     (c.Title == lectureSection.Course.Name)));
@@ -250,17 +264,23 @@ namespace PurdueIo.Tests
                     (c.Sections.Count == 2) &&
                     (c.Sections.Any(s => (s.Crn == lectureSection.Section.Crn))) &&
                     (c.Sections.Any(s => (s.Crn == recitationSection.Section.Crn)))));
+            }
 
-                // Add a new section to the class and sync again
-                var labSection = GenerateSection(course: lectureSection.Course,
-                    campus: lectureSection.Campus, type: "Laboratory", linkSelf: "A2",
-                    linkOther: "A0");
-                recitationSection.Section = recitationSection.Section with { LinkOther = "A2" };
-                scraper = GetScraper(new List<ScrapedSection>() {
-                    lectureSection.Section, recitationSection.Section, labSection.Section });
+            // Add a new section to the class and sync again
+            var labSection = GenerateSection(course: lectureSection.Course,
+                campus: lectureSection.Campus, type: "Laboratory", linkSelf: "A2",
+                linkOther: "A0");
+            recitationSection.Section = recitationSection.Section with { LinkOther = "A2" };
+            scraper = GetScraper(new List<ScrapedSection>() {
+                lectureSection.Section, recitationSection.Section, labSection.Section });
+            using (var dbContext = dbContextFactory())
+            {
                 await FastSync.SynchronizeAsync(scraper, dbContext);
+            }
 
-                // Confirm all three sections are synced
+            // Confirm all three sections are synced
+            using (var dbContext = dbContextFactory())
+            {
                 Assert.NotNull(dbContext.Classes.SingleOrDefault(c =>
                     (c.Course.Number == lectureSection.Course.Number) &&
                     (c.Course.Title == lectureSection.Course.Name) &&
@@ -268,15 +288,21 @@ namespace PurdueIo.Tests
                     (c.Sections.Any(s => (s.Crn == lectureSection.Section.Crn))) &&
                     (c.Sections.Any(s => (s.Crn == recitationSection.Section.Crn))) &&
                     (c.Sections.Any(s => (s.Crn == labSection.Section.Crn)))));
+            }
 
-                // Remove a section and sync again
-                labSection.Section = labSection.Section with { LinkSelf = "A1", LinkOther = "A0" };
-                scraper = GetScraper(new List<ScrapedSection>() {
-                    lectureSection.Section, labSection.Section });
+            // Remove a section and sync again
+            labSection.Section = labSection.Section with { LinkSelf = "A1", LinkOther = "A0" };
+            scraper = GetScraper(new List<ScrapedSection>() {
+                lectureSection.Section, labSection.Section });
+            using (var dbContext = dbContextFactory())
+            {
                 await FastSync.SynchronizeAsync(scraper, dbContext);
+            }
 
-                // Confirm only two sections are now part of the class, and that the third has
-                // been removed.
+            // Confirm only two sections are now part of the class, and that the third has
+            // been removed.
+            using (var dbContext = dbContextFactory())
+            {
                 Assert.NotNull(dbContext.Classes.SingleOrDefault(c =>
                     (c.Course.Number == lectureSection.Course.Number) &&
                     (c.Course.Title == lectureSection.Course.Name) &&
@@ -285,13 +311,20 @@ namespace PurdueIo.Tests
                     (c.Sections.Any(s => (s.Crn == labSection.Section.Crn)))));
                 Assert.Null(dbContext.Sections
                     .SingleOrDefault(s => (s.Crn == recitationSection.Section.Crn)));
+            }
 
-                // Remove all sections and sync again
-                scraper = GetScraper(new List<ScrapedSection>() { });
+            // Remove all sections and sync again
+            scraper = GetScraper(new List<ScrapedSection>() { });
+            using (var dbContext = dbContextFactory())
+            {
                 await FastSync.SynchronizeAsync(scraper, dbContext);
+            }
 
-                // Confirm that there are no more sections, and the class has been removed
+            // Confirm that there are no more sections, and the class has been removed
+            using (var dbContext = dbContextFactory())
+            {
                 Assert.Equal(0, dbContext.Sections.Count());
+                Assert.Equal(0, dbContext.Meetings.Count());
                 Assert.Null(dbContext.Classes.SingleOrDefault(c => 
                     (c.Course.Number == lectureSection.Course.Number) && 
                     (c.Course.Title == lectureSection.Course.Name)));
@@ -358,7 +391,7 @@ namespace PurdueIo.Tests
         private readonly TimeZoneInfo timeZone =
             TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
 
-        private ApplicationDbContext GetDbContext(string path = "")
+        private Func<ApplicationDbContext> GetDbContextFactory(string path = "")
         {
             if (path == "")
             {
@@ -367,7 +400,7 @@ namespace PurdueIo.Tests
             var loggerFactory = new LoggerFactory(new[] { 
                 new Microsoft.Extensions.Logging.Debug.DebugLoggerProvider()
             });
-            return new ApplicationDbContext(path, loggerFactory);
+            return () => new ApplicationDbContext(path, loggerFactory);
         }
 
         private IScraper GetScraper(ScrapedSection section)

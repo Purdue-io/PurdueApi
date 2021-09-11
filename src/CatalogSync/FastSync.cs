@@ -159,15 +159,15 @@ namespace PurdueIo.CatalogSync
                 dbContext.Entry(term).Property(t => t.StartDate).CurrentValue = 
                     dbContext.Sections
                         .Where(s => s.Class.TermId == term.Id)
-                        .OrderBy(s => s.StartDate)
-                        .First()
-                        .StartDate;
+                        .Select(s => s.StartDate)
+                        .OrderBy(d => d)
+                        .First();
                 dbContext.Entry(term).Property(t => t.EndDate).CurrentValue =
                     dbContext.Sections
                         .Where(s => s.Class.TermId == term.Id)
-                        .OrderByDescending(s => s.EndDate)
-                        .First()
-                        .EndDate;
+                        .Select(s => s.EndDate)
+                        .OrderByDescending(d => d)
+                        .First();
                 dbContext.SaveChanges();
             }
         }
@@ -204,6 +204,27 @@ namespace PurdueIo.CatalogSync
             {
                 InternalSynchronizeClass(term, subject, campuses, buildings, instructors, courses,
                     sections, sectionGroup);
+            }
+
+            // Delete any existing CRNs that are no longer present in the latest scraped sections
+            var scrapedSectionsByCrn = scrapedSections.ToDictionary(s => s.Crn);
+            var removedSections = sections
+                .Where(s => !scrapedSectionsByCrn.ContainsKey(s.Key)).Select(s => s.Value);
+            foreach (var removedSection in removedSections)
+            {
+                dbContext.Entry(removedSection).State = EntityState.Deleted;
+            }
+
+            dbContext.SaveChanges();
+
+            // Remove classes that no longer have any sections
+            var removedClasses = dbContext.Classes.Where(c =>
+                (c.TermId == term.Id) &&
+                (c.Course.SubjectId == subject.Id) &&
+                (c.Sections.Count == 0));
+            foreach (var removedClass in removedClasses)
+            {
+                dbContext.Entry(removedClass).State = EntityState.Deleted;
             }
             dbContext.SaveChanges();
         }
