@@ -25,7 +25,7 @@ namespace PurdueIo.CatalogSync
 {
     public class FastSync
     {
-        public record SyncProgress (double? Progress, string Description);
+        public record SyncProgress (double Progress, string Description);
 
         public enum TermSyncBehavior
         {
@@ -35,25 +35,28 @@ namespace PurdueIo.CatalogSync
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
-            IProgress<SyncProgress> progress = null)
+            Action<SyncProgress> progress = null)
         {
             await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(termSyncBehavior,
                 progress: progress);
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            string termCode, IProgress<SyncProgress> progress = null)
+            IEnumerable<string> termCodes,
+            TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
+            Action<SyncProgress> progress = null)
         {
             await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(
-                TermSyncBehavior.SyncAllTerms, termCode, progress: progress);
+                TermSyncBehavior.SyncAllTerms, termCodes, progress: progress);
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            string termCode, string subjectCode,
-            IProgress<SyncProgress> progress = null)
+            IEnumerable<string> termCodes, IEnumerable<string> subjectCodes,
+            TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
+            Action<SyncProgress> progress = null)
         {
             await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(
-                TermSyncBehavior.SyncAllTerms, termCode, subjectCode, progress);
+                termSyncBehavior, termCodes, subjectCodes, progress);
         }
 
         private IScraper scraper;
@@ -65,7 +68,17 @@ namespace PurdueIo.CatalogSync
         private const double PROGRESS_UPDATING_TERM_LIST = 0.05;
 
         private const double PROGRESS_UPDATING_TERM_SECTIONS = 0.95;
+
+        private const double PROGRESS_TERM_UPDATING_SUBJECT_LIST = 0.05;
+
+        private const double PROGRESS_TERM_UPDATING_SUBJECTS = 0.95;
         
+        private const double PROGRESS_SUBJECT_CACHING_ENTITIES = 0.05;
+
+        private const double PROGRESS_SUBJECT_SCRAPING_SECTIONS = 0.05;
+
+        private const double PROGRESS_SUBJECT_UPDATING_CLASSES = 0.90;
+
         private FastSync(IScraper scraper, ApplicationDbContext dbContext)
         {
             this.scraper = scraper;
@@ -77,21 +90,22 @@ namespace PurdueIo.CatalogSync
         }
 
         private async Task InternalSynchronizeAsync(TermSyncBehavior termSyncBehavior,
-            string termCode = "", string subjectCode = "",
-            IProgress<SyncProgress> progress = null)
+            IEnumerable<string> termCodes = null, IEnumerable<string> subjectCodes = null,
+            Action<SyncProgress> progress = null)
         {
             // Fetch existing terms from DB
             var terms = dbContext.Terms.ToDictionary(t => t.Code);
 
             // Scrape new terms from service
-            progress?.Report(new (0, "Updating term list..."));
+            progress?.Invoke(new (0, "Updating term list..."));
             var scrapedTerms = await scraper.GetTermsAsync();
+            var termsToSync = new List<DatabaseTerm>();
 
             // Add any new terms to the database
             foreach (var scrapedTerm in scrapedTerms)
             {
-                // If a term code was specified, filter to that term only
-                if ((termCode.Length > 0) && (scrapedTerm.Id != termCode))
+                // Apply filter to terms if specified
+                if ((termCodes?.Count() > 0) && termCodes.All(t => (t != scrapedTerm.Id)))
                 {
                     continue;
                 }
@@ -108,42 +122,47 @@ namespace PurdueIo.CatalogSync
                     dbContext.Add(dbTerm);
                     terms[scrapedTerm.Id] = dbTerm;
                 }
+                termsToSync.Add(terms[scrapedTerm.Id]);
             }
             dbContext.SaveChanges();
-            progress?.Report(new (PROGRESS_UPDATING_TERM_LIST, $"Updated {terms.Count} terms"));
+            progress?.Invoke(new (PROGRESS_UPDATING_TERM_LIST, $"Updated {terms.Count} terms"));
 
             // Sync each term
             int numTermsSynced = 0;
-            foreach (var termPair in terms)
+            foreach (var term in termsToSync)
             {
-                // If a term code was specified, filter to that term only
-                if ((termCode.Length > 0) && (termPair.Key != termCode))
-                {
-                    continue;
-                }
-                progress?.Report(new (null, $"Synchronizing {termPair.Key}"));
-                await InternalSynchronizeTermAsync(termPair.Value, subjectCode);
+                // Translate each term's sync progress to overall progress before reporting it out
+                Action<SyncProgress> termProgress = (s) => progress?.Invoke(
+                    new (PROGRESS_UPDATING_TERM_LIST + 
+                        (PROGRESS_UPDATING_TERM_SECTIONS / termsToSync.Count) * 
+                        ((double)numTermsSynced + (s.Progress)),
+                    $"{term.Code}: {s.Description}"));
+
+                progress?.Invoke(new (PROGRESS_UPDATING_TERM_LIST + 
+                    ((PROGRESS_UPDATING_TERM_SECTIONS / termsToSync.Count) * 
+                        (double)numTermsSynced),
+                    $"Synchronizing {term.Code} / {term.Name}"));
+                await InternalSynchronizeTermAsync(term, subjectCodes, termProgress);
                 ++numTermsSynced;
-                progress?.Report(new (
-                    PROGRESS_UPDATING_TERM_LIST + 
-                        (PROGRESS_UPDATING_TERM_SECTIONS / terms.Count) * (double)numTermsSynced,
-                    $"Synchronized {termPair.Key}"));
             }
         }
 
-        private async Task InternalSynchronizeTermAsync(DatabaseTerm term, string subjectCode)
+        private async Task InternalSynchronizeTermAsync(DatabaseTerm term,
+            IEnumerable<string> subjectCodes = null, Action<SyncProgress> progress = null)
         {
             // Fetch existing subjects from DB
             var subjects = dbContext.Subjects.ToDictionary(s => s.Abbreviation);
 
             // Scrape new subjects from service
             var scrapedSubjects = await scraper.GetSubjectsAsync(term.Code);
+            var subjectsToSync = new List<DatabaseSubject>();
 
             // Add any new subjects to the database
+            progress?.Invoke(new (0.0, "Updating subjects..."));
             foreach (var scrapedSubject in scrapedSubjects)
             {
                 // If a subject was specified, filter to that subject only
-                if ((subjectCode.Length > 0) && (scrapedSubject.Code != subjectCode))
+                if ((subjectCodes?.Count() > 0) && subjectCodes.All(s => (s != scrapedSubject.Code)))
                 {
                     continue;
                 }
@@ -158,18 +177,29 @@ namespace PurdueIo.CatalogSync
                     dbContext.Add(dbSubject);
                     subjects[scrapedSubject.Code] = dbSubject;
                 }
+                subjectsToSync.Add(subjects[scrapedSubject.Code]);
             }
             dbContext.SaveChanges();
+            progress?.Invoke(new (PROGRESS_TERM_UPDATING_SUBJECT_LIST,
+                $"Updated {subjectsToSync.Count} subjects"));
 
             // Sync each subject
-            foreach (var subjectPair in subjects)
+            var numSubjectsSynced = 0;
+            foreach (var subject in subjectsToSync)
             {
-                // If a subject code was specified, filter to that subject only
-                if ((subjectCode.Length > 0) && (subjectPair.Key != subjectCode))
-                {
-                    continue;
-                }
-                await InternalSynchronizeTermSubjectAsync(term, subjectPair.Value);
+                // Translate each subjects's sync progress to term progress before reporting it out
+                Action<SyncProgress> subjectProgress = (s) => progress?.Invoke(
+                    new (PROGRESS_TERM_UPDATING_SUBJECT_LIST + 
+                        (PROGRESS_TERM_UPDATING_SUBJECTS / subjectsToSync.Count) * 
+                        ((double)numSubjectsSynced + (s.Progress)),
+                    $"{subject.Abbreviation}: {s.Description}"));
+
+                progress?.Invoke(new (PROGRESS_TERM_UPDATING_SUBJECT_LIST + 
+                    ((PROGRESS_TERM_UPDATING_SUBJECTS / subjectsToSync.Count) *
+                        (double)numSubjectsSynced),
+                    $"Synchronizing {subject.Abbreviation} / {subject.Name}"));
+                await InternalSynchronizeTermSubjectAsync(term, subject, subjectProgress);
+                ++numSubjectsSynced;
             }
 
             // Update term's start and end date to match the earliest and latest meeting
@@ -177,24 +207,38 @@ namespace PurdueIo.CatalogSync
             {
                 dbContext.Entry(term).Property(t => t.StartDate).CurrentValue = 
                     dbContext.Sections
-                        .Where(s => s.Class.TermId == term.Id)
+                        .Where(s => 
+                            (s.Class.TermId == term.Id) &&
+                            (s.StartDate > DateTimeOffset.MinValue.AddDays(7))) // Add this buffer,
+                                                                                // since DTO on
+                                                                                // SQLite has some
+                                                                                // funky timezone
+                                                                                // limitations
                         .Select(s => s.StartDate)
                         .OrderBy(d => d)
+                        .ToList()
+                        .DefaultIfEmpty(DateTimeOffset.MinValue)
                         .First();
                 dbContext.Entry(term).Property(t => t.EndDate).CurrentValue =
                     dbContext.Sections
-                        .Where(s => s.Class.TermId == term.Id)
+                        .Where(s => 
+                            (s.Class.TermId == term.Id) &&
+                            (s.EndDate < DateTimeOffset.MaxValue.AddDays(-7)))
                         .Select(s => s.EndDate)
                         .OrderByDescending(d => d)
+                        .ToList()
+                        .DefaultIfEmpty(DateTimeOffset.MaxValue)
                         .First();
+                dbContext.Entry(term).State = EntityState.Modified;
                 dbContext.SaveChanges();
             }
         }
 
         private async Task InternalSynchronizeTermSubjectAsync(DatabaseTerm term,
-            DatabaseSubject subject)
+            DatabaseSubject subject, Action<SyncProgress> progress = null)
         {
             // Fetch existing campuses, buildings, instructors
+            progress?.Invoke(new (0.0, "Caching entities..."));
             var campuses = dbContext.Campuses.ToDictionary(c => c.Code);
             var buildings = dbContext.Buildings
                 .Include(b => b.Rooms)
@@ -215,14 +259,28 @@ namespace PurdueIo.CatalogSync
                 .ToDictionary(s => s.Crn);
 
             // Scrape new sections, group into classes
+            progress?.Invoke(new (PROGRESS_SUBJECT_CACHING_ENTITIES, "Scraping sections..."));
             var scrapedSections = await scraper.GetSectionsAsync(term.Code, subject.Abbreviation);
             var groupedSections = SectionLinker.GroupLinkedSections(scrapedSections);
 
             // Sync each section group as a "Class"
+            var syncedSectionGroups = 0;
             foreach (var sectionGroup in groupedSections)
             {
+                var sectionCourseNumber = sectionGroup
+                    .FirstOrDefault(s => (s.CourseNumber.Length > 0))
+                    .CourseNumber;
+                var sectionCourseTitle = sectionGroup
+                    .FirstOrDefault(s => (s.CourseTitle.Length > 0))
+                    .CourseTitle;
+                progress?.Invoke(new (PROGRESS_SUBJECT_CACHING_ENTITIES + 
+                    PROGRESS_SUBJECT_SCRAPING_SECTIONS +
+                    ((PROGRESS_SUBJECT_UPDATING_CLASSES / groupedSections.Count)
+                        * (double)syncedSectionGroups),
+                    $"Synchronizing {sectionCourseNumber} {sectionCourseTitle}"));
                 InternalSynchronizeClass(term, subject, campuses, buildings, instructors, courses,
                     sections, sectionGroup);
+                syncedSectionGroups++;
             }
 
             // Delete any existing CRNs that are no longer present in the latest scraped sections
@@ -371,69 +429,86 @@ namespace PurdueIo.CatalogSync
             var startDate = section.Meetings
                 .OrderBy(m => m.StartDate)
                 .Select(m => m.StartDate)
-                .First();
+                .DefaultIfEmpty(DateTimeOffset.MinValue)
+                .FirstOrDefault();
 
             var endDate = section.Meetings
                 .OrderByDescending(m => m.EndDate)
                 .Select(m => m.EndDate)
-                .First();
+                .DefaultIfEmpty(DateTimeOffset.MaxValue)
+                .FirstOrDefault();
 
             if (sections.ContainsKey(section.Crn))
             {
+                var modified = false;
                 var existingSection = sections[section.Crn];
                 var dbEntry = dbContext.Entry(existingSection);
                 if (existingSection.ClassId != classId)
                 {
                     existingSection.ClassId = classId;
                     dbEntry.Property(s => s.ClassId).CurrentValue = classId;
+                    modified = true;
                 }
                 if (existingSection.Type != section.Type)
                 {
                     existingSection.Type = section.Type;
                     dbEntry.Property(s => s.Type).CurrentValue = section.Type;
+                    modified = true;
                 }
                 // TODO: Registration status..?
                 if (existingSection.StartDate != startDate)
                 {
                     existingSection.StartDate = startDate;
                     dbEntry.Property(s => s.StartDate).CurrentValue = startDate;
+                    modified = true;
                 }
                 if (existingSection.EndDate != endDate)
                 {
                     existingSection.EndDate = endDate;
                     dbEntry.Property(s => s.EndDate).CurrentValue = endDate;
+                    modified = true;
                 }
                 if (existingSection.Capacity != section.Capacity)
                 {
                     existingSection.Capacity = section.Capacity;
                     dbEntry.Property(s => s.Capacity).CurrentValue = section.Capacity;
+                    modified = true;
                 }
                 if (existingSection.Enrolled != section.Enrolled)
                 {
                     existingSection.Enrolled = section.Enrolled;
                     dbEntry.Property(s => s.Enrolled).CurrentValue = section.Enrolled;
+                    modified = true;
                 }
                 if (existingSection.RemainingSpace != section.RemainingSpace)
                 {
                     existingSection.RemainingSpace = section.RemainingSpace;
                     dbEntry.Property(s => s.RemainingSpace).CurrentValue = 
                         section.RemainingSpace;
+                    modified = true;
                 }
                 if (existingSection.WaitListCapacity != section.WaitListCapacity)
                 {
                     existingSection.WaitListCapacity = section.WaitListCapacity;
                     dbEntry.Property(s => s.WaitListCapacity).CurrentValue =
                         section.WaitListCapacity;
+                    modified = true;
                 }
                 if (existingSection.WaitListCount != section.WaitListCount)
                 {
                     existingSection.WaitListCount = section.WaitListCount;
                     dbEntry.Property(s => s.WaitListCount).CurrentValue = section.WaitListCount;
+                    modified = true;
                 }
                 if (existingSection.WaitListSpace != section.WaitListSpace)
                 {
                     existingSection.WaitListSpace = section.WaitListSpace;
                     dbEntry.Property(s => s.WaitListSpace).CurrentValue = section.WaitListSpace;
+                    modified = true;
+                }
+                if (modified)
+                {
+                    dbEntry.State = EntityState.Modified;
                 }
                 return existingSection;
             }
@@ -466,7 +541,6 @@ namespace PurdueIo.CatalogSync
             Dictionary<string, DatabaseInstructor> instructors,
             DatabaseSection dbSection, ScrapedSection section)
         {
-            var foundMeetingIds = new List<Guid>();
             foreach (var meeting in section.Meetings)
             {
                 var meetingDuration = meeting.EndTime.Subtract(meeting.StartTime);

@@ -9,6 +9,11 @@ using static PurdueIo.CatalogSync.FastSync;
 
 namespace PurdueIo.CatalogSync
 {
+    class ConsoleProgress : Progress<SyncProgress>
+    {
+        
+    }
+
     class Program
     {
         public class Options
@@ -30,10 +35,7 @@ namespace PurdueIo.CatalogSync
 
         static async Task Main(string[] args)
         {
-            // Parse arguments
-            var parsedArgs = Parser.Default.ParseArguments<Options>(args);
-
-            (await parsedArgs
+            (await Parser.Default.ParseArguments<Options>(args)
                 .WithParsedAsync(async options => await RunSync(options)))
                 .WithNotParsed(errors => errors.Output());
         }
@@ -45,7 +47,7 @@ namespace PurdueIo.CatalogSync
             string password = options.MyPurduePass ?? 
                 Environment.GetEnvironmentVariable("MY_PURDUE_PASSWORD");
 
-            if (username == null || password == null)
+            if ((username == null) || (password == null))
             {
                 Console.Error.WriteLine("You must provide a MyPurdue username and password " +
                     "to sync course. Use command line options or environment variables " +
@@ -53,13 +55,19 @@ namespace PurdueIo.CatalogSync
                 return;
             }
 
-            Console.WriteLine("Blah");
-
             var connection = await MyPurdueConnection.CreateAndConnectAsync(username, password);
             var scraper = new MyPurdueScraper(connection);
             var dbContext = new ApplicationDbContext();
-            await FastSync.SynchronizeAsync(scraper, dbContext, TermSyncBehavior.SyncAllTerms,
-                new Progress<SyncProgress>((p) => Console.WriteLine(p.Description)));
+            await FastSync.SynchronizeAsync(scraper, dbContext, options.Terms,
+                options.Subjects, TermSyncBehavior.SyncAllTerms, ReportProgress);
+        }
+
+        static void ReportProgress(SyncProgress value)
+        {
+            var percentString = Math
+                .Round(value.Progress * 100.0, 2, MidpointRounding.ToZero)
+                .ToString("0.00");
+            Console.WriteLine($"[{percentString}%] {value.Description}");
         }
     }
 }

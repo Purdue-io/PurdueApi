@@ -351,8 +351,7 @@ namespace Database.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Subjects_Name",
                 table: "Subjects",
-                column: "Name",
-                unique: true);
+                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Terms_Code",

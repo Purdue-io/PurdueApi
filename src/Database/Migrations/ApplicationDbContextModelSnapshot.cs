@@ -297,8 +297,7 @@ namespace Database.Migrations
                     b.HasIndex("Abbreviation")
                         .IsUnique();
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("Name");
 
                     b.ToTable("Subjects");
                 });

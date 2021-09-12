@@ -171,8 +171,7 @@ namespace PurdueIo.Database
                 .HasIndex(s => s.Abbreviation)
                 .IsUnique();
             modelBuilder.Entity<Subject>()
-                .HasIndex(s => s.Name)
-                .IsUnique();
+                .HasIndex(s => s.Name);
             modelBuilder.Entity<Subject>()
                 .HasMany<Course>(s => s.Courses)
                 .WithOne(c => c.Subject)
