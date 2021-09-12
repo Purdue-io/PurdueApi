@@ -145,6 +145,7 @@ namespace PurdueIo.CatalogSync
                 await InternalSynchronizeTermAsync(term, subjectCodes, termProgress);
                 ++numTermsSynced;
             }
+            progress?.Invoke(new (1.0, $"Synchronized {termsToSync.Count} terms!"));
         }
 
         private async Task InternalSynchronizeTermAsync(DatabaseTerm term,
