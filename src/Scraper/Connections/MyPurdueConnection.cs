@@ -1,9 +1,12 @@
+using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
 
 namespace PurdueIo.Scraper.Connections
 {
@@ -19,6 +22,9 @@ namespace PurdueIo.Scraper.Connections
         // Password used to authenticate with MyPurdue
         private readonly string password;
 
+        // Logger reference
+        private readonly ILogger<MyPurdueConnection> logger;
+
         // Keeps track of cookies for all requests on this connection
         private CookieContainer cookies = new CookieContainer();
 
@@ -28,12 +34,19 @@ namespace PurdueIo.Scraper.Connections
         // HttpClient used by this connection to communicate with MyPurdue
         private HttpClient httpClient;
 
+        // How many request attempts should be made before failure
+        private const int MAX_RETRIES = 5;
+
+        // Used to parse session timeout messages
+        private static Regex sessionTimeoutRegex = new Regex(@"Session timeout occurred",
+            RegexOptions.IgnoreCase);
+
         // Attempts to open a new authenticated connection to MyPurdue,
         // throws if authentication fails
         public static async Task<MyPurdueConnection> CreateAndConnectAsync(string username,
-            string password)
+            string password, ILogger<MyPurdueConnection> logger)
         {
-            var connection = new MyPurdueConnection(username, password);
+            var connection = new MyPurdueConnection(username, password, logger);
             if (await connection.Authenticate())
             {
                 return connection;
@@ -47,120 +60,180 @@ namespace PurdueIo.Scraper.Connections
 
         public async Task<string> GetTermListPageAsync()
         {
-            var result = await Request(HttpMethod.GET,
-                "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
-            var content = await result.Content.ReadAsStringAsync();
-            return content;
+            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
+            {
+                var result = await Request(HttpMethod.GET,
+                    "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
+                var content = await result.Content.ReadAsStringAsync();
+
+                if (sessionTimeoutRegex.IsMatch(content))
+                {
+                    // If we received a session timeout message, authenticate and then try again
+                    await Authenticate();
+                }
+                else
+                {
+                    return content;
+                }
+            }
+
+            throw new ApplicationException(
+                "Exceeded retries attempting to query MyPurdue term list");
         }
 
         public async Task<string> GetSubjectListPageAsync(string termCode)
         {
-            var request = await Request(HttpMethod.POST,
-                "https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date",
-                new FormUrlEncodedContent(new[]
-                    {
-                        new KeyValuePair<string, string>("p_calling_proc",
-                            "bwckschd.p_disp_dyn_sched"),
-                        new KeyValuePair<string, string>("p_term", termCode)
-                    }),
-                true,
-                "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
-            var content = await request.Content.ReadAsStringAsync();
-            return content;
+            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
+            {
+                var request = await Request(HttpMethod.POST,
+                    "https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date",
+                    new FormUrlEncodedContent(new[]
+                        {
+                            new KeyValuePair<string, string>("p_calling_proc",
+                                "bwckschd.p_disp_dyn_sched"),
+                            new KeyValuePair<string, string>("p_term", termCode)
+                        }),
+                    true,
+                    "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
+                var content = await request.Content.ReadAsStringAsync();
+
+                if (sessionTimeoutRegex.IsMatch(content))
+                {
+                    // If we received a session timeout message, authenticate and then try again
+                    await Authenticate();
+                }
+                else
+                {
+                    return content;
+                }
+            }
+            throw new ApplicationException(
+                "Exceeded retries attempting to query MyPurdue subject list");
         }
 
         public async Task<string> GetSectionListPageAsync(string termCode, string subjectCode)
         {
-            var postBody = new FormUrlEncodedContent(new[] 
+            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
             {
-                new KeyValuePair<string, string>("term_in", termCode),
-                new KeyValuePair<string, string>("sel_subj", "dummy"),
-                new KeyValuePair<string, string>("sel_day", "dummy"),
-                new KeyValuePair<string, string>("sel_schd", "dummy"),
-                new KeyValuePair<string, string>("sel_insm", "dummy"),
-                new KeyValuePair<string, string>("sel_camp", "dummy"),
-                new KeyValuePair<string, string>("sel_levl", "dummy"),
-                new KeyValuePair<string, string>("sel_sess", "dummy"),
-                new KeyValuePair<string, string>("sel_instr", "dummy"),
-                new KeyValuePair<string, string>("sel_ptrm", "dummy"),
-                new KeyValuePair<string, string>("sel_attr", "dummy"),
-                new KeyValuePair<string, string>("sel_subj", subjectCode),
-                new KeyValuePair<string, string>("sel_crse", "%"),
-                new KeyValuePair<string, string>("sel_title", ""),
-                new KeyValuePair<string, string>("sel_schd", "%"),
-                new KeyValuePair<string, string>("sel_from_cred", ""),
-                new KeyValuePair<string, string>("sel_to_cred", ""),
-                new KeyValuePair<string, string>("sel_camp", "%"),
-                new KeyValuePair<string, string>("sel_ptrm", "%"),
-                new KeyValuePair<string, string>("sel_instr", "%"),
-                new KeyValuePair<string, string>("sel_sess", "%"),
-                new KeyValuePair<string, string>("sel_attr", "%"),
-                new KeyValuePair<string, string>("begin_hh", "0"),
-                new KeyValuePair<string, string>("begin_mi", "0"),
-                new KeyValuePair<string, string>("begin_ap", "a"),
-                new KeyValuePair<string, string>("end_hh", "0"),
-                new KeyValuePair<string, string>("end_mi", "0"),
-                new KeyValuePair<string, string>("end_ap", "a"),
-            });
+                var postBody = new FormUrlEncodedContent(new[] 
+                {
+                    new KeyValuePair<string, string>("term_in", termCode),
+                    new KeyValuePair<string, string>("sel_subj", "dummy"),
+                    new KeyValuePair<string, string>("sel_day", "dummy"),
+                    new KeyValuePair<string, string>("sel_schd", "dummy"),
+                    new KeyValuePair<string, string>("sel_insm", "dummy"),
+                    new KeyValuePair<string, string>("sel_camp", "dummy"),
+                    new KeyValuePair<string, string>("sel_levl", "dummy"),
+                    new KeyValuePair<string, string>("sel_sess", "dummy"),
+                    new KeyValuePair<string, string>("sel_instr", "dummy"),
+                    new KeyValuePair<string, string>("sel_ptrm", "dummy"),
+                    new KeyValuePair<string, string>("sel_attr", "dummy"),
+                    new KeyValuePair<string, string>("sel_subj", subjectCode),
+                    new KeyValuePair<string, string>("sel_crse", "%"),
+                    new KeyValuePair<string, string>("sel_title", ""),
+                    new KeyValuePair<string, string>("sel_schd", "%"),
+                    new KeyValuePair<string, string>("sel_from_cred", ""),
+                    new KeyValuePair<string, string>("sel_to_cred", ""),
+                    new KeyValuePair<string, string>("sel_camp", "%"),
+                    new KeyValuePair<string, string>("sel_ptrm", "%"),
+                    new KeyValuePair<string, string>("sel_instr", "%"),
+                    new KeyValuePair<string, string>("sel_sess", "%"),
+                    new KeyValuePair<string, string>("sel_attr", "%"),
+                    new KeyValuePair<string, string>("begin_hh", "0"),
+                    new KeyValuePair<string, string>("begin_mi", "0"),
+                    new KeyValuePair<string, string>("begin_ap", "a"),
+                    new KeyValuePair<string, string>("end_hh", "0"),
+                    new KeyValuePair<string, string>("end_mi", "0"),
+                    new KeyValuePair<string, string>("end_ap", "a"),
+                });
 
-            var request = await Request(HttpMethod.POST,
-                "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec", postBody);
-            var content = await request.Content.ReadAsStringAsync();
-            return content;
+                var request = await Request(HttpMethod.POST,
+                    "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec",
+                    postBody);
+                var content = await request.Content.ReadAsStringAsync();
+
+                if (sessionTimeoutRegex.IsMatch(content))
+                {
+                    // If we received a session timeout message, authenticate and then try again
+                    await Authenticate();
+                }
+                else
+                {
+                    return content;
+                }
+            }
+            throw new ApplicationException(
+                "Exceeded retries attempting to query MyPurdue section list");
         }
 
         public async Task<string> GetSectionDetailsPageAsync(string termCode, string subjectCode)
         {
-            var postBody = new FormUrlEncodedContent(new[] 
+            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
             {
-                new KeyValuePair<string, string>("rsts", "dummy"),
-                new KeyValuePair<string, string>("crn", "dummy"),
-                new KeyValuePair<string, string>("term_in", termCode),
-                new KeyValuePair<string, string>("sel_subj", "dummy"),
-                new KeyValuePair<string, string>("sel_day", "dummy"),
-                new KeyValuePair<string, string>("sel_schd", "dummy"),
-                new KeyValuePair<string, string>("sel_insm", "dummy"),
-                new KeyValuePair<string, string>("sel_camp", "dummy"),
-                new KeyValuePair<string, string>("sel_levl", "dummy"),
-                new KeyValuePair<string, string>("sel_sess", "dummy"),
-                new KeyValuePair<string, string>("sel_instr", "dummy"),
-                new KeyValuePair<string, string>("sel_ptrm", "dummy"),
-                new KeyValuePair<string, string>("sel_attr", "dummy"),
-                new KeyValuePair<string, string>("sel_subj", subjectCode),
-                new KeyValuePair<string, string>("sel_crse", ""),
-                new KeyValuePair<string, string>("sel_title", ""),
-                new KeyValuePair<string, string>("sel_schd", "%"),
-                new KeyValuePair<string, string>("sel_insm", "%"),
-                new KeyValuePair<string, string>("sel_from_cred", ""),
-                new KeyValuePair<string, string>("sel_to_cred", ""),
-                new KeyValuePair<string, string>("sel_camp", "%"),
-                new KeyValuePair<string, string>("sel_ptrm", "%"),
-                new KeyValuePair<string, string>("sel_instr", "%"),
-                new KeyValuePair<string, string>("sel_sess", "%"),
-                new KeyValuePair<string, string>("sel_attr", "%"),
-                new KeyValuePair<string, string>("begin_hh", "0"),
-                new KeyValuePair<string, string>("begin_mi", "0"),
-                new KeyValuePair<string, string>("begin_ap", "a"),
-                new KeyValuePair<string, string>("end_hh", "0"),
-                new KeyValuePair<string, string>("end_mi", "0"),
-                new KeyValuePair<string, string>("end_ap", "a"),
-                new KeyValuePair<string, string>("SUB_BTN", "Section Search"),
-                new KeyValuePair<string, string>("path", "1"),
-            });
+                var postBody = new FormUrlEncodedContent(new[] 
+                {
+                    new KeyValuePair<string, string>("rsts", "dummy"),
+                    new KeyValuePair<string, string>("crn", "dummy"),
+                    new KeyValuePair<string, string>("term_in", termCode),
+                    new KeyValuePair<string, string>("sel_subj", "dummy"),
+                    new KeyValuePair<string, string>("sel_day", "dummy"),
+                    new KeyValuePair<string, string>("sel_schd", "dummy"),
+                    new KeyValuePair<string, string>("sel_insm", "dummy"),
+                    new KeyValuePair<string, string>("sel_camp", "dummy"),
+                    new KeyValuePair<string, string>("sel_levl", "dummy"),
+                    new KeyValuePair<string, string>("sel_sess", "dummy"),
+                    new KeyValuePair<string, string>("sel_instr", "dummy"),
+                    new KeyValuePair<string, string>("sel_ptrm", "dummy"),
+                    new KeyValuePair<string, string>("sel_attr", "dummy"),
+                    new KeyValuePair<string, string>("sel_subj", subjectCode),
+                    new KeyValuePair<string, string>("sel_crse", ""),
+                    new KeyValuePair<string, string>("sel_title", ""),
+                    new KeyValuePair<string, string>("sel_schd", "%"),
+                    new KeyValuePair<string, string>("sel_insm", "%"),
+                    new KeyValuePair<string, string>("sel_from_cred", ""),
+                    new KeyValuePair<string, string>("sel_to_cred", ""),
+                    new KeyValuePair<string, string>("sel_camp", "%"),
+                    new KeyValuePair<string, string>("sel_ptrm", "%"),
+                    new KeyValuePair<string, string>("sel_instr", "%"),
+                    new KeyValuePair<string, string>("sel_sess", "%"),
+                    new KeyValuePair<string, string>("sel_attr", "%"),
+                    new KeyValuePair<string, string>("begin_hh", "0"),
+                    new KeyValuePair<string, string>("begin_mi", "0"),
+                    new KeyValuePair<string, string>("begin_ap", "a"),
+                    new KeyValuePair<string, string>("end_hh", "0"),
+                    new KeyValuePair<string, string>("end_mi", "0"),
+                    new KeyValuePair<string, string>("end_ap", "a"),
+                    new KeyValuePair<string, string>("SUB_BTN", "Section Search"),
+                    new KeyValuePair<string, string>("path", "1"),
+                });
 
-            var request = await Request(HttpMethod.POST,
-                "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse_Advanced",
-                postBody,
-                true,
-                "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse");
-            var content = await request.Content.ReadAsStringAsync();
-            return content;
+                var request = await Request(HttpMethod.POST,
+                    "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse_Advanced",
+                    postBody,
+                    true,
+                    "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse");
+                var content = await request.Content.ReadAsStringAsync();
+
+                if (sessionTimeoutRegex.IsMatch(content))
+                {
+                    // If we received a session timeout message, authenticate and then try again
+                    await Authenticate();
+                }
+                else
+                {
+                    return content;
+                }
+            }
+            throw new ApplicationException(
+                "Exceeded retries attempting to query MyPurdue section details");
         }
 
-        private MyPurdueConnection(string username, string password)
+        private MyPurdueConnection(string username, string password,
+            ILogger<MyPurdueConnection> logger)
         {
             this.username = username;
             this.password = password;
+            this.logger = logger;
 
             var httpHandler = new HttpClientHandler()
             {
@@ -176,14 +249,14 @@ namespace PurdueIo.Scraper.Connections
             httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
             httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
             httpClient.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " + 
+                "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " +
                 "Chrome/45.0.2454.99 Safari/537.36");
         }
 
         private async Task<bool> Authenticate()
         {
             var loginForm = await Request(HttpMethod.GET,
-                "https://www.purdue.edu/apps/account/cas/login" + 
+                "https://www.purdue.edu/apps/account/cas/login" +
                 "?service=https%3A%2F%2Fwl.mypurdue.purdue.edu%2Fc%2Fportal%2Flogin");
             HtmlDocument document = new HtmlDocument();
             document.LoadHtml(await loginForm.Content.ReadAsStringAsync());
@@ -201,7 +274,7 @@ namespace PurdueIo.Scraper.Connections
                 new KeyValuePair<string, string>("_eventId", "submit"),
                 new KeyValuePair<string, string>("submit", "Login")
             });
-            
+
             HttpResponseMessage r = await Request(HttpMethod.POST,
                 "https://www.purdue.edu/apps/account/cas/login" + 
                 "?service=https%3A%2F%2Fwl.mypurdue.purdue.edu%2Fc%2Fportal%2Flogin", content);
@@ -228,14 +301,14 @@ namespace PurdueIo.Scraper.Connections
             FormUrlEncodedContent postContent = null, bool followRedirect = true,
             string requestReferrer = null)
         {
-            System.Diagnostics.Debug.WriteLine(method.ToString() + " Request: " + url);
+            logger.LogDebug($"{method.ToString()} Request: {url}");
 
             if (requestReferrer != null)
             {
                 referrer = requestReferrer;
             }
 
-            System.Diagnostics.Debug.WriteLine("\tReferrer: " + referrer);
+            logger.LogDebug($"Referrer: {referrer}");
             if (referrer.Length > 0)
             {
                 httpClient.DefaultRequestHeaders.Referrer = new Uri(referrer);
@@ -251,21 +324,16 @@ namespace PurdueIo.Scraper.Connections
             // Print out our POST data
             if (postContent != null)
             {
-                System.Diagnostics.Debug.WriteLine("\tPOST data:");
                 var postString = await postContent.ReadAsStringAsync();
-                postString = "\t\t" + postString.Replace("&", "\n\t\t");
-                System.Diagnostics.Debug.WriteLine(postString);
+                postString = postString.Replace("&", "\n\t\t");
+                logger.LogDebug($"POST data: \n{postString}");
             }
 
             // Print out all the cookies we're sending
             var cookiesToSend = cookies.GetCookies(new Uri(url));
-            System.Diagnostics.Debug.WriteLine("\tOutgoing cookies:");
-            foreach (var cookie in cookiesToSend)
-            {
-                System.Diagnostics.Debug.WriteLine("\t\t" + cookie.ToString());
-            }
+            logger.LogDebug("Outgoing cookies: \n" + 
+                $"{string.Join("\n", cookiesToSend.Select(c => c.ToString()))}");
 
-            System.Diagnostics.Debug.WriteLine("\t...");
             HttpResponseMessage result = null;
             switch (method)
             {
@@ -282,13 +350,12 @@ namespace PurdueIo.Scraper.Connections
                     "No request was made - most likely due to invalid HTTP method.");
             }
 
-            System.Diagnostics.Debug.WriteLine("\tIncoming cookies:");
             IEnumerable<string> incomingCookies;
             if (result.Headers.TryGetValues("set-cookie", out incomingCookies))
             {
+                logger.LogDebug($"Incoming cookies:\n{string.Join("\n", incomingCookies)}");
                 foreach (var c in incomingCookies)
                 {
-                    System.Diagnostics.Debug.WriteLine("\t\t" + c);
                     if (c.StartsWith("SESSID") && !c.Contains("expires"))
                     {
                         var sessidCookieValue = c.Substring((c.IndexOf('=') + 1),
@@ -304,8 +371,7 @@ namespace PurdueIo.Scraper.Connections
 
             if (followRedirect && (result.Headers.Location != null))
             {
-                System.Diagnostics.Debug.WriteLine(
-                    "\tREDIRECT to " + result.Headers.Location.ToString());
+                logger.LogDebug($"Redirect to {result.Headers.Location.ToString()}");
                 // All redirects are converted to GET
                 result = await Request(HttpMethod.GET, result.Headers.Location.ToString(), null);
             }

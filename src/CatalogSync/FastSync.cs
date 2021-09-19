@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PurdueIo.Database;
 using PurdueIo.Database.Models;
 using PurdueIo.Scraper;
@@ -34,34 +35,38 @@ namespace PurdueIo.CatalogSync
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
+            ILogger<FastSync> logger,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(termSyncBehavior,
-                progress: progress);
+            await (new FastSync(scraper, dbContext, logger)).InternalSynchronizeAsync(
+                termSyncBehavior, progress: progress);
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            IEnumerable<string> termCodes,
+            ILogger<FastSync> logger, IEnumerable<string> termCodes,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(
+            await (new FastSync(scraper, dbContext, logger)).InternalSynchronizeAsync(
                 TermSyncBehavior.SyncAllTerms, termCodes, progress: progress);
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            IEnumerable<string> termCodes, IEnumerable<string> subjectCodes,
+            ILogger<FastSync> logger, IEnumerable<string> termCodes,
+            IEnumerable<string> subjectCodes,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext)).InternalSynchronizeAsync(
+            await (new FastSync(scraper, dbContext, logger)).InternalSynchronizeAsync(
                 termSyncBehavior, termCodes, subjectCodes, progress);
         }
 
-        private IScraper scraper;
+        private readonly IScraper scraper;
 
-        private ApplicationDbContext dbContext;
+        private readonly ApplicationDbContext dbContext;
+
+        private readonly ILogger<FastSync> logger;
 
         private readonly TimeSpan MEETING_TIME_EQUALITY_TOLERANCE = TimeSpan.FromMinutes(1);
 
@@ -79,10 +84,12 @@ namespace PurdueIo.CatalogSync
 
         private const double PROGRESS_SUBJECT_UPDATING_CLASSES = 0.90;
 
-        private FastSync(IScraper scraper, ApplicationDbContext dbContext)
+        private FastSync(IScraper scraper, ApplicationDbContext dbContext,
+            ILogger<FastSync> logger)
         {
             this.scraper = scraper;
             this.dbContext = dbContext;
+            this.logger = logger;
 
             // Disable change tracking
             this.dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
@@ -333,7 +340,7 @@ namespace PurdueIo.CatalogSync
                     (s.CourseTitle.Length > 0));
             if (sectionWithCourse == null)
             {
-                Console.Error.WriteLine("WARNING: No course information found for CRNs " + 
+                logger.LogError("WARNING: No course information found for CRNs " + 
                     $"{string.Join(", ", sectionGroup.Select(s => s.Crn))}");
                 return;
             }

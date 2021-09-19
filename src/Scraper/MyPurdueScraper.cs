@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace PurdueIo.Scraper
 {
@@ -13,9 +14,12 @@ namespace PurdueIo.Scraper
     {
         private readonly IMyPurdueConnection connection;
 
-        public MyPurdueScraper(IMyPurdueConnection connection)
+        private readonly ILogger<MyPurdueScraper> logger;
+
+        public MyPurdueScraper(IMyPurdueConnection connection, ILogger<MyPurdueScraper> logger)
         {
             this.connection = connection;
+            this.logger = logger;
         }
 
         public async Task<ICollection<Term>> GetTermsAsync()

@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using Microsoft.Extensions.Logging;
 using PurdueIo.Database;
 using PurdueIo.Scraper;
 using PurdueIo.Scraper.Connections;
@@ -36,11 +37,11 @@ namespace PurdueIo.CatalogSync
         static async Task Main(string[] args)
         {
             (await Parser.Default.ParseArguments<Options>(args)
-                .WithParsedAsync(async options => await RunSync(options)))
+                .WithParsedAsync(async options => await RunASync(options)))
                 .WithNotParsed(errors => errors.Output());
         }
 
-        static async Task RunSync(Options options)
+        static async Task RunASync(Options options)
         {
             string username = options.MyPurduePass ?? 
                 Environment.GetEnvironmentVariable("MY_PURDUE_USERNAME");
@@ -55,19 +56,26 @@ namespace PurdueIo.CatalogSync
                 return;
             }
 
-            var connection = await MyPurdueConnection.CreateAndConnectAsync(username, password);
-            var scraper = new MyPurdueScraper(connection);
-            var dbContext = new ApplicationDbContext();
-            await FastSync.SynchronizeAsync(scraper, dbContext, options.Terms,
-                options.Subjects, TermSyncBehavior.SyncAllTerms, ReportProgress);
-        }
+            var loggerFactory = LoggerFactory.Create(b => 
+                b.AddSimpleConsole(c => c.TimestampFormat = "hh:mm:ss.fff "));
 
-        static void ReportProgress(SyncProgress value)
-        {
-            var percentString = Math
-                .Round(value.Progress * 100.0, 2, MidpointRounding.ToZero)
-                .ToString("0.00");
-            Console.WriteLine($"[{percentString}%] {value.Description}");
+            var logger = loggerFactory.CreateLogger<Program>();
+
+            Action<SyncProgress> reportProgress = (value) => {
+                var percentString = Math
+                    .Round(value.Progress * 100.0, 2, MidpointRounding.ToZero)
+                    .ToString("0.00");
+                logger.LogInformation($"[{percentString}%] {value.Description}");
+            };
+
+            var connection = await MyPurdueConnection.CreateAndConnectAsync(username, password,
+                loggerFactory.CreateLogger<MyPurdueConnection>());
+            var scraper = new MyPurdueScraper(connection,
+                loggerFactory.CreateLogger<MyPurdueScraper>());
+            var dbContext = new ApplicationDbContext();
+            await FastSync.SynchronizeAsync(scraper, dbContext,
+                loggerFactory.CreateLogger<FastSync>(), options.Terms, options.Subjects,
+                TermSyncBehavior.SyncAllTerms, reportProgress);
         }
     }
 }
