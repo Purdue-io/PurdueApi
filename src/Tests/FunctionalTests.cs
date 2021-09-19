@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using PurdueIo.CatalogSync;
 using PurdueIo.Database;
 using PurdueIo.Scraper;
@@ -12,14 +13,23 @@ namespace PurdueIo.Tests
 {
     public class FunctionalTests
     {
+        private readonly ILoggerFactory loggerFactory;
+
+        public FunctionalTests()
+        {
+            this.loggerFactory = new NullLoggerFactory();
+        }
+
         [Fact]
         public async Task FunctionalSyncTest()
         {
             using (var dbContext = GetDbContext())
             {
                 var connection = new MockMyPurdueConnection();
-                var scraper = new MyPurdueScraper(connection);
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                var scraper = new MyPurdueScraper(connection,
+                    loggerFactory.CreateLogger<MyPurdueScraper>());
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
         }
 

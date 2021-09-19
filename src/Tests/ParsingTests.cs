@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using PurdueIo.Scraper;
 using PurdueIo.Scraper.Models;
 using PurdueIo.Tests.Mocks;
@@ -10,11 +12,19 @@ namespace PurdueIo.Tests
 {
     public class ParsingTests
     {
+        private readonly ILoggerFactory loggerFactory;
+
+        public ParsingTests()
+        {
+            this.loggerFactory = new NullLoggerFactory();
+        }
+
         [Fact]
         public async Task SectionParsing()
         {
             var connection = new MockMyPurdueConnection();
-            var scraper = new MyPurdueScraper(connection);
+            var scraper = new MyPurdueScraper(connection,
+                loggerFactory.CreateLogger<MyPurdueScraper>());
             var sections = await scraper.GetSectionsAsync("202210", "COM");
             Assert.NotEmpty(sections);
             Assert.Equal(271, sections.Count);
@@ -85,7 +95,8 @@ namespace PurdueIo.Tests
         public async Task SubjectParsing()
         {
             var connection = new MockMyPurdueConnection();
-            var scraper = new MyPurdueScraper(connection);
+            var scraper = new MyPurdueScraper(connection,
+                loggerFactory.CreateLogger<MyPurdueScraper>());
             ICollection<Subject> subjects = await scraper.GetSubjectsAsync("202210");
 
             // Spot check a few subjects
@@ -107,7 +118,8 @@ namespace PurdueIo.Tests
         public async Task TermParsing()
         {
             var connection = new MockMyPurdueConnection();
-            var scraper = new MyPurdueScraper(connection);
+            var scraper = new MyPurdueScraper(connection,
+                loggerFactory.CreateLogger<MyPurdueScraper>());
             ICollection<Term> terms = await scraper.GetTermsAsync();
 
             // Spot check a few terms

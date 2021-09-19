@@ -84,6 +84,18 @@ namespace PurdueIo.CatalogSync
 
         private const double PROGRESS_SUBJECT_UPDATING_CLASSES = 0.90;
 
+        private Dictionary<string, DatabaseCampus> dbCachedCampuses =
+            new Dictionary<string, DatabaseCampus>();
+
+        private Dictionary<(string number, string title), DatabaseCourse> dbCachedCourses = 
+            new Dictionary<(string number, string title), DatabaseCourse>();
+
+        private Dictionary<(Guid campusId, string buildingCode), DatabaseBuilding> dbCachedBuildings
+            = new Dictionary<(Guid campusId, string buildingCode), DatabaseBuilding>();
+
+        private Dictionary<string, DatabaseInstructor> dbCachedInstructors =
+            new Dictionary<string, DatabaseInstructor>();
+
         private FastSync(IScraper scraper, ApplicationDbContext dbContext,
             ILogger<FastSync> logger)
         {
@@ -246,25 +258,14 @@ namespace PurdueIo.CatalogSync
             DatabaseSubject subject, Action<SyncProgress> progress = null)
         {
             // Fetch existing campuses, buildings, instructors
-            progress?.Invoke(new (0.0, "Caching entities..."));
-            var campuses = dbContext.Campuses.ToDictionary(c => c.Code);
-            var buildings = dbContext.Buildings
-                .Include(b => b.Rooms)
-                .ToDictionary(b => (campusId: b.CampusId, code: b.ShortCode));
-            var instructors = dbContext.Instructors.ToDictionary(i => i.Email);
+            progress?.Invoke(new (0.0, "Retrieving existing CRNs..."));
             // Fetch existing courses, sections for this term + subject
-            var courses = dbContext.Courses.Where(c => c.SubjectId == subject.Id)
-                .ToDictionary(c => (number: c.Number, name: c.Title));
-            var sections = dbContext.Sections
-                .Include(s => s.Meetings)
-                .ThenInclude(m => m.Room)
-                .ThenInclude(r => r.Building)
-                .Include(s => s.Meetings)
-                .ThenInclude(m => m.Instructors)
+            var existingCrns = dbContext.Sections
                 .Where(s => 
                     (s.Class.TermId == term.Id) && 
                     (s.Class.Course.SubjectId == subject.Id))
-                .ToDictionary(s => s.Crn);
+                .Select(s => s.Crn)
+                .ToList();
 
             // Scrape new sections, group into classes
             progress?.Invoke(new (PROGRESS_SUBJECT_CACHING_ENTITIES, "Scraping sections..."));
@@ -286,18 +287,27 @@ namespace PurdueIo.CatalogSync
                     ((PROGRESS_SUBJECT_UPDATING_CLASSES / groupedSections.Count)
                         * (double)syncedSectionGroups),
                     $"Synchronizing {sectionCourseNumber} {sectionCourseTitle}"));
-                InternalSynchronizeClass(term, subject, campuses, buildings, instructors, courses,
-                    sections, sectionGroup);
+                InternalSynchronizeClass(term, subject, sectionGroup);
                 syncedSectionGroups++;
             }
 
             // Delete any existing CRNs that are no longer present in the latest scraped sections
+            progress?.Invoke(new ((PROGRESS_SUBJECT_CACHING_ENTITIES + 
+                PROGRESS_SUBJECT_SCRAPING_SECTIONS +
+                PROGRESS_SUBJECT_UPDATING_CLASSES),
+                $"Cleaning up outdated sections..."));
             var scrapedSectionsByCrn = scrapedSections.ToDictionary(s => s.Crn);
-            var removedSections = sections
-                .Where(s => !scrapedSectionsByCrn.ContainsKey(s.Key)).Select(s => s.Value);
-            foreach (var removedSection in removedSections)
+            var crnsToRemove = existingCrns
+                .Where(s => !scrapedSectionsByCrn.ContainsKey(s));
+            foreach (var crnToRemove in crnsToRemove)
             {
-                dbContext.Entry(removedSection).State = EntityState.Deleted;
+                var sectionToRemove = dbContext.Sections.SingleOrDefault(s =>
+                    (s.Class.TermId == term.Id) &&
+                    (s.Crn == crnToRemove));
+                if (sectionToRemove != null)
+                {
+                    dbContext.Entry(sectionToRemove).State = EntityState.Deleted;
+                }
             }
 
             dbContext.SaveChanges();
@@ -315,11 +325,6 @@ namespace PurdueIo.CatalogSync
         }
 
         private void InternalSynchronizeClass(DatabaseTerm term, DatabaseSubject subject,
-            Dictionary<string, DatabaseCampus> campuses,
-            Dictionary<(Guid campusId, string code), DatabaseBuilding> buildings,
-            Dictionary<string, DatabaseInstructor> instructors,
-            Dictionary<(string number, string title), DatabaseCourse> courses,
-            Dictionary<string, DatabaseSection> sections,
             ICollection<ScrapedSection> sectionGroup)
         {
             // Hydrate campus
@@ -331,7 +336,7 @@ namespace PurdueIo.CatalogSync
                 campusCode = sectionWithCampus.CampusCode;
                 campusName = sectionWithCampus.CampusName;
             }
-            DatabaseCampus campus = FetchOrAddCampus(campuses, campusCode, campusName);
+            DatabaseCampus campus = FetchOrAddCampus(campusCode, campusName);
 
             // Hydrate course
             var sectionWithCourse = sectionGroup
@@ -348,14 +353,16 @@ namespace PurdueIo.CatalogSync
                 .OrderByDescending(c => c.CreditHours)
                 .FirstOrDefault()
                 .CreditHours;
-            DatabaseCourse course = FetchOrAddCourse(subject, courses,
-                sectionWithCourse.CourseNumber, sectionWithCourse.CourseTitle, creditHours,
-                sectionWithCourse.Description);
+            DatabaseCourse course = FetchOrAddCourse(subject, sectionWithCourse.CourseNumber,
+                sectionWithCourse.CourseTitle, creditHours, sectionWithCourse.Description);
 
             // Hydrate class
             Guid classId = Guid.Empty;
-            var sectionWithClass = sectionGroup.FirstOrDefault(s => sections.ContainsKey(s.Crn));
-            if (sectionWithClass == null)
+            var crns = sectionGroup.Select(s => s.Crn);
+            var dbSections = dbContext.Sections
+                .Where(s => (s.Class.TermId == term.Id) && (crns.Contains(s.Crn)))
+                .ToList();
+            if (dbSections.Count == 0)
             {
                 var newClass = new DatabaseClass()
                 {
@@ -369,70 +376,78 @@ namespace PurdueIo.CatalogSync
             }
             else
             {
-                classId = sections[sectionWithClass.Crn].ClassId;
+                classId = dbSections.First().ClassId;
             }
 
             // Hydrate each section
             foreach (var section in sectionGroup)
             {
-                var dbSection = AddOrUpdateSection(sections, classId, section);
-                AddOrUpdateSectionMeetings(campus, buildings, instructors, dbSection, section);
+                var dbSection = AddOrUpdateSection(classId, dbSections, section);
+                AddOrUpdateSectionMeetings(campus, dbSection, section);
             }
         }
 
-        private DatabaseCampus FetchOrAddCampus(Dictionary<string, DatabaseCampus> campuses,
-            string campusCode, string campusName)
+        private DatabaseCampus FetchOrAddCampus(string campusCode, string campusName)
         {
             DatabaseCampus campus;
-            if (campuses.ContainsKey(campusCode))
+            if (dbCachedCampuses.ContainsKey(campusCode))
             {
-                campus = campuses[campusCode];
+                campus = dbCachedCampuses[campusCode];
             }
             else
             {
-                campus = new DatabaseCampus()
+                campus = dbContext.Campuses.SingleOrDefault(c => (c.Code == campusCode));
+                if (campus == null)
                 {
-                    Id = Guid.NewGuid(),
-                    Code = campusCode,
-                    Name = campusName,
-                    ZipCode = "",
-                };
-                dbContext.Add(campus);
-                campuses[campusCode] = campus;
+                    campus = new DatabaseCampus()
+                    {
+                        Id = Guid.NewGuid(),
+                        Code = campusCode,
+                        Name = campusName,
+                        ZipCode = "",
+                    };
+                    dbContext.Add(campus);
+                }
+                dbCachedCampuses[campusCode] = campus;
             }
             return campus;
         }
 
-        private DatabaseCourse FetchOrAddCourse(
-            DatabaseSubject subject,
-            Dictionary<(string number, string title), DatabaseCourse> courses,
-            string courseNumber, string courseTitle, double creditHours, string courseDescription)
+        private DatabaseCourse FetchOrAddCourse(DatabaseSubject subject, string courseNumber,
+            string courseTitle, double creditHours, string courseDescription)
         {
             DatabaseCourse course;
             var courseKey = (number: courseNumber, title: courseTitle);
-            if (courses.ContainsKey(courseKey))
+            if (dbCachedCourses.ContainsKey(courseKey))
             {
-                course = courses[courseKey];
+                course = dbCachedCourses[courseKey];
             }
             else
             {
-                course = new DatabaseCourse()
+                course = dbContext.Courses.SingleOrDefault(c => 
+                    (c.SubjectId == subject.Id) &&
+                    (c.Number == courseNumber) && 
+                    (c.Title == courseTitle));
+                if (course == null)
                 {
-                    Id = Guid.NewGuid(),
-                    Number = courseNumber,
-                    SubjectId = subject.Id,
-                    Title = courseTitle,
-                    CreditHours = creditHours,
-                    Description = courseDescription,
-                };
-                dbContext.Add(course);
-                courses[courseKey] = course;
+                    course = new DatabaseCourse()
+                    {
+                        Id = Guid.NewGuid(),
+                        Number = courseNumber,
+                        SubjectId = subject.Id,
+                        Title = courseTitle,
+                        CreditHours = creditHours,
+                        Description = courseDescription,
+                    };
+                    dbContext.Add(course);
+                }
+                dbCachedCourses[courseKey] = course;
             }
             return course;
         }
 
-        private DatabaseSection AddOrUpdateSection(Dictionary<string, DatabaseSection> sections,
-            Guid classId, ScrapedSection section)
+        private DatabaseSection AddOrUpdateSection(Guid classId,
+            ICollection<DatabaseSection> dbSections, ScrapedSection section)
         {
             var startDate = section.Meetings
                 .OrderBy(m => m.StartDate)
@@ -446,10 +461,10 @@ namespace PurdueIo.CatalogSync
                 .DefaultIfEmpty(DateTimeOffset.MaxValue)
                 .FirstOrDefault();
 
-            if (sections.ContainsKey(section.Crn))
+            var existingSection = dbSections.SingleOrDefault(s => (s.Crn == section.Crn));
+            if (existingSection != null)
             {
                 var modified = false;
-                var existingSection = sections[section.Crn];
                 var dbEntry = dbContext.Entry(existingSection);
                 if (existingSection.ClassId != classId)
                 {
@@ -543,12 +558,16 @@ namespace PurdueIo.CatalogSync
             }
         }
 
-        private void AddOrUpdateSectionMeetings(
-            DatabaseCampus campus,
-            Dictionary<(Guid campusId, string code), DatabaseBuilding> buildings,
-            Dictionary<string, DatabaseInstructor> instructors,
-            DatabaseSection dbSection, ScrapedSection section)
+        private void AddOrUpdateSectionMeetings(DatabaseCampus campus, DatabaseSection dbSection,
+            ScrapedSection section)
         {
+            var dbMeetings = dbContext.Meetings
+                .Include(m => m.Instructors)
+                .Include(m => m.Room)
+                .ThenInclude(r => r.Building)
+                .Where(m => (m.SectionId == dbSection.Id))
+                .ToList();
+            var existingMeetingsToKeep = new List<DatabaseMeeting>();
             foreach (var meeting in section.Meetings)
             {
                 var meetingDuration = meeting.EndTime.Subtract(meeting.StartTime);
@@ -557,7 +576,7 @@ namespace PurdueIo.CatalogSync
                 // so we need to determine equality via a heuristic:
                 // If it happens at the same time at the same location, it is the same
                 // meeting.
-                var dbMeeting = dbSection.Meetings?.FirstOrDefault(m => 
+                var dbMeeting = dbMeetings.FirstOrDefault(m => 
                     (m.Room?.Number == meeting.RoomNumber) &&
                     (m.Room?.Building?.ShortCode == meeting.BuildingCode) &&
                     (m.DaysOfWeek == (DatabaseDaysOfWeek) meeting.DaysOfWeek) &&
@@ -570,8 +589,8 @@ namespace PurdueIo.CatalogSync
                     (m.Duration.Subtract(meetingDuration).Duration()
                         <= MEETING_TIME_EQUALITY_TOLERANCE));
 
-                var dbRoom = FetchOrAddMeetingRoom(campus, buildings, dbSection, meeting);
-                var dbInstructors = FetchOrAddMeetingInstructors(instructors, meeting);
+                var dbRoom = FetchOrAddMeetingRoom(campus, meeting);
+                var dbInstructors = FetchOrAddMeetingInstructors(meeting);
 
                 if (dbMeeting == null)
                 {
@@ -589,6 +608,10 @@ namespace PurdueIo.CatalogSync
                         Instructors = new List<DatabaseInstructor>(),
                     };
                     dbContext.Add(dbMeeting);
+                }
+                else
+                {
+                    existingMeetingsToKeep.Add(dbMeeting);
                 }
 
                 if (dbMeeting.Instructors != null)
@@ -619,14 +642,18 @@ namespace PurdueIo.CatalogSync
                     }
                 }
             }
+
+            // Remove any "orphaned" meetings
+            var dbMeetingsToRemove = dbMeetings.Where(m => !existingMeetingsToKeep.Contains(m));
+            foreach (var dbMeetingToRemove in dbMeetingsToRemove)
+            {
+                dbContext.Entry(dbMeetingToRemove).State = EntityState.Deleted;
+            }
         }
 
-        private DatabaseRoom FetchOrAddMeetingRoom(
-            DatabaseCampus campus,
-            Dictionary<(Guid campusId, string code), DatabaseBuilding> buildings,
-            DatabaseSection dbSection, ScrapedMeeting meeting)
+        private DatabaseRoom FetchOrAddMeetingRoom(DatabaseCampus campus, ScrapedMeeting meeting)
         {
-            var dbBuilding = FetchOrAddMeetingBuilding(campus, buildings, dbSection, meeting);
+            var dbBuilding = FetchOrAddMeetingBuilding(campus, meeting);
             var dbRoom = dbBuilding.Rooms.FirstOrDefault(r => (r.Number == meeting.RoomNumber));
             if (dbRoom == null)
             {
@@ -642,52 +669,62 @@ namespace PurdueIo.CatalogSync
             return dbRoom;
         }
 
-        private DatabaseBuilding FetchOrAddMeetingBuilding(
-            DatabaseCampus campus,
-            Dictionary<(Guid campusId, string code), DatabaseBuilding> buildings,
-            DatabaseSection dbSection, ScrapedMeeting meeting)
+        private DatabaseBuilding FetchOrAddMeetingBuilding(DatabaseCampus campus,
+            ScrapedMeeting meeting)
         {
             var buildingKey = (campusId: campus.Id, code: meeting.BuildingCode);
-            if (buildings.ContainsKey(buildingKey))
+            if (dbCachedBuildings.ContainsKey(buildingKey))
             {
-                return buildings[buildingKey];
+                return dbCachedBuildings[buildingKey];
             }
             else
             {
-                var dbBuilding = new DatabaseBuilding()
+                var dbBuilding = dbContext.Buildings
+                    .Include(b => b.Rooms)
+                    .SingleOrDefault(b =>
+                        (b.CampusId == campus.Id) &&
+                        (b.ShortCode == meeting.BuildingCode));
+                if (dbBuilding == null)
                 {
-                    Id = Guid.NewGuid(),
-                    CampusId = campus.Id,
-                    Name = meeting.BuildingName,
-                    ShortCode = meeting.BuildingCode,
-                    Rooms = new List<DatabaseRoom>(),
-                };
-                dbContext.Add(dbBuilding);
-                buildings[buildingKey] = dbBuilding;
+                    dbBuilding = new DatabaseBuilding()
+                    {
+                        Id = Guid.NewGuid(),
+                        CampusId = campus.Id,
+                        Name = meeting.BuildingName,
+                        ShortCode = meeting.BuildingCode,
+                        Rooms = new List<DatabaseRoom>(),
+                    };
+                    dbContext.Add(dbBuilding);
+                }
+                dbCachedBuildings[buildingKey] = dbBuilding;
                 return dbBuilding;
             }
         }
 
-        private ICollection<DatabaseInstructor> FetchOrAddMeetingInstructors(
-            Dictionary<string, DatabaseInstructor> instructors, ScrapedMeeting meeting)
+        private ICollection<DatabaseInstructor> FetchOrAddMeetingInstructors(ScrapedMeeting meeting)
         {
             var returnVal = new List<DatabaseInstructor>();
             foreach (var scrapedInstructor in meeting.Instructors)
             {
-                if (instructors.ContainsKey(scrapedInstructor.email))
+                if (dbCachedInstructors.ContainsKey(scrapedInstructor.email))
                 {
-                    returnVal.Add(instructors[scrapedInstructor.email]);
+                    returnVal.Add(dbCachedInstructors[scrapedInstructor.email]);
                 }
                 else
                 {
-                    var dbInstructor = new DatabaseInstructor()
+                    var dbInstructor = dbContext.Instructors.SingleOrDefault(i =>
+                        (i.Email == scrapedInstructor.email));
+                    if (dbInstructor == null)
                     {
-                        Id = Guid.NewGuid(),
-                        Name = scrapedInstructor.name,
-                        Email = scrapedInstructor.email,
-                    };
-                    dbContext.Add(dbInstructor);
-                    instructors[scrapedInstructor.email] = dbInstructor;
+                        dbInstructor = new DatabaseInstructor()
+                        {
+                            Id = Guid.NewGuid(),
+                            Name = scrapedInstructor.name,
+                            Email = scrapedInstructor.email,
+                        };
+                        dbContext.Add(dbInstructor);
+                    }
+                    dbCachedInstructors[scrapedInstructor.email] = dbInstructor;
                     returnVal.Add(dbInstructor);
                 }
             }

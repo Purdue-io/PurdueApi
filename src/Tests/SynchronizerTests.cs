@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using PurdueIo.CatalogSync;
 using PurdueIo.Database;
 using PurdueIo.Scraper;
@@ -21,6 +22,13 @@ namespace PurdueIo.Tests
 {
     public class SynchronizerTests
     {
+        private readonly ILoggerFactory loggerFactory;
+
+        public SynchronizerTests()
+        {
+            this.loggerFactory = new NullLoggerFactory();
+        }
+
         [Fact]
         public async Task BasicSectionSyncTest()
         {
@@ -32,7 +40,8 @@ namespace PurdueIo.Tests
             var subject = (await scraper.GetSubjectsAsync(term.Id)).FirstOrDefault();
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             using (var dbContext = dbContextFactory())
@@ -121,7 +130,8 @@ namespace PurdueIo.Tests
 
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             using (var dbContext = dbContextFactory())
@@ -153,7 +163,8 @@ namespace PurdueIo.Tests
             var scraper = GetScraper(section.Section);
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             // Confirm that all instructors were synchronized
@@ -181,7 +192,8 @@ namespace PurdueIo.Tests
             scraper = GetScraper(section.Section);
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             // Confirm that the instructor was removed
@@ -213,7 +225,8 @@ namespace PurdueIo.Tests
             scraper = GetScraper(section.Section);
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             // Confirm all the expected instructors were synchronized
@@ -249,7 +262,8 @@ namespace PurdueIo.Tests
                 lectureSection.Section, recitationSection.Section });
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             // Confirm class w/ two sections was properly synced
@@ -275,7 +289,8 @@ namespace PurdueIo.Tests
                 lectureSection.Section, recitationSection.Section, labSection.Section });
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             // Confirm all three sections are synced
@@ -296,7 +311,8 @@ namespace PurdueIo.Tests
                 lectureSection.Section, labSection.Section });
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             // Confirm only two sections are now part of the class, and that the third has
@@ -317,7 +333,8 @@ namespace PurdueIo.Tests
             scraper = GetScraper(new List<ScrapedSection>() { });
             using (var dbContext = dbContextFactory())
             {
-                await FastSync.SynchronizeAsync(scraper, dbContext);
+                await FastSync.SynchronizeAsync(scraper, dbContext,
+                    loggerFactory.CreateLogger<FastSync>());
             }
 
             // Confirm that there are no more sections, and the class has been removed
