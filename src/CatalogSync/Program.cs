@@ -10,11 +10,6 @@ using static PurdueIo.CatalogSync.FastSync;
 
 namespace PurdueIo.CatalogSync
 {
-    class ConsoleProgress : Progress<SyncProgress>
-    {
-        
-    }
-
     class Program
     {
         public class Options
@@ -24,6 +19,10 @@ namespace PurdueIo.CatalogSync
 
             [Option(shortName: 'p', longName: "pass", HelpText = "MyPurdue Password")]
             public string MyPurduePass { get; set; }
+
+            [Option(shortName: 'a', longName: "sync-all-terms", Default = false,
+                HelpText = "Sync all terms, don't skip old/existing terms")]
+            public bool SyncAllTerms { get; set; }
 
             [Option(shortName: 't', longName: "terms",
                 HelpText = "Term codes to sync (ex. 202210)")]
@@ -68,6 +67,8 @@ namespace PurdueIo.CatalogSync
                 logger.LogInformation($"[{percentString}%] {value.Description}");
             };
 
+            var behavior = options.SyncAllTerms ? 
+                TermSyncBehavior.SyncAllTerms : TermSyncBehavior.SyncNewAndCurrentTerms;
             var connection = await MyPurdueConnection.CreateAndConnectAsync(username, password,
                 loggerFactory.CreateLogger<MyPurdueConnection>());
             var scraper = new MyPurdueScraper(connection,
@@ -75,7 +76,7 @@ namespace PurdueIo.CatalogSync
             var dbContext = new ApplicationDbContext();
             await FastSync.SynchronizeAsync(scraper, dbContext,
                 loggerFactory.CreateLogger<FastSync>(), options.Terms, options.Subjects,
-                TermSyncBehavior.SyncAllTerms, reportProgress);
+                behavior, reportProgress);
         }
     }
 }

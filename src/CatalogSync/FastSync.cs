@@ -31,7 +31,7 @@ namespace PurdueIo.CatalogSync
         public enum TermSyncBehavior
         {
             SyncAllTerms,
-            // TODO: SyncCurrentAndNewTerms
+            SyncNewAndCurrentTerms,
         }
 
         public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
@@ -141,10 +141,29 @@ namespace PurdueIo.CatalogSync
                     dbContext.Add(dbTerm);
                     terms[scrapedTerm.Id] = dbTerm;
                 }
-                termsToSync.Add(terms[scrapedTerm.Id]);
+
+                if (termSyncBehavior == TermSyncBehavior.SyncAllTerms)
+                {
+                    termsToSync.Add(terms[scrapedTerm.Id]);
+                }
+                else if (termSyncBehavior == TermSyncBehavior.SyncNewAndCurrentTerms)
+                {
+                    if ((terms[scrapedTerm.Id].StartDate < DateTimeOffset.Now) &&
+                        (terms[scrapedTerm.Id].EndDate > DateTimeOffset.Now))
+                    {
+                        termsToSync.Add(terms[scrapedTerm.Id]);
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid term sync behavior specified");
+                }
             }
             dbContext.SaveChanges();
             progress?.Invoke(new (PROGRESS_UPDATING_TERM_LIST, $"Updated {terms.Count} terms"));
+
+            var termListStr = string.Join('\n', termsToSync.Select(t => $"{t.Code} / {t.Name}"));
+            progress?.Invoke(new (PROGRESS_UPDATING_TERM_LIST, $"Syncing terms:\n{termListStr}"));
 
             // Sync each term
             int numTermsSynced = 0;
@@ -562,23 +581,21 @@ namespace PurdueIo.CatalogSync
             ScrapedSection section)
         {
             var dbMeetings = dbContext.Meetings
-                .Include(m => m.Instructors)
-                .Include(m => m.Room)
-                .ThenInclude(r => r.Building)
                 .Where(m => (m.SectionId == dbSection.Id))
                 .ToList();
             var existingMeetingsToKeep = new List<DatabaseMeeting>();
             foreach (var meeting in section.Meetings)
             {
                 var meetingDuration = meeting.EndTime.Subtract(meeting.StartTime);
+                var dbRoom = FetchOrAddMeetingRoom(campus, meeting);
+                var dbInstructors = FetchOrAddMeetingInstructors(meeting);
 
                 // MyPurdue doesn't expose any sort of unique ID for each meeting,
                 // so we need to determine equality via a heuristic:
                 // If it happens at the same time at the same location, it is the same
                 // meeting.
                 var dbMeeting = dbMeetings.FirstOrDefault(m => 
-                    (m.Room?.Number == meeting.RoomNumber) &&
-                    (m.Room?.Building?.ShortCode == meeting.BuildingCode) &&
+                    (m.RoomId == dbRoom.Id) &&
                     (m.DaysOfWeek == (DatabaseDaysOfWeek) meeting.DaysOfWeek) &&
                     (m.StartDate.Subtract(meeting.StartDate).Duration()
                         <= MEETING_TIME_EQUALITY_TOLERANCE) &&
@@ -588,9 +605,6 @@ namespace PurdueIo.CatalogSync
                         <= MEETING_TIME_EQUALITY_TOLERANCE) &&
                     (m.Duration.Subtract(meetingDuration).Duration()
                         <= MEETING_TIME_EQUALITY_TOLERANCE));
-
-                var dbRoom = FetchOrAddMeetingRoom(campus, meeting);
-                var dbInstructors = FetchOrAddMeetingInstructors(meeting);
 
                 if (dbMeeting == null)
                 {
@@ -614,26 +628,25 @@ namespace PurdueIo.CatalogSync
                     existingMeetingsToKeep.Add(dbMeeting);
                 }
 
-                if (dbMeeting.Instructors != null)
+                var dbMeetingInstructors = dbContext.Instructors
+                    .Where(i => i.Meetings.Any(m => (m.Id == dbMeeting.Id))).ToList();
+
+                var instructorsToRemove = dbMeetingInstructors.Where(i => 
+                    dbInstructors.SingleOrDefault(di => di.Id == i.Id) == null)
+                    .ToList();
+                foreach (var instructorToRemove in instructorsToRemove)
                 {
-                    var instructorsToRemove = dbMeeting.Instructors.Where(i => 
-                        dbInstructors.SingleOrDefault(di => di.Id == i.Id) == null)
-                        .ToList();
-                    foreach (var instructorToRemove in instructorsToRemove)
+                    dbContext.Remove(new MeetingInstructor() 
                     {
-                        dbContext.Remove(new MeetingInstructor() 
-                        {
-                            MeetingId = dbMeeting.Id,
-                            InstructorId = instructorToRemove.Id 
-                        });
-                    }
+                        MeetingId = dbMeeting.Id,
+                        InstructorId = instructorToRemove.Id 
+                    });
                 }
                 foreach (var dbInstructor in dbInstructors)
                 {
-                    if (dbMeeting.Instructors.SingleOrDefault(i => 
+                    if (dbMeetingInstructors.SingleOrDefault(i => 
                         (i.Id == dbInstructor.Id)) == null)
                     {
-                        dbMeeting.Instructors.Add(dbInstructor);
                         dbContext.Add(new MeetingInstructor()
                         {
                             MeetingId = dbMeeting.Id,

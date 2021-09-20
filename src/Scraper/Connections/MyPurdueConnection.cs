@@ -335,14 +335,27 @@ namespace PurdueIo.Scraper.Connections
                 $"{string.Join("\n", cookiesToSend.Select(c => c.ToString()))}");
 
             HttpResponseMessage result = null;
-            switch (method)
+            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
             {
-                case HttpMethod.POST:
-                    result = await httpClient.PostAsync(url, postContent);
-                    break;
-                case HttpMethod.GET:
-                    result = await httpClient.GetAsync(url);
-                    break;
+                try
+                {
+                    switch (method)
+                    {
+                        case HttpMethod.POST:
+                            result = await httpClient.PostAsync(url, postContent);
+                            break;
+                        case HttpMethod.GET:
+                            result = await httpClient.GetAsync(url);
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    logger.LogWarning("HTTP request exception, retrying " + 
+                        $"({attempts + 1} / {MAX_RETRIES})\n{e.ToString()}");
+                    continue;
+                }
+                break;
             }
             if (result == null)
             {
