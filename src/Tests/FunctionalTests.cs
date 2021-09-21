@@ -1,9 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using PurdueIo.CatalogSync;
 using PurdueIo.Database;
 using PurdueIo.Scraper;
 using PurdueIo.Tests.Mocks;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,7 +25,7 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task FunctionalSyncTest()
         {
-            using (var dbContext = GetDbContext())
+            using (var dbContext = GetDbContextFactory()())
             {
                 var connection = new MockMyPurdueConnection();
                 var scraper = new MyPurdueScraper(connection,
@@ -33,12 +35,20 @@ namespace PurdueIo.Tests
             }
         }
 
-        private ApplicationDbContext GetDbContext()
+        private Func<ApplicationDbContext> GetDbContextFactory(string path = "")
         {
+            if (path == "")
+            {
+                path = Path.GetTempFileName();
+            }
             var loggerFactory = new LoggerFactory(new[] { 
                 new Microsoft.Extensions.Logging.Debug.DebugLoggerProvider()
             });
-            return new ApplicationDbContext(Path.GetTempFileName(), loggerFactory);
+            var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseSqlite($"Data Source={path}")
+                .UseLoggerFactory(loggerFactory)
+                .Options;
+            return () => new ApplicationDbContext(dbOptions);
         }
     }
 }

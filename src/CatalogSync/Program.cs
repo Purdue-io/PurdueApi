@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PurdueIo.Database;
 using PurdueIo.Scraper;
@@ -73,7 +74,11 @@ namespace PurdueIo.CatalogSync
                 loggerFactory.CreateLogger<MyPurdueConnection>());
             var scraper = new MyPurdueScraper(connection,
                 loggerFactory.CreateLogger<MyPurdueScraper>());
-            var dbContext = new ApplicationDbContext();
+            var sqliteFilePath = "purdueio.sqlite";
+            var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseSqlite($"Data Source={sqliteFilePath}")
+                .Options;
+            var dbContext = new ApplicationDbContext(dbOptions);
             await FastSync.SynchronizeAsync(scraper, dbContext,
                 loggerFactory.CreateLogger<FastSync>(), options.Terms, options.Subjects,
                 behavior, reportProgress);

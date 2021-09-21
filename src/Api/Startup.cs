@@ -1,17 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.OData;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
 using PurdueIo.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,8 +26,7 @@ namespace PurdueIo.Api
                 .UseSqlite($"Data Source=C:\\Users\\Hayden\\Source\\PurdueApi\\src\\CatalogSync\\purdueio.sqlite"));
 
             var edmModel = EdmModelBuilder.GetEdmModel();
-            services.AddControllers().AddOData(opt => opt.AddRouteComponents(edmModel));
-            services.AddSwaggerGen();
+            services.AddControllers().AddOData(opt => opt.AddRouteComponents("odata", edmModel));
         }
 
         // This method gets called by the runtime.
@@ -52,11 +43,12 @@ namespace PurdueIo.Api
             app.UseODataQueryRequest();
             app.UseODataBatching();
 
-            app.UseSwagger();
-            app.UseSwaggerUI(c => 
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Purdue.io OData API"));
-
             app.UseRouting();
+
+            app.UseCors(c => c
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowAnyOrigin());
 
             app.UseEndpoints(endpoints =>
             {

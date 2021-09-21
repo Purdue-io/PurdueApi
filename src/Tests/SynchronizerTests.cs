@@ -417,7 +417,11 @@ namespace PurdueIo.Tests
             var loggerFactory = new LoggerFactory(new[] { 
                 new Microsoft.Extensions.Logging.Debug.DebugLoggerProvider()
             });
-            return () => new ApplicationDbContext(path, loggerFactory);
+            var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseSqlite($"Data Source={path}")
+                .UseLoggerFactory(loggerFactory)
+                .Options;
+            return () => new ApplicationDbContext(dbOptions);
         }
 
         private IScraper GetScraper(ScrapedSection section)

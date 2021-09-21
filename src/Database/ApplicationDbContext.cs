@@ -41,35 +41,9 @@ namespace PurdueIo.Database
         /// All instructors in the catalog.
         public DbSet<Instructor> Instructors { get; set; }
 
-        private readonly ILoggerFactory loggerFactory;
-
-        // Default constructor will use SQLite local database
-        public ApplicationDbContext(string sqliteFilePath = "purdueio.sqlite",
-            ILoggerFactory loggerFactory = null) : 
-            base(new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseSqlite($"Data Source={sqliteFilePath}").Options)
-        {
-            this.loggerFactory = loggerFactory;
-
-            // Migrate by default
-            Database.Migrate();
-        }
-
         public ApplicationDbContext([NotNullAttribute] DbContextOptions options) : 
             base(options)
         { }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (loggerFactory != null)
-            {
-                if (Debugger.IsAttached)
-                {
-                    optionsBuilder.UseLoggerFactory(loggerFactory);
-                    optionsBuilder.EnableSensitiveDataLogging(true);
-                }
-            }
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
