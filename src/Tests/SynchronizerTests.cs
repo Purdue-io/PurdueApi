@@ -406,7 +406,9 @@ namespace PurdueIo.Tests
         private readonly (string name, string code) DefaultTerm = ("Fall 2021", "202210");
         private readonly (string name, string code) DefaultSubject = ("Test Subject", "TEST");
         private readonly TimeZoneInfo timeZone =
-            TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            TimeZoneInfo.GetSystemTimeZones().Any(t => (t.Id == "Eastern Standard Time"))
+                ? TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")
+                : TimeZoneInfo.FindSystemTimeZoneById("America/Indianapolis");
 
         private Func<ApplicationDbContext> GetDbContextFactory(string path = "")
         {

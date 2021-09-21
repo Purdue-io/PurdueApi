@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace PurdueIo.Scraper
 {
@@ -15,6 +16,11 @@ namespace PurdueIo.Scraper
         private readonly IMyPurdueConnection connection;
 
         private readonly ILogger<MyPurdueScraper> logger;
+
+        private readonly TimeZoneInfo defaultTimeZone = 
+            TimeZoneInfo.GetSystemTimeZones().Any(t => (t.Id == "Eastern Standard Time"))
+                ? TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")
+                : TimeZoneInfo.FindSystemTimeZoneById("America/Indianapolis");
 
         public MyPurdueScraper(IMyPurdueConnection connection, ILogger<MyPurdueScraper> logger)
         {
@@ -242,7 +248,7 @@ namespace PurdueIo.Scraper
                             meetingNode.SelectSingleNode("td[2]").InnerText);
                         // TODO: don't hard-code time zones
                         var startEndTimes = ParsingUtilities.ParseStartEndTime(times,
-                            TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"));
+                            defaultTimeZone);
                         DateTimeOffset parsedMeetingStartTime = startEndTimes.Item1;
                         DateTimeOffset parsedMeetingEndTime = startEndTimes.Item2;
 
@@ -277,7 +283,7 @@ namespace PurdueIo.Scraper
                             meetingNode.SelectSingleNode("td[5]").InnerText);
                         // TODO: don't hard-code time zones
                         var startEndDates = ParsingUtilities.ParseStartEndDate(dates,
-                            TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"));
+                            defaultTimeZone);
                         DateTimeOffset parsedMeetingStartDate = startEndDates.Item1;
                         DateTimeOffset parsedMeetingEndDate = startEndDates.Item2;
 
@@ -441,7 +447,7 @@ namespace PurdueIo.Scraper
                 var times = HtmlEntity.DeEntitize(node.SelectSingleNode("td[10]").InnerText).Trim();
                 // TODO: Don't hard-code time zone
                 var startEndTimes = ParsingUtilities.ParseStartEndTime(times,
-                    TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"));
+                    defaultTimeZone);
                 DateTimeOffset parsedMeetingStartTime = startEndTimes.Item1;
                 DateTimeOffset parsedMeetingEndTime = startEndTimes.Item2;
 
