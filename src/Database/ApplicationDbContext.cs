@@ -41,11 +41,28 @@ namespace PurdueIo.Database
         /// All instructors in the catalog.
         public DbSet<Instructor> Instructors { get; set; }
 
+        public ApplicationDbContext() : base()
+        { }
+
         public ApplicationDbContext([NotNullAttribute] DbContextOptions options) : 
             base(options)
         {
             Database.Migrate();
         }
+
+        // Uncomment this override to add new migrations
+        // protected override void OnConfiguring(DbContextOptionsBuilder options)
+        // {
+        //     // Npgsql migrations
+        //     options
+        //         .UseNpgsql("Host=localhost;Database=purdueio;Username=purdueio;Password=purdueio",
+        //             o => o.MigrationsAssembly("Database.Migrations.Npgsql"));
+
+        //     // Sqlite migrations
+        //     options
+        //         .UseSqlite("Data Source=purdueio.sqlite",
+        //             o => o.MigrationsAssembly("Database.Migrations.Sqlite"));
+        // }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

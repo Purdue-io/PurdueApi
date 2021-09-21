@@ -13,6 +13,12 @@ namespace PurdueIo.CatalogSync
 {
     class Program
     {
+        public enum DataProvider
+        {
+            Sqlite,
+            Npgsql,
+        }
+
         public class Options
         {
             [Option(shortName: 'u', longName: "user", HelpText = "MyPurdue User Name")]
@@ -20,6 +26,15 @@ namespace PurdueIo.CatalogSync
 
             [Option(shortName: 'p', longName: "pass", HelpText = "MyPurdue Password")]
             public string MyPurduePass { get; set; }
+
+            [Option(shortName: 'd', longName: "data-provider", Default = DataProvider.Sqlite,
+                HelpText = "The database provider to use")]
+            public DataProvider DataProvider { get; set; }
+
+            [Option(shortName: 'c', longName: "connection-string",
+                Default = "Data Source=purdueio.sqlite",
+                HelpText = "The connection string used to connect to the database provider")]
+            public string ConnectionString { get; set; }
 
             [Option(shortName: 'a', longName: "sync-all-terms", Default = false,
                 HelpText = "Sync all terms, don't skip old/existing terms")]
@@ -51,7 +66,7 @@ namespace PurdueIo.CatalogSync
             if ((username == null) || (password == null))
             {
                 Console.Error.WriteLine("You must provide a MyPurdue username and password " +
-                    "to sync course. Use command line options or environment variables " +
+                    "to sync course data. Use command line options or environment variables " +
                     "MY_PURDUE_USERNAME and MY_PURDUE_PASSWORD.");
                 return;
             }
@@ -74,11 +89,30 @@ namespace PurdueIo.CatalogSync
                 loggerFactory.CreateLogger<MyPurdueConnection>());
             var scraper = new MyPurdueScraper(connection,
                 loggerFactory.CreateLogger<MyPurdueScraper>());
-            var sqliteFilePath = "purdueio.sqlite";
-            var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseSqlite($"Data Source={sqliteFilePath}")
-                .Options;
-            var dbContext = new ApplicationDbContext(dbOptions);
+
+            ApplicationDbContext dbContext;
+            if (options.DataProvider == DataProvider.Sqlite)
+            {
+                var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+                    .UseSqlite(options.ConnectionString,
+                        o => o.MigrationsAssembly("Database.Migrations.Sqlite"))
+                    .Options;
+                dbContext = new ApplicationDbContext(dbOptions);
+            }
+            else if (options.DataProvider == DataProvider.Npgsql)
+            {
+                var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+                    .UseNpgsql(options.ConnectionString,
+                        o => o.MigrationsAssembly("Database.Migrations.Npgsql"))
+                    .Options;
+                dbContext = new ApplicationDbContext(dbOptions);
+            }
+            else
+            {
+                throw new ArgumentException("Invalid database provider specified.");
+            }
+            dbContext.Database.Migrate();
+
             await FastSync.SynchronizeAsync(scraper, dbContext,
                 loggerFactory.CreateLogger<FastSync>(), options.Terms, options.Subjects,
                 behavior, reportProgress);
