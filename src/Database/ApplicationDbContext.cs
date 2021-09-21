@@ -43,7 +43,9 @@ namespace PurdueIo.Database
 
         public ApplicationDbContext([NotNullAttribute] DbContextOptions options) : 
             base(options)
-        { }
+        {
+            Database.Migrate();
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
