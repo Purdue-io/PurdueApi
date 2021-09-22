@@ -420,10 +420,15 @@ namespace PurdueIo.Tests
                 new Microsoft.Extensions.Logging.Debug.DebugLoggerProvider()
             });
             var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseSqlite($"Data Source={path}")
+                .UseSqlite($"Data Source={path}", 
+                    s => s.MigrationsAssembly("Database.Migrations.Sqlite"))
                 .UseLoggerFactory(loggerFactory)
                 .Options;
-            return () => new ApplicationDbContext(dbOptions);
+            return () => {
+                var retVal = new ApplicationDbContext(dbOptions);
+                retVal.Database.Migrate();
+                return retVal;
+            };
         }
 
         private IScraper GetScraper(ScrapedSection section)

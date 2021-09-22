@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PurdueIo.Database;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace PurdueIo.Api
 {
@@ -21,9 +22,27 @@ namespace PurdueIo.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(opt => opt
-                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
-                .UseSqlite($"Data Source=C:\\Users\\Hayden\\Source\\PurdueApi\\src\\CatalogSync\\purdueio.sqlite"));
+            var dbProvider = Configuration.GetValue<string>("DbProvider");
+            var dbConnectionString = Configuration.GetValue<string>("DbConnectionString");
+
+            if (string.Compare(dbProvider, "Sqlite", true) == 0)
+            {
+                services.AddDbContext<ApplicationDbContext>(opt => opt
+                    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                    .UseSqlite(dbConnectionString,
+                        s => s.MigrationsAssembly("Database.Migrations.Sqlite")));
+            }
+            else if (string.Compare(dbProvider, "Npgsql", true) == 0)
+            {
+                services.AddDbContext<ApplicationDbContext>(opt => opt
+                    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                    .UseNpgsql(dbConnectionString,
+                        s => s.MigrationsAssembly("Database.Migrations.Npgsql")));
+            }
+            else
+            {
+                throw new ArgumentException("Invalid DB provider specified.");
+            }
 
             var edmModel = EdmModelBuilder.GetEdmModel();
             services.AddControllers().AddOData(opt => opt.AddRouteComponents("odata", edmModel));

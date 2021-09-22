@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Database\Database.csproj" />
+    <ProjectReference Include="..\Database.Migrations.Sqlite\Database.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\Database.Migrations.Npgsql\Database.Migrations.Npgsql.csproj" />
   </ItemGroup>
 
 </Project>

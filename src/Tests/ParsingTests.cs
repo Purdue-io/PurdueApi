@@ -101,17 +101,9 @@ namespace PurdueIo.Tests
 
             // Spot check a few subjects
             Assert.Contains(subjects,
-                (s => s.Code == "AAE" && s.Name == "Aero & Astro Engineering"));
+                (s => s.Code == "COM" && s.Name == "Communication"));
             Assert.Contains(subjects,
                 (s => s.Code == "CS" && s.Name == "Computer Sciences"));
-            Assert.Contains(subjects,
-                (s => s.Code == "EAPS" && s.Name == "Earth Atmos Planetary Sci"));
-            Assert.Contains(subjects,
-                (s => s.Code == "HSOP" && s.Name == "Hlth,Srvcs,Outcomes&Polic"));
-            Assert.Contains(subjects,
-                (s => s.Code == "PSY" && s.Name == "Psychological Sciences"));
-            Assert.Contains(subjects,
-                (s => s.Code == "WGSS" && s.Name == "Women Gend&Sexuality Std"));
         }
 
         [Fact]
@@ -124,9 +116,7 @@ namespace PurdueIo.Tests
 
             // Spot check a few terms
             Assert.Contains(terms, (t => t.Id == "202210" && t.Name == "Fall 2021"));
-            Assert.Contains(terms, (t => t.Id == "201520" && t.Name == "Spring 2015")); // 🎓
-            Assert.Contains(terms, (t => t.Id == "201210" && t.Name == "Fall 2011")); // 🎒
-            Assert.Contains(terms, (t => t.Id == "200910" && t.Name == "Fall 2008"));
+            Assert.Contains(terms, (t => t.Id == "202130" && t.Name == "Summer 2021"));
         }
     }
 }
