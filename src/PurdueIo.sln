@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\Api.csproj", "{F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database.Migrations.Sqlite", "Database.Migrations.Sqlite\Database.Migrations.Sqlite.csproj", "{68ADA7D2-6C11-47D2-B030-85D2456F8881}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database.Migrations.Npgsql", "Database.Migrations.Npgsql\Database.Migrations.Npgsql.csproj", "{04E93656-2241-4386-9F2A-39B197A419A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -100,5 +102,17 @@ Global
 		{68ADA7D2-6C11-47D2-B030-85D2456F8881}.Release|x64.Build.0 = Release|Any CPU
 		{68ADA7D2-6C11-47D2-B030-85D2456F8881}.Release|x86.ActiveCfg = Release|Any CPU
 		{68ADA7D2-6C11-47D2-B030-85D2456F8881}.Release|x86.Build.0 = Release|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Debug|x64.Build.0 = Debug|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Debug|x86.Build.0 = Debug|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Release|x64.ActiveCfg = Release|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Release|x64.Build.0 = Release|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Release|x86.ActiveCfg = Release|Any CPU
+		{04E93656-2241-4386-9F2A-39B197A419A1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
