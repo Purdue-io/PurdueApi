@@ -3,6 +3,7 @@ function init() {
     var queryUrlEl = document.body.querySelector("div.queryBaseUrl");
     var sampleDropdownEl = document.body.querySelector("form.query select[name=samplequery]");
     var queryStringEl = document.body.querySelector("form.query textarea[name=queryString]");
+    var progressEl = document.body.querySelector("form.query progress");
 
     queryUrlEl.innerHTML = document.location.origin + "/odata/...";
 
@@ -12,9 +13,21 @@ function init() {
 
     formEl.addEventListener("submit", function(e) {
         e.preventDefault();
+        progressEl.style.display = "";
         fetch("/odata/" + encodeURI(queryStringEl.value))
-            .then(resp => resp.json())
-            .then(data => presentQueryResults(data));
+            .then(resp => {
+                progressEl.style.display = "none";
+                if (!resp.ok)
+                {
+                    alert("Error running query: " + resp.status + ": " + resp.statusText);
+                }
+                return resp.json();
+            })
+            .then(data => presentQueryResults(data))
+            .catch(error => {
+                alert(error)
+                progressEl.style.display = "none";
+            });
     });
 }
 
