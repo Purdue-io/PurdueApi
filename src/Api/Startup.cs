@@ -29,15 +29,17 @@ namespace PurdueIo.Api
             {
                 services.AddDbContext<ApplicationDbContext>(opt => opt
                     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
-                    .UseSqlite(dbConnectionString,
-                        s => s.MigrationsAssembly("Database.Migrations.Sqlite")));
+                    .UseSqlite(dbConnectionString, s => s
+                        .MigrationsAssembly("Database.Migrations.Sqlite")
+                        .UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
             }
             else if (string.Compare(dbProvider, "Npgsql", true) == 0)
             {
                 services.AddDbContext<ApplicationDbContext>(opt => opt
                     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
-                    .UseNpgsql(dbConnectionString,
-                        s => s.MigrationsAssembly("Database.Migrations.Npgsql")));
+                    .UseNpgsql(dbConnectionString, s => s
+                        .MigrationsAssembly("Database.Migrations.Npgsql")
+                        .UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
             }
             else
             {
@@ -58,6 +60,9 @@ namespace PurdueIo.Api
             }
 
             app.UseHttpsRedirection();
+
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.UseODataQueryRequest();
             app.UseODataBatching();

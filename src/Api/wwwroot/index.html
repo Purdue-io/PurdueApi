@@ -1,0 +1,82 @@
+<!-- 👋 -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Purdue.io</title>
+        <link rel="stylesheet" href="style.css" />
+        <script type="text/javascript" src="index.js" async></script>
+    </head>
+    <body>
+        <header>
+            <svg
+                width="512"
+                height="512"
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:svg="http://www.w3.org/2000/svg"
+                xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                xmlns:cc="http://creativecommons.org/ns#"
+                xmlns:dc="http://purl.org/dc/elements/1.1/"
+                viewBox="0 0 512 512">
+                <path
+                    style="fill:var(--accent-color);fill-opacity:1;stroke:none"
+                    d="M 157.8125 169.8125 L 140.03125 211.6875 L 181.28125 211.6875 L 144.0625 299.8125 L 102.1875 299.8125 L 84.46875 342.03125 L 251.875 342.03125 L 270.03125 299.8125 L 228.09375 299.8125 L 236.09375 280.875 L 342.3125 280.5625 C 358.07842 280.51444 394.78055 276.30814 413.125 240.9375 C 417.90082 231.72905 421.78532 222.05025 425.09375 212.21875 C 430.28627 196.7884 427.33476 183.79381 416.53125 177.59375 C 407.82213 172.59564 396.28223 169.9435 386.375 169.9375 L 157.8125 169.8125 z M 265.40625 211.59375 L 337.40625 211.59375 C 337.40625 211.59375 346.30108 211.98937 347.4375 216.15625 C 347.65108 216.93936 347.51525 218.29869 347.40625 219.90625 C 346.88898 227.53316 336.14388 238.49228 324.625 238.5 L 254.03125 238.5625 L 265.40625 211.59375 z "/>
+            </svg>
+            <h1>Purdue.io API</h1>
+        </header>
+        <main>
+            <section class="about">
+                <h2>About Purdue.io</h2>
+                <p>
+                    Purdue.io is an open-source API designed to enable easy access to
+                    <a href="https://purdue.edu">Purdue University</a> course catalog data.
+                </p>
+                <p>
+                    The project was started in 2015 by a group of Purdue Computer Science
+                    students with the goal of making course catalog data more accessible to
+                    other students and developers.
+                </p>
+                <p>
+                    Check out the project on GitHub!
+                </p>
+                <p>
+                    <a href="https://github.com/Purdue-io">github.com/Purdue-io</a>
+                </p>
+            </section>
+            <section>
+                <h2>Run Queries</h2>
+                <noscript>Javascript is required to use the query tester functionality!</noscript>
+                <form class="query">
+                    <div>
+                        <label>Sample Queries</label>
+                        <select name="samplequery">
+                            <option value="">None</option>
+                            <option value="Term?$orderby=EndDate desc">List of Terms</option>
+                            <option value="Subject?$orderby=Abbreviation asc">List of Subjects</option>
+                            <option value="Course?$filter=Subject/Abbreviation eq 'CS'&$orderby=Number asc">All CS Courses</option>
+                            <option value="Course?$filter=Subject/Abbreviation eq 'SPAN' and Number ge '30000' and Number le '39999'&$orderby=Number asc">All 300 level SPAN Courses</option>
+                            <option value="Course?$filter=contains(Title, 'Algebra')">Courses with "Algebra" in title</option>
+                            <option value="Course?$expand=Classes($filter=Term/Code eq '202210';$expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation eq 'CS' and Number eq '18000'">All CS180 Courses, Classes, Sections, Meetings in Fall 2021</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Query URL</label>
+                        <div class="queryBaseUrl">https://api.purdue.io/odata/...</div>
+                        <textarea name="queryString" placeholder="..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <input type="submit" />
+                    </div>
+                </form>
+            </section>
+            <section class="queryResults" style="display: none;">
+                <h2>Query Results</h2>
+                <div class="response">
+                    <pre></pre>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>

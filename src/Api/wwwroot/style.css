@@ -1,0 +1,130 @@
+@font-face {
+    font-family: 'Inter';
+    font-weight: 100 900;
+    font-display: swap;
+    font-style: oblique 0deg 10deg;
+    src: url("Inter.var.woff2?v=3.19") format("woff2");
+}
+
+:root {
+    --background-rgb: 8, 8, 8;
+    --foreground-rgb: 255, 255, 255;
+    --background-color: rgb(var(--background-rgb));
+    --foreground-color: rgb(var(--foreground-rgb));
+    --accent-hue: 42;
+    --accent-color: hsl(var(--accent-hue), 100%, 60%);
+}
+
+/* LIGHT THEME */
+@media (prefers-color-scheme: light) {
+    :root {
+        --background-rgb: 255, 255, 255;
+        --foreground-rgb: 8, 8, 8;
+        --accent-color: hsl(var(--accent-hue), 100%, 35%);
+    }
+}
+
+/* DARK THEME (default) */
+@media (prefers-color-scheme: dark), (prefers-color-scheme:no-preference) {
+    :root {
+        --background-rgb: 8, 8, 8;
+        --foreground-rgb: 255, 255, 255;
+        --accent-color: hsl(var(--accent-hue), 100%, 60%);
+    }
+}
+
+body {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+    color: var(--foreground-color);
+    background-color: var(--background-color);
+}
+
+a {
+    color: var(--accent-color);
+    transition: color 200ms ease-in-out;
+    text-decoration: none;
+}
+
+header {
+    display: flex;
+    align-items: center;
+}
+    header > svg {
+        width: 96px;
+        height: 96px;
+    }
+
+main {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    flex-grow: 1;
+}
+    main > section {
+        margin: 0 16px;
+    }
+        main > section.about {
+            flex-basis: 30%;
+        }
+
+    main > section.queryResults {
+        overflow: auto;
+    }
+        main > section.queryResults > div.response {
+            height: 500px;
+        }
+            main > section.queryResults > div.response > pre {
+                background-color: rgba(var(--foreground-rgb), 0.1);
+                padding: 16px;
+                max-width: 1024px;
+            }
+
+form.query > div {
+    margin: 16px 0;
+}
+
+form.query label {
+    display: block;
+    font-weight: 600;
+    padding-bottom: 8px;
+}
+
+form.query input, form.query select, form.query textarea {
+    font-size: 20px;
+    color: var(--foreground-color);
+    background: none;
+    padding: 4px;
+    border: none;
+    border-bottom: 2px solid rgba(var(--foreground-rgb), 0.75);
+    max-width: 400px;
+}
+
+form.query select option {
+    color: var(--foreground-color);
+    background-color: var(--background-color);
+}
+
+form.query textarea {
+    width: 400px;
+    height: 240px;
+    margin: 8px 0;
+    border: 2px solid rgba(var(--foreground-rgb), 0.75);
+}
+
+form.query input[type=submit] {
+    color: var(--accent-color);
+    font-weight: 600;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    background: none;
+    border: none;
+}
