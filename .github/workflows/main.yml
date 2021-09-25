@@ -1,0 +1,42 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: Clone repository
+      uses: actions/checkout@v2
+    - name: Restore dependencies
+      run: dotnet restore src/PurdueIo.sln
+    - name: Build
+      run: dotnet build --no-restore src/PurdueIo.sln
+    - name: Test
+      run: dotnet test --no-build --verbosity normal src/PurdueIo.sln
+    - name: Publish API
+      run: dotnet publish -c Release -r linux-x64 --self-contained=true -p:PublishReadyToRun=true -o publish/Api src/Api/Api.csproj
+    - name: Publish CatalogSync
+      run: dotnet publish -c Release -r linux-x64 --self-contained=true -p:PublishReadyToRun=true -o publish/CatalogSync src/CatalogSync/CatalogSync.csproj
+    - name: Upload API Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: Api
+        path: publish/Api
+        if-no-files-found: error
+    - name: Upload CatalogSync Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: CatalogSync
+        path: publish/CatalogSync
+        if-no-files-found: error
