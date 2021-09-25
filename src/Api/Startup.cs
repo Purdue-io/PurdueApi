@@ -59,8 +59,6 @@ namespace PurdueIo.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
-
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
