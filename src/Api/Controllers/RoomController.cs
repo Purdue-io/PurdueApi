@@ -16,7 +16,8 @@ namespace PurdueIo.Api.Controllers
         }
 
         [HttpGet]
-        [EnableQuery(MaxExpansionDepth = 3, MaxAnyAllExpressionDepth = 3)]
+        [EnableQuery(MaxExpansionDepth = EdmModelBuilder.MAX_EXPAND_DEPTH,
+            MaxAnyAllExpressionDepth = EdmModelBuilder.MAX_EXPAND_DEPTH)]
         public IActionResult Get(CancellationToken token)
         {
             return Ok(dbContext.Rooms);

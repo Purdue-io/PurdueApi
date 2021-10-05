@@ -6,9 +6,9 @@ namespace PurdueIo.Api
 {
     public static class EdmModelBuilder
     {
-        private const int MAX_RESULTS = 10000;
+        public const int MAX_EXPAND_DEPTH = 5;
 
-        private const int MAX_EXPAND_DEPTH = 3;
+        private const int MAX_RESULTS = 10000;
 
         public static IEdmModel GetEdmModel()
         {
