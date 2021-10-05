@@ -16,7 +16,7 @@ namespace PurdueIo.Api.Controllers
         }
 
         [HttpGet]
-        [EnableQuery(MaxExpansionDepth = 3, MaxAnyAllExpressionDepth = 3)]
+        [EnableQuery(MaxExpansionDepth = 5, MaxAnyAllExpressionDepth = 5)]
         public IActionResult Get(CancellationToken token)
         {
             return Ok(dbContext.Terms);
