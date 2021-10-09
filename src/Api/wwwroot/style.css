@@ -11,8 +11,10 @@
     --foreground-rgb: 255, 255, 255;
     --background-color: rgb(var(--background-rgb));
     --foreground-color: rgb(var(--foreground-rgb));
-    --accent-hue: 42;
-    --accent-color: hsl(var(--accent-hue), 100%, 60%);
+    --accent-hue: 37;
+    --accent-saturation: 65%;
+    --accent-lightness: 60%;
+    --accent-color: hsl(var(--accent-hue), var(--accent-saturation), var(--accent-lightness));
 }
 
 /* LIGHT THEME */
@@ -20,7 +22,8 @@
     :root {
         --background-rgb: 255, 255, 255;
         --foreground-rgb: 8, 8, 8;
-        --accent-color: hsl(var(--accent-hue), 100%, 35%);
+        --accent-saturation: 39%;
+        --accent-lightness: 40%;
     }
 }
 
@@ -29,7 +32,6 @@
     :root {
         --background-rgb: 8, 8, 8;
         --foreground-rgb: 255, 255, 255;
-        --accent-color: hsl(var(--accent-hue), 100%, 60%);
     }
 }
 
