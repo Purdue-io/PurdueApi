@@ -6,11 +6,11 @@ using PurdueIo.Database;
 
 namespace PurdueIo.Api.Controllers
 {
-    public class SubjectController : ODataController
+    public class SubjectsController : ODataController
     {
         private ApplicationDbContext dbContext;
 
-        public SubjectController(ApplicationDbContext dbContext)
+        public SubjectsController(ApplicationDbContext dbContext)
         {
             this.dbContext = dbContext;
         }

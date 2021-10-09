@@ -14,16 +14,16 @@ namespace PurdueIo.Api
         {
             var builder = new ODataConventionModelBuilder();
 
-            builder.GenerateEntitySet<Campus>("Campus");
-            builder.GenerateEntitySet<Building>("Building");
-            builder.GenerateEntitySet<Room>("Room");
-            builder.GenerateEntitySet<Term>("Term");
-            builder.GenerateEntitySet<Course>("Course");
-            builder.GenerateEntitySet<Class>("Class");
-            builder.GenerateEntitySet<Section>("Section");
-            builder.GenerateEntitySet<Meeting>("Meeting");
-            builder.GenerateEntitySet<Subject>("Subject");
-            builder.GenerateEntitySet<Instructor>("Instructor");
+            builder.GenerateEntitySet<Campus>("Campuses");
+            builder.GenerateEntitySet<Building>("Buildings");
+            builder.GenerateEntitySet<Room>("Rooms");
+            builder.GenerateEntitySet<Term>("Terms");
+            builder.GenerateEntitySet<Course>("Courses");
+            builder.GenerateEntitySet<Class>("Classes");
+            builder.GenerateEntitySet<Section>("Sections");
+            builder.GenerateEntitySet<Meeting>("Meetings");
+            builder.GenerateEntitySet<Subject>("Subjects");
+            builder.GenerateEntitySet<Instructor>("Instructors");
 
             return builder.GetEdmModel();
         }
