@@ -51,12 +51,12 @@
                         <label>Sample Queries</label>
                         <select name="samplequery">
                             <option value="">None</option>
-                            <option value="Term?$orderby=EndDate desc">List of Terms</option>
-                            <option value="Subject?$orderby=Abbreviation asc">List of Subjects</option>
-                            <option value="Course?$filter=Subject/Abbreviation eq 'CS'&$orderby=Number asc">All CS Courses</option>
-                            <option value="Course?$filter=Subject/Abbreviation eq 'SPAN' and Number ge '30000' and Number le '39999'&$orderby=Number asc">All 300 level SPAN Courses</option>
-                            <option value="Course?$filter=contains(Title, 'Algebra')">Courses with "Algebra" in title</option>
-                            <option value="Course?$expand=Classes($filter=Term/Code eq '202210';$expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation eq 'CS' and Number eq '18000'">All CS180 Courses, Classes, Sections, Meetings in Fall 2021</option>
+                            <option value="Terms?$orderby=EndDate desc">List of Terms</option>
+                            <option value="Subjects?$orderby=Abbreviation asc">List of Subjects</option>
+                            <option value="Courses?$filter=Subject/Abbreviation eq 'CS'&$orderby=Number asc">All CS Courses</option>
+                            <option value="Courses?$filter=Subject/Abbreviation eq 'SPAN' and Number ge '30000' and Number le '39999'&$orderby=Number asc">All 300 level SPAN Courses</option>
+                            <option value="Courses?$filter=contains(Title, 'Algebra')">Courses with "Algebra" in title</option>
+                            <option value="Courses?$expand=Classes($filter=Term/Code eq '202210';$expand=Sections($expand=Meetings))&$filter=Subject/Abbreviation eq 'CS' and Number eq '18000'">All CS180 Courses, Classes, Sections, Meetings in Fall 2021</option>
                         </select>
                     </div>
 

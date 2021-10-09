@@ -6,11 +6,11 @@ using PurdueIo.Database;
 
 namespace PurdueIo.Api.Controllers
 {
-    public class BuildingController : ODataController
+    public class RoomsController : ODataController
     {
         private ApplicationDbContext dbContext;
 
-        public BuildingController(ApplicationDbContext dbContext)
+        public RoomsController(ApplicationDbContext dbContext)
         {
             this.dbContext = dbContext;
         }
@@ -20,7 +20,7 @@ namespace PurdueIo.Api.Controllers
             MaxAnyAllExpressionDepth = EdmModelBuilder.MAX_EXPAND_DEPTH)]
         public IActionResult Get(CancellationToken token)
         {
-            return Ok(dbContext.Buildings);
+            return Ok(dbContext.Rooms);
         }
     }
 }
