@@ -1,0 +1,3 @@
+# Exclude test HTML from GitHub's linguist indexing
+# (so it doesn't think our repo is just a giant bunch of HTML)
+src/Tests/Resources/**/* linguist-documentation
