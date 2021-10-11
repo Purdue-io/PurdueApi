@@ -10,20 +10,20 @@ years later!
 
 ## Public API Instance
 
-There is a public instance of the Purdue.io API available at [new-api.purdue.io](https://new-api.purdue.io)
+There is a public instance of the Purdue.io API available at [api.purdue.io](https://api.purdue.io)
 
 ## OData Queries
 
 Purdue.io allows you to construct OData queries that you can run via RESTful HTTP calls to query
 for course catalog information. For example, this URL
 
-`http://new-api.purdue.io/odata/Course?$filter=contains(Title, 'Algebra')`
+`http://api.purdue.io/odata/Course?$filter=contains(Title, 'Algebra')`
 
 will return this:
 
 ```json
 {
-    "@odata.context": "http://new-api.purdue.io/odata/$metadata#Course",
+    "@odata.context": "http://api.purdue.io/odata/$metadata#Course",
     "value": [
         {
             "Id": "893b204e-616d-42bb-bf7b-49689878bdac",
@@ -48,7 +48,7 @@ will return this:
 
 Check out the [wiki](https://github.com/Purdue-io/PurdueApi/wiki/)!
 You can run the [sample queries](https://github.com/Purdue-io/PurdueApi/wiki/OData-Queries#example-queries)
-there through the query tester at [http://new-api.purdue.io/](new-api.purdue.io/).
+there through the query tester at [http://api.purdue.io/](api.purdue.io/).
 
 # Building and Running
 
