@@ -148,8 +148,9 @@ namespace PurdueIo.CatalogSync
                 }
                 else if (termSyncBehavior == TermSyncBehavior.SyncNewAndCurrentTerms)
                 {
-                    if ((terms[scrapedTerm.Id].StartDate < DateTimeOffset.Now) &&
-                        (terms[scrapedTerm.Id].EndDate > DateTimeOffset.Now))
+                    // We only care about terms that haven't ended yet - 
+                    // we still want to sync "future" terms.
+                    if (terms[scrapedTerm.Id].EndDate > DateTimeOffset.Now)
                     {
                         termsToSync.Add(terms[scrapedTerm.Id]);
                     }
