@@ -58,7 +58,7 @@ namespace PurdueIo.CatalogSync
 
         static async Task RunASync(Options options)
         {
-            string username = options.MyPurduePass ?? 
+            string username = options.MyPurdueUser ?? 
                 Environment.GetEnvironmentVariable("MY_PURDUE_USERNAME");
             string password = options.MyPurduePass ?? 
                 Environment.GetEnvironmentVariable("MY_PURDUE_PASSWORD");
