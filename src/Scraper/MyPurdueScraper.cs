@@ -63,7 +63,7 @@ namespace PurdueIo.Scraper
         {
             string subjectListPageContent = await connection.GetSubjectListPageAsync(termCode);
             var subjects = new List<Subject>();
-            HtmlDocument document = new HtmlDocument();
+            HtmlDocument document = new();
             document.LoadHtml(subjectListPageContent);
             HtmlNode root = document.DocumentNode;
             HtmlNodeCollection termSelectNodes =
@@ -72,7 +72,7 @@ namespace PurdueIo.Scraper
             {
                 var code = HtmlEntity.DeEntitize(node.Attributes["VALUE"].Value).Trim();
                 var name = HtmlEntity.DeEntitize(node.InnerText).Trim();
-                name = name.Substring(name.IndexOf("-")+1);
+                name = name.Substring(name.IndexOf("-") + 1);
                 subjects.Add(new Subject()
                 {
                     Code = code,
@@ -85,18 +85,14 @@ namespace PurdueIo.Scraper
         public async Task<ICollection<Section>> GetSectionsAsync(string termCode,
             string subjectCode)
         {
-            // The section information we need from MyPurdue is split between two pages:
-            // the "section list" page (bwckschd.p_get_crse_unsec) and the "section details" page
-            // (bwskfcls.P_GetCrse_Advanced).
+            // The section information we need from MyPurdue may be split across
+            // multiple pages.
             //
-            // This method scrapes both the section list page and the section details page,
-            // then merges the relevant information from both into one coherent model.
+            // This method scrapes the relevant information from all sources into
+            // one coherent model.
 
             Dictionary<Crn, SectionListInfo> sectionList = 
                 await FetchSectionListAsync(termCode, subjectCode);
-
-            Dictionary<Crn, SectionDetailsInfo> sectionDetails =
-                await FetchSectionDetailsAsync(termCode, subjectCode);
 
             var mergedSections = new List<Section>();
 
@@ -104,56 +100,72 @@ namespace PurdueIo.Scraper
             {
                 Crn sectionCrn = sectionPair.Key;
                 SectionListInfo sectionListInfo = sectionPair.Value;
-                if (!sectionDetails.ContainsKey(sectionCrn))
-                {
-                    throw new ApplicationException($"Section list retrieved from MyPurdue " + 
-                        $"contained CRN {sectionCrn} that was not found on section details page");
-                }
-                SectionDetailsInfo sectionDetailsInfo = sectionDetails[sectionCrn];
 
                 // Merge meeting info
                 var mergedSectionMeetings = new List<Meeting>();
                 for (int i = 0; i < sectionListInfo.Meetings.Count; ++i)
                 {
                     var sectionListInfoMeeting = sectionListInfo.Meetings[i];
-                    var sectionDetailsInfoMeeting = sectionDetailsInfo.Meetings[i];
+                    if (!BuildingNamesToShortCodes.TryGetValue(sectionListInfoMeeting.BuildingName,
+                        out string buildingShortCode))
+                    {
+                        throw new ApplicationException(
+                            "No building short code found for building " +
+                            $"'{sectionListInfoMeeting.BuildingName}'");
+                    }
                     mergedSectionMeetings.Add(new Meeting()
                     {
-                        Type = sectionDetailsInfoMeeting.Type,
+                        Type = sectionListInfoMeeting.Type,
                         Instructors = sectionListInfoMeeting.Instructors,
                         StartDate = sectionListInfoMeeting.StartDate,
                         EndDate = sectionListInfoMeeting.EndDate,
                         DaysOfWeek = sectionListInfoMeeting.DaysOfWeek,
                         StartTime = sectionListInfoMeeting.StartTime,
                         EndTime = sectionListInfoMeeting.EndTime,
-                        BuildingCode = sectionDetailsInfoMeeting.BuildingCode,
+                        BuildingCode = buildingShortCode,
                         BuildingName = sectionListInfoMeeting.BuildingName,
                         RoomNumber = sectionListInfoMeeting.RoomNumber,
                     });
+                }
+
+                string sectionType = sectionListInfo.Meetings.Select(m => m.Type)
+                    .FirstOrDefault("");
+
+                if (!CampusNamesToShortCodes.TryGetValue(sectionListInfo.CampusName,
+                        out string campusShortCode))
+                {
+                    throw new ApplicationException(
+                        "No campus short code found for campus " +
+                        $"'{sectionListInfo.CampusName}'");
                 }
 
                 // Merge section info
                 mergedSections.Add(new Section()
                 {
                     Crn = sectionCrn,
-                    SectionCode = sectionDetailsInfo.SectionCode,
+                    SectionCode = sectionListInfo.SectionCode,
                     Meetings = mergedSectionMeetings.ToArray(),
                     SubjectCode = sectionListInfo.SubjectCode,
                     CourseNumber = sectionListInfo.CourseNumber,
-                    Type = sectionDetailsInfo.Type,
+                    Type = sectionType,
                     CourseTitle = sectionListInfo.CourseTitle,
                     Description = sectionListInfo.Description,
                     CreditHours = sectionListInfo.CreditHours,
                     LinkSelf = sectionListInfo.LinkSelf,
                     LinkOther = sectionListInfo.LinkOther,
-                    CampusCode = sectionDetailsInfo.CampusCode,
+                    CampusCode = campusShortCode,
                     CampusName = sectionListInfo.CampusName,
-                    Capacity = sectionDetailsInfo.Capacity,
-                    Enrolled = sectionDetailsInfo.Enrolled,
-                    RemainingSpace = sectionDetailsInfo.RemainingSpace,
-                    WaitListCapacity = sectionDetailsInfo.WaitListCapacity,
-                    WaitListCount = sectionDetailsInfo.WaitListCount,
-                    WaitListSpace = sectionDetailsInfo.WaitListSpace,
+
+                    // The loss of authenticated APIs removed our source of information for 
+                    // capacity, enrolled, remaining space, and waitlists without querying
+                    // each CRN individually.
+                    // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/56
+                    Capacity = 0,
+                    Enrolled = 0,
+                    RemainingSpace = 0,
+                    WaitListCapacity = 0,
+                    WaitListCount = 0,
+                    WaitListSpace = 0,
                 });
             }
 
@@ -178,7 +190,7 @@ namespace PurdueIo.Scraper
             }
 
             // Parse HTML from the returned page
-            HtmlDocument htmlDocument = new HtmlDocument();
+            HtmlDocument htmlDocument = new();
             htmlDocument.LoadHtml(sectionListPageContent);
             HtmlNode docRoot = htmlDocument.DocumentNode;
 
@@ -208,6 +220,7 @@ namespace PurdueIo.Scraper
                 string parsedCrn = titleParse.Groups["crn"].Value;
                 string parsedSubjectCode = titleParse.Groups["subj"].Value;
                 string parsedCourseNumber = titleParse.Groups["number"].Value;
+                string parsedSectionCode = titleParse.Groups["section"].Value;
                 string parsedLinkSelf = titleParse.Groups["selflink"].Value;
                 string parsedLinkOther = titleParse.Groups["otherlink"].Value;
 
@@ -216,21 +229,29 @@ namespace PurdueIo.Scraper
                 double parsedCreditHours = 0;
                 HtmlNode info = termSelectNodes[i + 1].SelectSingleNode("td");
                 // TODO: Deal with white space...
-                string parsedDescription = HtmlEntity.DeEntitize(info.FirstChild.InnerText).Trim();
+                string parsedDescription = "";
+                if (info.FirstChild.NodeType == HtmlNodeType.Text)
+                {
+                    parsedDescription = HtmlEntity.DeEntitize(info.FirstChild.InnerText).Trim();
+                }
                 HtmlNode additionalInfo = info
                     .SelectSingleNode("span[@class='fieldlabeltext'][last()]")
                     ?.NextSibling?.NextSibling;
                 while (additionalInfo != null)
                 {
-                    if (additionalInfo.InnerText.Contains("Campus"))
+                    if (additionalInfo.NodeType == HtmlNodeType.Text)
                     {
-                        parsedCampusName = HtmlEntity.DeEntitize(additionalInfo.InnerText.Trim());
-                    }
-                    if (additionalInfo.InnerText.Contains("Credits"))
-                    {
-                        parsedCreditHours = double.Parse(
-                            HtmlEntity.DeEntitize(additionalInfo.InnerText.Trim()).Split(
-                                new string[] { " " }, StringSplitOptions.None)[0]);
+                        if (additionalInfo.InnerText.Contains("Campus"))
+                        {
+                            parsedCampusName = HtmlEntity.DeEntitize(
+                                additionalInfo.InnerText.Trim());
+                        }
+                        if (additionalInfo.InnerText.Contains("Credits"))
+                        {
+                            parsedCreditHours = double.Parse(
+                                HtmlEntity.DeEntitize(additionalInfo.InnerText.Trim()).Split(
+                                    new string[] { " " }, StringSplitOptions.None)[0]);
+                        }
                     }
                     additionalInfo = additionalInfo.NextSibling;
                 }
@@ -259,6 +280,8 @@ namespace PurdueIo.Scraper
                             ParsingUtilities.ParseDaysOfWeek(daysOfWeek);
 
                         // Parse building / room
+                        // Usually the room number is the last token in the string.
+                        // However, there are a lot of edge cases
                         string parsedMeetingRoomNumber = "";
                         string parsedMeetingBuildingName = "";
                         string parsedMeetingBuildingCode = "";
@@ -270,12 +293,45 @@ namespace PurdueIo.Scraper
                             parsedMeetingBuildingName = "TBA";
                             parsedMeetingBuildingCode = "TBA";
                         }
+                        // Handle weird on-site location names (ex. "On-site SF 1900W")
+                        else if (room.StartsWith("On-site") && (room.Length > 7))
+                        {
+                            parsedMeetingBuildingName = room.Substring(0, 7);
+                            parsedMeetingRoomNumber = room.Substring(8);
+                        }
+                        // Some buildings (Studebaker Building in South Bend) have a weird
+                        // room naming convention (ex. "Studebaker Building CLASS 2" or
+                        // "Studebaker Building LAB 4")
+                        else if (room.Contains(" CLASS") || room.Contains(" LAB") ||
+                            room.Contains(" Room") || room.Contains(" AU HARTUNG"))
+                        {
+                            var splitIndex = 0;
+                            if (room.Contains(" CLASS"))
+                            {
+                                splitIndex = room.LastIndexOf(" CLASS");
+                            }
+                            else if (room.Contains(" LAB"))
+                            {
+                                splitIndex = room.LastIndexOf(" LAB");
+                            }
+                            else if (room.Contains(" Room"))
+                            {
+                                splitIndex = room.LastIndexOf(" Room");
+                            }
+                            else if (room.Contains(" AU HARTUNG"))
+                            {
+                                splitIndex = room.LastIndexOf(" AU HARTUNG");
+                            }
+                            parsedMeetingBuildingName = room.Substring(0, splitIndex);
+                            parsedMeetingRoomNumber = room.Substring(splitIndex + 1);
+                        }
+                        // Otherwise we just assume the last space separates the building name
+                        // from the room number. ex. "Lawson Computer Science Bldg B131"
                         else
                         {
                             var index = room.LastIndexOf(" ");
                             parsedMeetingBuildingName = room.Substring(0, index);
-                            parsedMeetingRoomNumber =
-                                room.Substring(index + 1,room.Length - index - 1);
+                            parsedMeetingRoomNumber = room.Substring(index + 1);
                         }
 
                         // Parse dates
@@ -331,6 +387,7 @@ namespace PurdueIo.Scraper
                     SubjectCode = parsedSubjectCode,
                     CourseNumber = parsedCourseNumber,
                     CourseTitle = parsedTitle,
+                    SectionCode = parsedSectionCode,
                     Description = parsedDescription,
                     CreditHours = parsedCreditHours,
                     LinkSelf = parsedLinkSelf,
@@ -339,162 +396,6 @@ namespace PurdueIo.Scraper
                 };
 
                 parsedSections.Add(section.Crn, section);
-            }
-
-            return parsedSections;
-        }
-
-        private async Task<Dictionary<Crn, SectionDetailsInfo>> FetchSectionDetailsAsync(
-            string termCode, string subjectCode)
-        {
-            var parsedSections = new Dictionary<Crn, SectionDetailsInfo>();
-
-            string sectionDetailsPageContent =
-                await connection.GetSectionDetailsPageAsync(termCode, subjectCode);
-
-            // Check if we didn't return any classes
-            // TODO: Might be a significant perf hit - we can probably avoid searching for this
-            // string if the page is large enough that there are likely results.
-            if (sectionDetailsPageContent.Contains(
-                "No classes were found that meet your search criteria"))
-            {
-                return parsedSections;
-            }
-
-            // Parse HTML from the returned page
-            HtmlDocument htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(sectionDetailsPageContent);
-            HtmlNode docRoot = htmlDocument.DocumentNode;
-            HtmlNodeCollection sectionNodes = docRoot.SelectNodes(
-                "/html/body/div[@class='pagebodydiv'][1]//" + 
-                "table[@class='datadisplaytable'][1]/tr[ not ( th ) ]");
-            if (sectionNodes == null)
-            {
-                throw new ApplicationException("Could not parse data from section details page.");
-            }
-
-            // Loop through table rows
-            SectionDetailsInfo section = null;
-            for (var i = 0; i < sectionNodes.Count; i++)
-            {
-                var node = sectionNodes[i];
-                var crnNode = node.SelectSingleNode("td[2]");
-                if (crnNode == null)
-                {
-                    continue; // No node? Skip...
-                }
-
-                // Each row is a section AND/OR meeting.
-                // If there's a CRN in this row, it means that we're looking at a new section.
-                if (HtmlEntity.DeEntitize(crnNode.InnerText).Trim().Length > 0)
-                {
-                    // Section w/ primary meeting data
-                    var crnNumber = HtmlEntity.DeEntitize(crnNode.InnerText).Trim();
-                    // Deal with credit hours...
-                    var credits = HtmlEntity.DeEntitize(node.SelectSingleNode("td[7]").InnerText)
-                        .Trim();
-                    if (credits.Contains("-")) {
-                        credits = credits.Substring(credits.IndexOf("-")+1);
-                    }
-                    else if (credits.Contains("/"))
-                    {
-                        credits = credits.Substring(credits.IndexOf("/") + 1);
-                    }
-                    section = new SectionDetailsInfo()
-                    {
-                        Crn = crnNumber,
-                        SectionCode = HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[5]").InnerText).Trim(),
-                        Meetings = new List<SectionDetailsMeetingInfo>(),
-                        SubjectCode = HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[3]").InnerText).Trim(),
-                        CourseNumber = HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[4]").InnerText).Trim(),
-                        Type = HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[23]").InnerText).Trim(),
-                        CourseTitle = HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[8]").InnerText).Trim(),
-                        Description = HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[26]").InnerText).Trim(),
-                        CreditHours = double.Parse(credits),
-                        CampusCode = HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[6]").InnerText).Trim(),
-                        Capacity = Int32.Parse(HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[11]").InnerText).Trim()),
-                        Enrolled = Int32.Parse(HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[12]").InnerText).Trim()),
-                        RemainingSpace = Int32.Parse(HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[13]").InnerText).Trim()),
-                        WaitListCapacity = Int32.Parse(HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[14]").InnerText).Trim()),
-                        WaitListCount = Int32.Parse(HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[15]").InnerText).Trim()),
-                        WaitListSpace = Int32.Parse(HtmlEntity.DeEntitize(
-                            node.SelectSingleNode("td[16]").InnerText).Trim()),
-                    };
-
-                    parsedSections.Add(crnNumber, section);
-                }
-
-                // Now, update meeting data for this row
-                // Update meeting days of the week
-                // Parse days of week
-                var daysOfWeek = HtmlEntity.DeEntitize(
-                    node.SelectSingleNode("td[9]").InnerText).Trim();
-                DaysOfWeek parsedMeetingDaysOfWeek = ParsingUtilities.ParseDaysOfWeek(daysOfWeek);
-
-                // Parse times
-                var times = HtmlEntity.DeEntitize(node.SelectSingleNode("td[10]").InnerText).Trim();
-                // TODO: Don't hard-code time zone
-                var startEndTimes = ParsingUtilities.ParseStartEndTime(times,
-                    defaultTimeZone);
-                DateTimeOffset parsedMeetingStartTime = startEndTimes.Item1;
-                DateTimeOffset parsedMeetingEndTime = startEndTimes.Item2;
-
-                // Update meeting location (building short name)
-                var loc = HtmlEntity.DeEntitize(node.SelectSingleNode("td[22]").InnerText).Trim();
-                string parsedMeetingBuildingCode = "";
-                string parsedMeetingBuildingName = "";
-                string parsedMeetingRoomNumber = "";
-                if (loc.Equals("TBA"))
-                {
-                    parsedMeetingBuildingCode = "TBA";
-                    parsedMeetingBuildingName = "TBA";
-                    parsedMeetingRoomNumber = "TBA";
-                }
-                else if (loc.Length > 0)
-                {
-                    if (loc.Contains(" "))
-                    {
-                        parsedMeetingBuildingCode = loc.Substring(0, loc.IndexOf(" ")).Trim();
-                        parsedMeetingRoomNumber = loc.Substring(loc.IndexOf(" ") + 1).Trim();
-                    }
-                    else
-                    {
-                        parsedMeetingBuildingCode = loc;
-                        parsedMeetingRoomNumber = "";
-                    }
-                } else
-                {
-                    throw new ApplicationException(
-                        $"Could not parse location data for section CRN {section.Crn}.");
-                }
-
-                // Updating meeting type
-                string parsedMeetingType = HtmlEntity.DeEntitize(
-                    node.SelectSingleNode("td[23]").InnerText).Trim();
-
-                // Add the meeting
-                section.Meetings.Add(new SectionDetailsMeetingInfo()
-                {
-                    Type = parsedMeetingType,
-                    DaysOfWeek = parsedMeetingDaysOfWeek,
-                    StartTime = parsedMeetingStartTime,
-                    EndTime = parsedMeetingEndTime,
-                    BuildingCode = parsedMeetingBuildingCode,
-                    BuildingName = parsedMeetingBuildingName,
-                    RoomNumber = parsedMeetingRoomNumber,
-                });
             }
 
             return parsedSections;
@@ -513,6 +414,8 @@ namespace PurdueIo.Scraper
 
             public string CourseTitle { get; init; }
 
+            public string SectionCode { get; init; }
+
             public string Description { get; init; }
 
             public double CreditHours { get; init; }
@@ -524,58 +427,194 @@ namespace PurdueIo.Scraper
             public string CampusName { get; init; }
         }
 
-        // A subset of Section information that can be scraped from the section details page.
-        private record SectionDetailsInfo
+        // The loss of authenticated APIs removed our source of information for 
+        // campus short codes, so now they are hard-coded here and we just hope
+        // new campuses are a fairly rare occurrence.
+        // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/55
+        private static readonly Dictionary<string, string> CampusNamesToShortCodes = new()
         {
-            public Crn Crn { get; init; }
+            { "West Lafayette Campus", "PWL" },
+            { "West Lafayette Continuing Ed Campus", "CEC" },
+            { "IUPUI Campus", "PIU" },
+            { "New Albany Campus", "TNA" },
+            { "Richmond Campus", "TRI" },
+            { "Lafayette Campus", "TLF" },
+            { "Anderson Campus", "TAN" },
+            { "South Bend Campus", "TSB" },
+            { "Columbus Campus", "TCO" },
+            { "Indianapolis Campus", "TDY" },
+            { "Kokomo Campus", "TKO" },
+            { "Vincennes Campus", "TVN" },
+            { "Greensburg Campus", "TGB" },
+            { "Concurrent Credit Campus", "CC" },
+            { "Dual Campus Campus", "TDC" },
+        };
 
-            public string SectionCode { get; init; }
-
-            public IList<SectionDetailsMeetingInfo> Meetings { get; init; }
-
-            public string SubjectCode { get; init; }
-
-            public string CourseNumber { get; init; }
-
-            public string Type { get; init; }
-
-            public string CourseTitle { get; init; }
-
-            public string Description { get; init; }
-            
-            public double CreditHours { get; init; }
-
-            public string CampusCode { get; init; }
-
-            public int Capacity { get; init; }
-
-            public int Enrolled { get; init; }
-
-            public int RemainingSpace { get; init; }
-
-            public int WaitListCapacity { get; init; }
-
-            public int WaitListCount { get; init; }
-
-            public int WaitListSpace { get; init; }
-        }
-
-        // A subset of Meeting information that can be scraped from the section details page
-        private record SectionDetailsMeetingInfo
+        // The loss of authenticated APIs removed our source of information for 
+        // building short codes, so now they are hard-coded here and we just hope
+        // new buildings are a fairly rare occurrence.
+        // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/54
+        private static readonly Dictionary<string, string> BuildingNamesToShortCodes = new()
         {
-            public string Type { get; init; }
-
-            public DaysOfWeek DaysOfWeek { get; init; }
-
-            public DateTimeOffset StartTime { get; init; }
-
-            public DateTimeOffset EndTime { get; init; }
-
-            public string BuildingCode { get; init; }
-
-            public string BuildingName { get; init; }
-
-            public string RoomNumber { get; init; }
-        }
+            { "Asynchronous Online Learning", "ASYNC" },
+            { "TBA", "TBA" },
+            { "Chaffee Hall", "CHAF" },
+            { "Seng-Liang Wang Hall", "WANG" },
+            { "Lawson Computer Science Bldg", "LWSN" },
+            { "Synchronous Online Learning", "SYNC" },
+            { "Forney Hall of Chemical Engr", "FRNY" },
+            { "Grissom Hall", "GRIS" },
+            { "Knoy Hall of Technology", "KNOY" },
+            { "Mathematical Sciences Building", "MATH" },
+            { "Electrical Engineering Bldg", "EE" },
+            { "Stewart Center", "STEW" },
+            { "Materials and Electrical Engr", "MSEE" },
+            { "Wilmeth Active Learning Center", "WALC" },
+            { "Stanley Coulter Hall", "SC" },
+            { "Honors College&Resid North", "HCRN" },
+            { "Physics Building", "PHYS" },
+            { "Brown Laboratory of Chemistry", "BRWN" },
+            { "Wetherill Lab of Chemistry", "WTHR" },
+            { "Hampton Hall of Civil Engnrng", "HAMP" },
+            { "Neil Armstrong Hall of Engr", "ARMS" },
+            { "Recitation Building", "REC" },
+            { "Beering Hall of Lib Arts & Ed", "BRNG" },
+            { "Lilly Hall of Life Sciences", "LILY" },
+            { "ADM Agricultural Innovation Ct", "ADM" },
+            { "Lyles-Porter Hall", "LYLE" },
+            { "Agricultural & Biological Engr", "ABE" },
+            { "Hicks Undergraduate Library", "HIKS" },
+            { "Forest Products Building", "FPRD" },
+            { "Pao Hall of Visual & Perf Arts", "PAO" },
+            { "Nelson Hall of Food Science", "NLSN" },
+            { "Forestry Building", "FORS" },
+            { "Armory", "AR" },
+            { "Biochemistry Building", "BCHM" },
+            { "Class of 1950 Lecture Hall", "CL50" },
+            { "Smith Hall", "SMTH" },
+            { "Jerry S Rawls Hall", "RAWL" },
+            { "Krannert Building", "KRAN" },
+            { "Horticulture Building", "HORT" },
+            { "On-site", "OFFCMP" },
+            { "Daniel Turfgrass Rsch&Diag Ct", "DANL" },
+            { "Heavilon Hall", "HEAV" },
+            { "University Hall", "UNIV" },
+            { "Land O Lakes Ctr", "LOLC" },
+            { "Matthews Hall", "MTHW" },
+            { "Creighton Hall of Animal Sci", "CRTN" },
+            { "Jischke Hall of Biomedical Eng", "MJIS" },
+            { "Peirce Hall", "PRCE" },
+            { "Winthrop E. Stone Hall", "STON" },
+            { "Holleman-Niswonger Simultr Ctr", "SIML" },
+            { "Niswonger Aviation Tech Bldg", "NISW" },
+            { "Terminal Building (Hangar 2)", "TERM" },
+            { "Indiana Manufcturing Institute", "IMI" },
+            { "Aerospace Science Lab-Hangar 3", "AERO" },
+            { "Composites Laboratory", "COMP" },
+            { "Slayter Ctr of Performing Arts", "SCPA" },
+            { "Elliott Hall of Music", "ELLT" },
+            { "Chaney-Hale Hall of Science", "CHAS" },
+            { "Morgan Ctr for Entrepreneurshp", "MRGN" },
+            { "Lynn Hall of Vet Medicine", "LYNN" },
+            { "University Church", "UC" },
+            { "Robert Heine Pharmacy Building", "RHPH" },
+            { "Mechanical Engineering Bldg", "ME" },
+            { "Vet Pathobiology Research Bldg", "VPRB" },
+            { "Veterinary Pathology Building", "VPTH" },
+            { "Psychological Sciences Bldg", "PSYC" },
+            { "Felix Haas Hall", "HAAS" },
+            { "Marriott Hall", "MRRT" },
+            { "Potter Engineering Center", "POTR" },
+            { "Lambert Field House & Gym", "LAMB" },
+            { "Brees Student-Athlete Acad Ctr", "BRES" },
+            { "Krach Leadership Center", "KRCH" },
+            { "Ernest C. Young Hall", "YONG" },
+            { "Eleanor B Shreve Residence Hal", "SHRV" },
+            { "John S. Wright Forestry Center", "WRIT" },
+            { "Pfendler Hall of Agriculture", "PFEN" },
+            { "Honors College&Resid South", "HCRS" },
+            { "Griffin Residence Hall South", "GRFS" },
+            { "Fowler Memorial House", "FWLR" },
+            { "Bill and Sally Hanley Hall", "HNLY" },
+            { "Horticultural Greenhouse", "HGRH" },
+            { "State Farm", "SF" },
+            { "Johnson Hall of Nursing", "JNSN" },
+            { "Schwartz Tennis Center", "SCHW" },
+            { "Purdue Memorial Union", "PMU" },
+            { "Hillenbrand Residence Hall", "HILL" },
+            { "Equine Health Sciences Annex", "EHSA" },
+            { "Equine Health Sciences Bldg", "EHSB" },
+            { "Online", "ONLINE" },
+            { "Hockmeyer Hall Strc Bio", "HOCK" },
+            { "The Innovation Center", "INVC" },
+            { "Whistler Hall of Ag Research", "WSLR" },
+            { "Training & Reception Center ROOM", "TRC" },
+            { "Purdue Technology Center", "SEI" },
+            { "Technology Statewide Site", "TECHSW" },
+            { "Agricultural Administration", "AGAD" },
+            { "Drug Discovery Bldg", "DRUG" },
+            { "Bechtel Innovation Design Ctr", "BIDC" },
+            { "Michael Golden Labs and Shops", "MGL" },
+            { "Tom Spurgeon Golf Training Ctr", "SPUR" },
+            { "Ground Service Building", "GRS" },
+            { "Third Street Suites", "TSS" },
+            { "Nuclear Engineering Building", "NUCL" },
+            { "Kepner Hall", "KPNR" },
+            { "Purdue Memorial Union Club", "PMUC" },
+            { "Cordova Rec Sports Center", "CREC" },
+            { "Herrick Laboratories", "HLAB" },
+            { "Animal Sciences Teaching Lab", "ASTL" },
+            { "Cancelled", "CANCEL" },
+            { "Ross-Ade Stadium", "STDM" },
+            { "Discovery and Learning", "DLR" },
+            { "On-site ONLINE", "OFFCMP" },
+            { "Black Cultural Center", "BCC" },
+            { "Subaru Isuzu Automotive", "SIA" },
+            { "Hansen Life Sciences Research", "HANS" },
+            { "Animal Disease Diagnostic Lab", "ADDL" },
+            { "Guy J Mackey Arena", "MACK" },
+            { "Ray W Herrick Laboratory", "HERL" },
+            { "Harvey W. Wiley Residence Hall", "WILY" },
+            { "Boilermaker Aquatic Center", "AQUA" },
+            { "INOK Investments Warehouse", "INOK" },
+            { "High Pressure Research Lab", "ZL3" },
+            { "Engineering Administration", "ENAD" },
+            { "Bindley Bioscience Center", "BIND" },
+            { "Krannert Center", "KCTR" },
+            { "South Campus Courts Bldg B", "SCCB" },
+            { "Civil Engineering Building", "CIVL" },
+            { "Recreational Sports Center", "RSC" },
+            { "Service Building", "SERV" },
+            { "Child Developmt&Family Studies", "CDFS" },
+            { "Food Science Building", "FS" },
+            { "Birk Nanotechnology Center", "BRK" },
+            { "Max W & Maileen Brown Hall", "BHEE" },
+            { "Marc & Sharon Hagle Hall", "HAGL" },
+            { "Inventrek Technology Park", "INVTRK" },
+            { "Advanced Manufacturing Center", "AMCE" },
+            { "Learning Center", "LC" },
+            { "Purdue Polytechnic Anderson", "PPA" },
+            { "Flex Lab", "FLEX" },
+            { "Main Street Resource Center", "MSRC" },
+            { "Studebaker Building", "SBST" },
+            { "Asian Amer & Asian Cult Ctr", "AACC" },
+            { "Dudley Hall", "DUDL" },
+            { "Gerald D and Edna E Mann Hall", "MANN" },
+            { "Lambertus Hall", "LMBS" },
+            { "Homeland Security & Public Ser", "HSPS" },
+            { "McDaniel Hall", "MHALL" },
+            { "Johnson Hall", "JHALL" },
+            { "Meredith Residence Hall South", "MRDS" },
+            { "OffSite", "OFST" },
+            { "Alexandria Room", "ALEX" },
+            { "Helen B. Schleman Hall", "SCHM" },
+            { "Winifred Parker Residence Hall", "PKRW" },
+            { "Technology Building", "TECHB" },
+            { "Aviation Technology Center", "ATC" },
+            { "Homeland Security Building", "HSB" },
+            { "Muncie Central", "MCHS" }, // I made this short code up since this is a dual-credit
+                                          // course at Muncie Central High School, presumably
+                                          // doesn't have a real short code.
+        };
     }
 }

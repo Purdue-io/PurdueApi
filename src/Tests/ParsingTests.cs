@@ -42,13 +42,21 @@ namespace PurdueIo.Tests
             Assert.Equal("", spotCheck.LinkOther);
             Assert.Equal("PWL", spotCheck.CampusCode);
             Assert.Equal("West Lafayette Campus", spotCheck.CampusName);
-            Assert.Equal(24, spotCheck.Capacity);
-            Assert.Equal(5, spotCheck.Enrolled);
-            Assert.Equal(19, spotCheck.RemainingSpace);
+
+            // The loss of authenticated APIs removed our source of information for 
+            // capacity, enrolled, remaining space, and waitlists without querying
+            // each CRN individually.
+            // So now these are all zero.
+            // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/56
+            Assert.Equal(0, spotCheck.Capacity);
+            Assert.Equal(0, spotCheck.Enrolled);
+            Assert.Equal(0, spotCheck.RemainingSpace);
             Assert.Equal(0, spotCheck.WaitListCapacity);
             Assert.Equal(0, spotCheck.WaitListCount);
             Assert.Equal(0, spotCheck.WaitListSpace);
+            
             Assert.Equal(2, spotCheck.Meetings.Length);
+
             // First meeting
             Meeting spotCheckMeeting = spotCheck.Meetings[0];
             Assert.Equal("Lecture", spotCheckMeeting.Type);

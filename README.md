@@ -54,7 +54,7 @@ there through the query tester at [http://api.purdue.io/](api.purdue.io/).
 
 ## Tools
 
-Purdue.io is written in C# on .NET 5. It will run natively on most major
+Purdue.io is written in C# on .NET 8. It will run natively on most major
 architectures and operating systems (Windows, Linux, Mac OS).
 
 Entity Framework is used to communicate with an underlying database provider. Currently,
@@ -71,10 +71,7 @@ To start developing locally, install the .NET SDK.
 CatalogSync is the process used to pull course data from MyPurdue and synchronize it to a
 relational database store.
 
-In order to access detailed course section information, CatalogSync requires a valid
-MyPurdue username and password.
-
-CatalogSync also accepts options to configure which database provider and connection it uses.
+CatalogSync accepts options to configure which database provider and connection it uses.
 
 Additional flags are available to configure CatalogSync behavior. 
 Use the `--help` flag for more information.
@@ -83,10 +80,10 @@ Use the `--help` flag for more information.
 cd src/CatalogSync
 
 # To sync to default SQLite file purdueio.sqlite
-dotnet run -- -u USERNAME -p PASSWORD
+dotnet run
 
 # To sync to a specific SQLite file
-dotnet run -- -u USERNAME -p PASSWORD -d Sqlite -c "Data Source=path/to/file.sqlite"
+dotnet run -- -d Sqlite -c "Data Source=path/to/file.sqlite"
 ```
 
 CatalogSync will begin synchronizing course catalog data to `purdueio.sqlite`.
@@ -96,7 +93,7 @@ and connection string:
 
 ```sh
 # To sync to a local PostgreSQL instance:
-dotnet run -- -u USERNAME -p PASSWORD -d Npgsql -c "Host=localhost;Database=purdueio;Username=purdueio;Password=purdueio"
+dotnet run -- -d Npgsql -c "Host=localhost;Database=purdueio;Username=purdueio;Password=purdueio"
 ```
 
 ## API
