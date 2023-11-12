@@ -53,8 +53,7 @@ namespace PurdueIo.CatalogSync
         static async Task RunASync(Options options)
         {
             var loggerFactory = LoggerFactory.Create(b => 
-                b.AddSimpleConsole(c => c.TimestampFormat = "hh:mm:ss.fff ")
-                .SetMinimumLevel(LogLevel.Trace)); // REMOVE
+                b.AddSimpleConsole(c => c.TimestampFormat = "hh:mm:ss.fff "));
 
             var logger = loggerFactory.CreateLogger<Program>();
 
@@ -76,7 +75,7 @@ namespace PurdueIo.CatalogSync
             if (options.DataProvider == DataProvider.Sqlite)
             {
                 var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
-                    .UseLoggerFactory(loggerFactory)
+                    //.UseLoggerFactory(loggerFactory)
                     .UseSqlite(options.ConnectionString,
                         o => o.MigrationsAssembly("Database.Migrations.Sqlite"))
                     .Options;
@@ -85,9 +84,9 @@ namespace PurdueIo.CatalogSync
             else if (options.DataProvider == DataProvider.Npgsql)
             {
                 var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
-                    .UseLoggerFactory(loggerFactory)
+                    //.UseLoggerFactory(loggerFactory)
                     .UseNpgsql(options.ConnectionString,
-                        o => o.MigrationsAssembly("Database.Migrations.Npgsql"))
+                        o => o.MigrationsAssembly("Database.Migrations.Npgsql").MaxBatchSize(100))
                     .Options;
                 dbContext = new ApplicationDbContext(dbOptions);
             }

@@ -11,19 +11,19 @@ namespace PurdueIo.Scraper.Models
         public (string name, string email)[] Instructors { get; init; }
 
         // Date of the very first meeting (start of the series)
-        public DateTimeOffset StartDate { get; init; }
+        public DateOnly? StartDate { get; init; }
 
         // Date of the very last meeting (end of the series)
-        public DateTimeOffset EndDate { get; init; }
+        public DateOnly? EndDate { get; init; }
 
         // Days of the week when this meeting is scheduled to occur
         public DaysOfWeek DaysOfWeek { get; init; }
 
         // The time each day this meeting begins
-        public DateTimeOffset StartTime { get; init; }
+        public TimeOnly? StartTime { get; init; }
 
         // The time each day this meeting ends
-        public DateTimeOffset EndTime { get; init; }
+        public TimeOnly? EndTime { get; init; }
 
         // The short name of the building where this meeting occurs
         public string BuildingCode { get; init; }

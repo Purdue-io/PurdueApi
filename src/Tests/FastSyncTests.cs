@@ -20,11 +20,11 @@ using ScrapedTerm = PurdueIo.Scraper.Models.Term;
 
 namespace PurdueIo.Tests
 {
-    public class SynchronizerTests
+    public class FastSyncTests
     {
         private readonly ILoggerFactory loggerFactory;
 
-        public SynchronizerTests()
+        public FastSyncTests()
         {
             this.loggerFactory = new NullLoggerFactory();
         }
@@ -87,13 +87,7 @@ namespace PurdueIo.Tests
                     (s.Crn == testSection.Section.Crn) &&
                     (s.Type == testSection.Section.Type) &&
                     (s.StartDate == testMeeting.StartDate) &&
-                    (s.EndDate == testMeeting.EndDate) &&
-                    (s.Capacity == testSection.Section.Capacity) &&
-                    (s.Enrolled == testSection.Section.Enrolled) &&
-                    (s.RemainingSpace == testSection.Section.RemainingSpace) &&
-                    (s.WaitListCapacity == testSection.Section.WaitListCapacity) &&
-                    (s.WaitListCount == testSection.Section.WaitListCount) &&
-                    (s.WaitListSpace == testSection.Section.WaitListSpace)));
+                    (s.EndDate == testMeeting.EndDate)));
                 // Instructor
                 Assert.NotNull(dbContext.Instructors.SingleOrDefault(i =>
                     (i.Email == testMeeting.Instructors.First().email) &&
@@ -107,7 +101,7 @@ namespace PurdueIo.Tests
                     (m.EndDate == testMeeting.EndDate) &&
                     ((DaysOfWeek)m.DaysOfWeek == testMeeting.DaysOfWeek) &&
                     (m.StartTime == testMeeting.StartTime) &&
-                    (m.Duration == testMeeting.EndTime.Subtract(testMeeting.StartTime)) &&
+                    (m.Duration == (testMeeting.EndTime - testMeeting.StartTime)) &&
                     (m.Room.Number == testSection.Room.Number) &&
                     (m.Room.Building.ShortCode == testSection.Room.Building.Code)));
             }
@@ -572,16 +566,12 @@ namespace PurdueIo.Tests
                             Type = type,
                             Instructors = 
                                 instructors.Select(i => (name: i.Name, email: i.Email)).ToArray(),
-                            StartDate = new DateTimeOffset(2021, 8, 23, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndDate = new DateTimeOffset(2021, 12, 11, 0, 0, 0, 0,
-                                timeZone.BaseUtcOffset),
+                            StartDate = new DateOnly(2021, 8, 23),
+                            EndDate = new DateOnly(2021, 12, 11),
                             DaysOfWeek =
                                 (DaysOfWeek.Monday | DaysOfWeek.Wednesday),
-                            StartTime = new DateTimeOffset(2021, 8, 30, 7, 30, 0, 0,
-                                timeZone.BaseUtcOffset),
-                            EndTime = new DateTimeOffset(2021, 8, 30, 8, 20, 0, 0,
-                                timeZone.BaseUtcOffset),
+                            StartTime = new TimeOnly(7, 30, 0),
+                            EndTime = new TimeOnly(8, 20, 0),
                             BuildingCode = room.Building.Code,
                             BuildingName = room.Building.Name,
                             RoomNumber = room.Number,
@@ -597,12 +587,6 @@ namespace PurdueIo.Tests
                     LinkOther = linkOther,
                     CampusCode = campus.Code,
                     CampusName = campus.Name,
-                    Capacity = 32,
-                    Enrolled = 16,
-                    RemainingSpace = 16,
-                    WaitListCapacity = 8,
-                    WaitListCount = 4,
-                    WaitListSpace = 4,
                 },
             };
         }

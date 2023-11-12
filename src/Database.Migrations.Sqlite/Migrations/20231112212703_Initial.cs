@@ -1,20 +1,24 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Database.Migrations.Npgsql.Migrations
+#nullable disable
+
+namespace Database.Migrations.Sqlite.Migrations
 {
+    /// <inheritdoc />
     public partial class Initial : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
                 name: "Campuses",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Code = table.Column<string>(type: "character varying(12)", maxLength: 12, nullable: true),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    ZipCode = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Code = table.Column<string>(type: "TEXT", maxLength: 12, nullable: true),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    ZipCode = table.Column<string>(type: "TEXT", maxLength: 5, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -25,9 +29,9 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Instructors",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    Email = table.Column<string>(type: "character varying(254)", maxLength: 254, nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 254, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -38,9 +42,9 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Subjects",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    Abbreviation = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    Abbreviation = table.Column<string>(type: "TEXT", maxLength: 6, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -51,11 +55,11 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Terms",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Code = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    StartDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    EndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Code = table.Column<string>(type: "TEXT", maxLength: 16, nullable: true),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    StartDate = table.Column<DateOnly>(type: "TEXT", nullable: true),
+                    EndDate = table.Column<DateOnly>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -66,10 +70,10 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Buildings",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CampusId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    ShortCode = table.Column<string>(type: "text", nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CampusId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    ShortCode = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -86,12 +90,12 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Courses",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Number = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
-                    SubjectId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "text", nullable: true),
-                    CreditHours = table.Column<double>(type: "double precision", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Number = table.Column<string>(type: "TEXT", maxLength: 16, nullable: true),
+                    SubjectId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", nullable: true),
+                    CreditHours = table.Column<double>(type: "REAL", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -108,9 +112,9 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Rooms",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Number = table.Column<string>(type: "text", nullable: true),
-                    BuildingId = table.Column<Guid>(type: "uuid", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Number = table.Column<string>(type: "TEXT", nullable: true),
+                    BuildingId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -127,10 +131,10 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Classes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CourseId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TermId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CampusId = table.Column<Guid>(type: "uuid", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CourseId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TermId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CampusId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -159,19 +163,12 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Sections",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Crn = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
-                    ClassId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: true),
-                    RegistrationStatus = table.Column<int>(type: "integer", nullable: false),
-                    StartDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    EndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Capacity = table.Column<int>(type: "integer", nullable: false),
-                    Enrolled = table.Column<int>(type: "integer", nullable: false),
-                    RemainingSpace = table.Column<int>(type: "integer", nullable: false),
-                    WaitListCapacity = table.Column<int>(type: "integer", nullable: false),
-                    WaitListCount = table.Column<int>(type: "integer", nullable: false),
-                    WaitListSpace = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Crn = table.Column<string>(type: "TEXT", maxLength: 16, nullable: true),
+                    ClassId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Type = table.Column<string>(type: "TEXT", nullable: true),
+                    StartDate = table.Column<DateOnly>(type: "TEXT", nullable: true),
+                    EndDate = table.Column<DateOnly>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -188,15 +185,15 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "Meetings",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    SectionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: true),
-                    StartDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    EndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    DaysOfWeek = table.Column<byte>(type: "smallint", nullable: false),
-                    StartTime = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Duration = table.Column<TimeSpan>(type: "interval", nullable: false),
-                    RoomId = table.Column<Guid>(type: "uuid", nullable: true)
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    SectionId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Type = table.Column<string>(type: "TEXT", nullable: true),
+                    StartDate = table.Column<DateOnly>(type: "TEXT", nullable: true),
+                    EndDate = table.Column<DateOnly>(type: "TEXT", nullable: true),
+                    DaysOfWeek = table.Column<byte>(type: "INTEGER", nullable: false),
+                    StartTime = table.Column<TimeOnly>(type: "TEXT", nullable: true),
+                    Duration = table.Column<TimeSpan>(type: "TEXT", nullable: false),
+                    RoomId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -205,8 +202,7 @@ namespace Database.Migrations.Npgsql.Migrations
                         name: "FK_Meetings_Rooms_RoomId",
                         column: x => x.RoomId,
                         principalTable: "Rooms",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Meetings_Sections_SectionId",
                         column: x => x.SectionId,
@@ -219,8 +215,8 @@ namespace Database.Migrations.Npgsql.Migrations
                 name: "MeetingInstructor",
                 columns: table => new
                 {
-                    MeetingId = table.Column<Guid>(type: "uuid", nullable: false),
-                    InstructorId = table.Column<Guid>(type: "uuid", nullable: false)
+                    MeetingId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    InstructorId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -366,6 +362,7 @@ namespace Database.Migrations.Npgsql.Migrations
                 unique: true);
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

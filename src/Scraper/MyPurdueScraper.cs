@@ -17,11 +17,6 @@ namespace PurdueIo.Scraper
 
         private readonly ILogger<MyPurdueScraper> logger;
 
-        private readonly TimeZoneInfo defaultTimeZone = 
-            TimeZoneInfo.GetSystemTimeZones().Any(t => (t.Id == "Eastern Standard Time"))
-                ? TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")
-                : TimeZoneInfo.FindSystemTimeZoneById("America/Indianapolis");
-
         public MyPurdueScraper(IMyPurdueConnection connection, ILogger<MyPurdueScraper> logger)
         {
             this.connection = connection;
@@ -155,17 +150,6 @@ namespace PurdueIo.Scraper
                     LinkOther = sectionListInfo.LinkOther,
                     CampusCode = campusShortCode,
                     CampusName = sectionListInfo.CampusName,
-
-                    // The loss of authenticated APIs removed our source of information for 
-                    // capacity, enrolled, remaining space, and waitlists without querying
-                    // each CRN individually.
-                    // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/56
-                    Capacity = 0,
-                    Enrolled = 0,
-                    RemainingSpace = 0,
-                    WaitListCapacity = 0,
-                    WaitListCount = 0,
-                    WaitListSpace = 0,
                 });
             }
 
@@ -267,11 +251,9 @@ namespace PurdueIo.Scraper
                         // Parse times
                         var times = HtmlEntity.DeEntitize(
                             meetingNode.SelectSingleNode("td[2]").InnerText);
-                        // TODO: don't hard-code time zones
-                        var startEndTimes = ParsingUtilities.ParseStartEndTime(times,
-                            defaultTimeZone);
-                        DateTimeOffset parsedMeetingStartTime = startEndTimes.Item1;
-                        DateTimeOffset parsedMeetingEndTime = startEndTimes.Item2;
+                        var startEndTimes = ParsingUtilities.ParseStartEndTime(times);
+                        TimeOnly? parsedMeetingStartTime = startEndTimes.Item1;
+                        TimeOnly? parsedMeetingEndTime = startEndTimes.Item2;
 
                         // Parse days of week
                         var daysOfWeek = HtmlEntity.DeEntitize(
@@ -337,11 +319,9 @@ namespace PurdueIo.Scraper
                         // Parse dates
                         var dates = HtmlEntity.DeEntitize(
                             meetingNode.SelectSingleNode("td[5]").InnerText);
-                        // TODO: don't hard-code time zones
-                        var startEndDates = ParsingUtilities.ParseStartEndDate(dates,
-                            defaultTimeZone);
-                        DateTimeOffset parsedMeetingStartDate = startEndDates.Item1;
-                        DateTimeOffset parsedMeetingEndDate = startEndDates.Item2;
+                        var startEndDates = ParsingUtilities.ParseStartEndDate(dates);
+                        DateOnly? parsedMeetingStartDate = startEndDates.Item1;
+                        DateOnly? parsedMeetingEndDate = startEndDates.Item2;
 
                         // Parse type
                         var type = meetingNode.SelectSingleNode("td[6]").InnerText

@@ -20,16 +20,16 @@ namespace PurdueIo.Database.Models
         public virtual ICollection<Instructor> Instructors { get; set; }
 
         // Date of first meeting occurrence
-        public DateTimeOffset StartDate { get; set; }
+        public DateOnly? StartDate { get; set; }
 
         // Date of final meeting occurrence
-        public DateTimeOffset EndDate { get; set; }
+        public DateOnly? EndDate { get; set; }
 
         // Days of the week this meeting occurs
         public DaysOfWeek DaysOfWeek { get; set; }
 
-        // The time each day this meeting starts
-        public DateTimeOffset StartTime { get; set; }
+        // The time each day this meeting starts, if applicable
+        public TimeOnly? StartTime { get; set; }
 
         // The duration of this meeting
         public TimeSpan Duration { get; set; }
