@@ -16,46 +16,41 @@ namespace PurdueIo.Scraper.Connections
         // Enum value of implemented HTTP request methods
         private enum HttpMethod { GET, POST };
 
-        // Username used to authenticate with MyPurdue
-        private readonly string username;
-
-        // Password used to authenticate with MyPurdue
-        private readonly string password;
-
         // Logger reference
         private readonly ILogger<MyPurdueConnection> logger;
 
         // Keeps track of cookies for all requests on this connection
-        private CookieContainer cookies = new CookieContainer();
+        private readonly CookieContainer cookies = new();
 
         // Keeps track of the last page requested, used in 'Referrer' HTTP header
         private string referrer = "";
 
         // HttpClient used by this connection to communicate with MyPurdue
-        private HttpClient httpClient;
+        private readonly HttpClient httpClient;
 
         // How many request attempts should be made before failure
         private const int MAX_RETRIES = 5;
 
-        // Used to parse session timeout messages
-        private static Regex sessionTimeoutRegex = new Regex(@"Session timeout occurred",
-            RegexOptions.IgnoreCase);
-
-        // Attempts to open a new authenticated connection to MyPurdue,
-        // throws if authentication fails
-        public static async Task<MyPurdueConnection> CreateAndConnectAsync(string username,
-            string password, ILogger<MyPurdueConnection> logger)
+        public MyPurdueConnection(ILogger<MyPurdueConnection> logger)
         {
-            var connection = new MyPurdueConnection(username, password, logger);
-            if (await connection.Authenticate())
+            this.logger = logger;
+
+            var httpHandler = new HttpClientHandler()
             {
-                return connection;
-            }
-            else
-            {
-                throw new ApplicationException(
-                    "Could not authenticate to MyPurdue with supplied username and password.");
-            }
+                CookieContainer = cookies, // MyPurdue stores a lot of state in cookies - we need
+                                           // to persist them to avoid upsetting it
+                AllowAutoRedirect = false, // We'll handle redirects by ourselves
+            };
+            httpClient = new HttpClient(httpHandler as HttpMessageHandler);
+
+            // Pretend we're Chrome
+            httpClient.DefaultRequestHeaders.Add("Accept",
+                "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+            httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            httpClient.DefaultRequestHeaders.Add("User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " +
+                "Chrome/45.0.2454.99 Safari/537.36");
         }
 
         public async Task<string> GetTermListPageAsync()
@@ -64,19 +59,16 @@ namespace PurdueIo.Scraper.Connections
             {
                 var result = await Request(HttpMethod.GET,
                     "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
-                var content = await result.Content.ReadAsStringAsync();
-
-                if (sessionTimeoutRegex.IsMatch(content))
+                if (!result.IsSuccessStatusCode)
                 {
-                    // If we received a session timeout message, authenticate and then try again
-                    await Authenticate();
+                    this.logger.LogError("Received non-success status code '{}' on " +
+                        "GetTermListPageAsync.", result.StatusCode);
                 }
                 else
                 {
-                    return content;
+                    return await result.Content.ReadAsStringAsync();
                 }
             }
-
             throw new ApplicationException(
                 "Exceeded retries attempting to query MyPurdue term list");
         }
@@ -95,15 +87,14 @@ namespace PurdueIo.Scraper.Connections
                         }),
                     true,
                     "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
-                var content = await request.Content.ReadAsStringAsync();
-
-                if (sessionTimeoutRegex.IsMatch(content))
+                if (!request.IsSuccessStatusCode)
                 {
-                    // If we received a session timeout message, authenticate and then try again
-                    await Authenticate();
+                    this.logger.LogError("Received non-success status code '{}' on " +
+                        "GetSubjectListPageAsync.", request.StatusCode);
                 }
                 else
                 {
+                    var content = await request.Content.ReadAsStringAsync();
                     return content;
                 }
             }
@@ -150,16 +141,15 @@ namespace PurdueIo.Scraper.Connections
                 var request = await Request(HttpMethod.POST,
                     "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec",
                     postBody);
-                var content = await request.Content.ReadAsStringAsync();
 
-                if (sessionTimeoutRegex.IsMatch(content))
+                if (!request.IsSuccessStatusCode)
                 {
-                    // If we received a session timeout message, authenticate and then try again
-                    await Authenticate();
+                    this.logger.LogError("Received non-success status code '{}' on " +
+                        "GetSectionListPageAsync.", request.StatusCode);
                 }
                 else
                 {
-                    return content;
+                    return await request.Content.ReadAsStringAsync();
                 }
             }
             throw new ApplicationException(
@@ -212,88 +202,18 @@ namespace PurdueIo.Scraper.Connections
                     postBody,
                     true,
                     "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse");
-                var content = await request.Content.ReadAsStringAsync();
-
-                if (sessionTimeoutRegex.IsMatch(content))
+                if (!request.IsSuccessStatusCode)
                 {
-                    // If we received a session timeout message, authenticate and then try again
-                    await Authenticate();
+                    this.logger.LogError("Received non-success status code '{}' on " +
+                        "GetSectionListPageAsync.", request.StatusCode);
                 }
                 else
                 {
-                    return content;
+                    return await request.Content.ReadAsStringAsync();
                 }
             }
             throw new ApplicationException(
                 "Exceeded retries attempting to query MyPurdue section details");
-        }
-
-        private MyPurdueConnection(string username, string password,
-            ILogger<MyPurdueConnection> logger)
-        {
-            this.username = username;
-            this.password = password;
-            this.logger = logger;
-
-            var httpHandler = new HttpClientHandler()
-            {
-                CookieContainer = cookies, // MyPurdue stores a lot of state in cookies - we need
-                                           // to persist them to avoid upsetting it
-                AllowAutoRedirect = false, // We'll handle redirects by ourselves
-            };
-            httpClient = new HttpClient(httpHandler as HttpMessageHandler);
-
-            // Pretend we're Chrome
-            httpClient.DefaultRequestHeaders.Add("Accept",
-                "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-            httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
-            httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
-            httpClient.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/45.0.2454.99 Safari/537.36");
-        }
-
-        private async Task<bool> Authenticate()
-        {
-            var loginForm = await Request(HttpMethod.GET,
-                "https://www.purdue.edu/apps/account/cas/login" +
-                "?service=https%3A%2F%2Fwl.mypurdue.purdue.edu%2Fc%2Fportal%2Flogin");
-            HtmlDocument document = new HtmlDocument();
-            document.LoadHtml(await loginForm.Content.ReadAsStringAsync());
-            HtmlNode docRoot = document.DocumentNode;
-            var ltValue = docRoot
-                .SelectSingleNode("//input[@name='lt']")
-                .GetAttributeValue("value", "");
-
-            FormUrlEncodedContent content = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("username", username),
-                new KeyValuePair<string, string>("password", password),
-                new KeyValuePair<string, string>("lt", ltValue),
-                new KeyValuePair<string, string>("execution", "e1s1"),
-                new KeyValuePair<string, string>("_eventId", "submit"),
-                new KeyValuePair<string, string>("submit", "Login")
-            });
-
-            HttpResponseMessage r = await Request(HttpMethod.POST,
-                "https://www.purdue.edu/apps/account/cas/login" + 
-                "?service=https%3A%2F%2Fwl.mypurdue.purdue.edu%2Fc%2Fportal%2Flogin", content);
-            string result = await r.Content.ReadAsStringAsync();
-            bool isAuthenticated = !result.Contains("Authentication failed.");
-
-            if (!isAuthenticated)
-            {
-                return false;
-            }
-
-            // Authenticate with MyPurdue self-service
-            var ssResult = await Request(HttpMethod.GET,
-                "https://wl.mypurdue.purdue.edu/static_resources/portal/jsp/ss_redir_lp5.jsp?pg=23",
-                null, true, "https://wl.mypurdue.purdue.edu/");
-            var ssResultContent = await ssResult.Content.ReadAsStringAsync();
-            // TODO: Verify self-service login
-
-            return isAuthenticated;
         }
 
         // Generates a basic request, providing POST body, following redirects, and storing cookies.
@@ -301,14 +221,14 @@ namespace PurdueIo.Scraper.Connections
             FormUrlEncodedContent postContent = null, bool followRedirect = true,
             string requestReferrer = null)
         {
-            logger.LogDebug($"{method.ToString()} Request: {url}");
+            logger.LogDebug("{} Request: {}", method.ToString(), url);
 
             if (requestReferrer != null)
             {
                 referrer = requestReferrer;
             }
 
-            logger.LogDebug($"Referrer: {referrer}");
+            logger.LogDebug("Referrer: {}", referrer);
             if (referrer.Length > 0)
             {
                 httpClient.DefaultRequestHeaders.Referrer = new Uri(referrer);
@@ -326,13 +246,13 @@ namespace PurdueIo.Scraper.Connections
             {
                 var postString = await postContent.ReadAsStringAsync();
                 postString = postString.Replace("&", "\n\t\t");
-                logger.LogDebug($"POST data: \n{postString}");
+                logger.LogDebug("POST data: \n{}", postString);
             }
 
             // Print out all the cookies we're sending
             var cookiesToSend = cookies.GetCookies(new Uri(url));
-            logger.LogDebug("Outgoing cookies: \n" + 
-                $"{string.Join("\n", cookiesToSend.Select(c => c.ToString()))}");
+            logger.LogDebug("Outgoing cookies: \n{}",
+                string.Join("\n", cookiesToSend.Select(c => c.ToString())));
 
             HttpResponseMessage result = null;
             for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
@@ -351,8 +271,8 @@ namespace PurdueIo.Scraper.Connections
                 }
                 catch (Exception e)
                 {
-                    logger.LogWarning("HTTP request exception, retrying " + 
-                        $"({attempts + 1} / {MAX_RETRIES})\n{e.ToString()}");
+                    logger.LogWarning("HTTP request exception, retrying ({} / {})\n{}",
+                        (attempts + 1), MAX_RETRIES, e.ToString());
                     continue;
                 }
                 break;
@@ -363,19 +283,20 @@ namespace PurdueIo.Scraper.Connections
                     "No request was made - most likely due to invalid HTTP method.");
             }
 
-            IEnumerable<string> incomingCookies;
-            if (result.Headers.TryGetValues("set-cookie", out incomingCookies))
+            if (result.Headers.TryGetValues("set-cookie", out IEnumerable<string> incomingCookies))
             {
-                logger.LogDebug($"Incoming cookies:\n{string.Join("\n", incomingCookies)}");
+                logger.LogDebug("Incoming cookies:\n{}", string.Join("\n", incomingCookies));
                 foreach (var c in incomingCookies)
                 {
                     if (c.StartsWith("SESSID") && !c.Contains("expires"))
                     {
                         var sessidCookieValue = c.Substring((c.IndexOf('=') + 1),
                             (c.IndexOf(';') - c.IndexOf('=') - 1));
-                        var sessidCookie = new Cookie("SESSID", sessidCookieValue);
-                        sessidCookie.Domain = new Uri(url).Host;
-                        sessidCookie.Path = "/";
+                        var sessidCookie = new Cookie("SESSID", sessidCookieValue)
+                        {
+                            Domain = new Uri(url).Host,
+                            Path = "/"
+                        };
                         cookies.Add(sessidCookie);
                     }
                     cookies.SetCookies(new Uri(url), c);
@@ -384,7 +305,7 @@ namespace PurdueIo.Scraper.Connections
 
             if (followRedirect && (result.Headers.Location != null))
             {
-                logger.LogDebug($"Redirect to {result.Headers.Location.ToString()}");
+                logger.LogDebug("Redirect to {}", result.Headers.Location.ToString());
                 // All redirects are converted to GET
                 result = await Request(HttpMethod.GET, result.Headers.Location.ToString(), null);
             }

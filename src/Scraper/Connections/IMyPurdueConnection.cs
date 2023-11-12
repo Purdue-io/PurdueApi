@@ -14,9 +14,5 @@ namespace PurdueIo.Scraper.Connections
         // Retrieves the contents of bwckschd.p_get_crse_unsec from MyPurdue for the given term
         // and subject
         Task<string> GetSectionListPageAsync(string termCode, string subjectCode);
-
-        // Retrieves the contents of bwskfcls.P_GetCrse_Advanced from MyPurdue for the given term
-        // and subject
-        Task<string> GetSectionDetailsPageAsync(string termCode, string subjectCode);
     }
 }

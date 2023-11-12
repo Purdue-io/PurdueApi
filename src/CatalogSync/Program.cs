@@ -21,12 +21,6 @@ namespace PurdueIo.CatalogSync
 
         public class Options
         {
-            [Option(shortName: 'u', longName: "user", HelpText = "MyPurdue User Name")]
-            public string MyPurdueUser { get; set; }
-
-            [Option(shortName: 'p', longName: "pass", HelpText = "MyPurdue Password")]
-            public string MyPurduePass { get; set; }
-
             [Option(shortName: 'd', longName: "data-provider", Default = DataProvider.Sqlite,
                 HelpText = "The database provider to use")]
             public DataProvider DataProvider { get; set; }
@@ -58,19 +52,6 @@ namespace PurdueIo.CatalogSync
 
         static async Task RunASync(Options options)
         {
-            string username = options.MyPurdueUser ?? 
-                Environment.GetEnvironmentVariable("MY_PURDUE_USERNAME");
-            string password = options.MyPurduePass ?? 
-                Environment.GetEnvironmentVariable("MY_PURDUE_PASSWORD");
-
-            if ((username == null) || (password == null))
-            {
-                Console.Error.WriteLine("You must provide a MyPurdue username and password " +
-                    "to sync course data. Use command line options or environment variables " +
-                    "MY_PURDUE_USERNAME and MY_PURDUE_PASSWORD.");
-                return;
-            }
-
             var loggerFactory = LoggerFactory.Create(b => 
                 b.AddSimpleConsole(c => c.TimestampFormat = "hh:mm:ss.fff "));
 
@@ -85,7 +66,7 @@ namespace PurdueIo.CatalogSync
 
             var behavior = options.SyncAllTerms ? 
                 TermSyncBehavior.SyncAllTerms : TermSyncBehavior.SyncNewAndCurrentTerms;
-            var connection = await MyPurdueConnection.CreateAndConnectAsync(username, password,
+            var connection = new MyPurdueConnection(
                 loggerFactory.CreateLogger<MyPurdueConnection>());
             var scraper = new MyPurdueScraper(connection,
                 loggerFactory.CreateLogger<MyPurdueScraper>());
