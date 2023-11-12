@@ -13,9 +13,10 @@ jobs:
 
     steps:
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: '8'
+        dotnet-quality: 'preview' # Change to 'ga' once .NET 8 release
     - name: Clone repository
       uses: actions/checkout@v2
     - name: Restore dependencies
