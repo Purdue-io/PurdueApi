@@ -262,58 +262,13 @@ namespace PurdueIo.Scraper
                             ParsingUtilities.ParseDaysOfWeek(daysOfWeek);
 
                         // Parse building / room
-                        // Usually the room number is the last token in the string.
-                        // However, there are a lot of edge cases
-                        string parsedMeetingRoomNumber = "";
-                        string parsedMeetingBuildingName = "";
-                        string parsedMeetingBuildingCode = "";
-                        var room = HtmlEntity.DeEntitize(
+                        var locationString = HtmlEntity.DeEntitize(
                             meetingNode.SelectSingleNode("td[4]").InnerText);
-                        if (room.Equals("TBA"))
+                        var locationDetails = ParseLocationDetails(locationString);
+                        if (locationDetails == null)
                         {
-                            parsedMeetingRoomNumber = "TBA";
-                            parsedMeetingBuildingName = "TBA";
-                            parsedMeetingBuildingCode = "TBA";
-                        }
-                        // Handle weird on-site location names (ex. "On-site SF 1900W")
-                        else if (room.StartsWith("On-site") && (room.Length > 7))
-                        {
-                            parsedMeetingBuildingName = room.Substring(0, 7);
-                            parsedMeetingRoomNumber = room.Substring(8);
-                        }
-                        // Some buildings (Studebaker Building in South Bend) have a weird
-                        // room naming convention (ex. "Studebaker Building CLASS 2" or
-                        // "Studebaker Building LAB 4")
-                        else if (room.Contains(" CLASS") || room.Contains(" LAB") ||
-                            room.Contains(" Room") || room.Contains(" AU HARTUNG"))
-                        {
-                            var splitIndex = 0;
-                            if (room.Contains(" CLASS"))
-                            {
-                                splitIndex = room.LastIndexOf(" CLASS");
-                            }
-                            else if (room.Contains(" LAB"))
-                            {
-                                splitIndex = room.LastIndexOf(" LAB");
-                            }
-                            else if (room.Contains(" Room"))
-                            {
-                                splitIndex = room.LastIndexOf(" Room");
-                            }
-                            else if (room.Contains(" AU HARTUNG"))
-                            {
-                                splitIndex = room.LastIndexOf(" AU HARTUNG");
-                            }
-                            parsedMeetingBuildingName = room.Substring(0, splitIndex);
-                            parsedMeetingRoomNumber = room.Substring(splitIndex + 1);
-                        }
-                        // Otherwise we just assume the last space separates the building name
-                        // from the room number. ex. "Lawson Computer Science Bldg B131"
-                        else
-                        {
-                            var index = room.LastIndexOf(" ");
-                            parsedMeetingBuildingName = room.Substring(0, index);
-                            parsedMeetingRoomNumber = room.Substring(index + 1);
+                            throw new ArgumentOutOfRangeException("Could not parse building " +
+                                $"and room information from string '{locationString}'");
                         }
 
                         // Parse dates
@@ -351,9 +306,9 @@ namespace PurdueIo.Scraper
                             DaysOfWeek = parsedMeetingDaysOfWeek,
                             StartTime = parsedMeetingStartTime,
                             EndTime = parsedMeetingEndTime,
-                            BuildingCode = parsedMeetingBuildingCode,
-                            BuildingName = parsedMeetingBuildingName,
-                            RoomNumber = parsedMeetingRoomNumber,
+                            BuildingCode = locationDetails?.buildingShortCode,
+                            BuildingName = locationDetails?.buildingName,
+                            RoomNumber = locationDetails?.room,
                         };
 
                         parsedMeetings.Add(meeting);
@@ -586,7 +541,7 @@ namespace PurdueIo.Scraper
             { "Johnson Hall", "JHALL" },
             { "Meredith Residence Hall South", "MRDS" },
             { "OffSite", "OFST" },
-            { "Alexandria Room", "ALEX" },
+            { "Alexandria", "ALEX" },
             { "Helen B. Schleman Hall", "SCHM" },
             { "Winifred Parker Residence Hall", "PKRW" },
             { "Technology Building", "TECHB" },
@@ -596,5 +551,46 @@ namespace PurdueIo.Scraper
                                           // course at Muncie Central High School, presumably
                                           // doesn't have a real short code.
         };
+
+        public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
+            string locationString)
+        {
+            // Handle special case
+            if (locationString == "TBA")
+            {
+                return (buildingName: "TBA", buildingShortCode: "TBA", room: "TBA");
+            }
+
+            // Building name and room are dilineated by a space
+            // (ex. "Lawson Computer Science Bldg B134")
+            // Unfortunately, many building names (and some rooms) have spaces in them too.
+            // First, let's see if we can find the building in our known list.
+            // We do this by walking back each 'token' until we've found one and only one match
+            string buildingName = locationString;
+            while (true)
+            {
+                if (BuildingNamesToShortCodes.ContainsKey(buildingName))
+                {
+                    string shortCode = BuildingNamesToShortCodes[buildingName];
+                    string room;
+                    if (locationString.Length > buildingName.Length)
+                    {
+                        room = locationString[(buildingName.Length + 1)..];
+                    }
+                    else
+                    {
+                        room = locationString[buildingName.Length..];
+                    }
+                    return (buildingName: buildingName, buildingShortCode: shortCode, room: room);
+                }
+                if (!buildingName.Contains(' '))
+                {
+                    break;
+                }
+                buildingName = buildingName[..buildingName.LastIndexOf(' ')];
+            }
+
+            return null;
+        }
     }
 }

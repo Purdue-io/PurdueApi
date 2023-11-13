@@ -249,16 +249,16 @@ namespace PurdueIo.CatalogSync
             {
                 dbContext.Entry(term).Property(t => t.StartDate).CurrentValue = 
                     dbContext.Sections
-                        .Where(s => (s.Class.TermId == term.Id))
+                        .Where(s => (s.Class.TermId == term.Id) && (s.StartDate != null))
                         .Select(s => s.StartDate)
                         .OrderBy(d => d)
-                        .First();
+                        .FirstOrDefault();
                 dbContext.Entry(term).Property(t => t.EndDate).CurrentValue =
                     dbContext.Sections
-                        .Where(s => (s.Class.TermId == term.Id))
+                        .Where(s => (s.Class.TermId == term.Id) && (s.EndDate != null))
                         .Select(s => s.EndDate)
                         .OrderByDescending(d => d)
-                        .First();
+                        .FirstOrDefault();
                 dbContext.Entry(term).State = EntityState.Modified;
                 dbContext.SaveChanges();
             }
