@@ -18,50 +18,30 @@ namespace PurdueIo.Scraper
             return dow;
         }
 
-        public static Tuple<DateTimeOffset, DateTimeOffset> ParseStartEndTime(string startEndTime,
-            TimeZoneInfo timeZone)
+        public static Tuple<TimeOnly?, TimeOnly?> ParseStartEndTime(string startEndTime)
         {
+            TimeOnly? start = null;
+            TimeOnly? end = null;
             string[] times = startEndTime.Split(new string[] { "-" }, StringSplitOptions.None);
-            if (times.Length != 2)
+            if (times.Length == 2)
             {
-                return new Tuple<DateTimeOffset, DateTimeOffset>(DateTimeOffset.MinValue,
-                    DateTimeOffset.MinValue);
+                start = TimeOnly.Parse(times[0].Trim());
+                end = TimeOnly.Parse(times[1].Trim());
             }
-            else
-            {
-                var start = DateTime.Parse(times[0].Trim());
-                var startTzOffset = timeZone.GetUtcOffset(start);
-                var startDto = new DateTimeOffset(start, startTzOffset);
-                
-                var end = DateTime.Parse(times[1].Trim());
-                var endTzOffset = timeZone.GetUtcOffset(end);
-                var endDto = new DateTimeOffset(end, endTzOffset);
-
-                return new Tuple<DateTimeOffset, DateTimeOffset>(startDto, endDto);
-            }
+            return new Tuple<TimeOnly?, TimeOnly?>(start, end);
         }
 
-        public static Tuple<DateTimeOffset, DateTimeOffset> ParseStartEndDate(string startEndDate,
-            TimeZoneInfo timeZone)
+        public static Tuple<DateOnly?, DateOnly?> ParseStartEndDate(string startEndDate)
         {
+            DateOnly? start = null;
+            DateOnly? end = null;
             string[] dateArray = startEndDate.Split(new string[] { "-" }, StringSplitOptions.None);
-            if (startEndDate.Equals("TBA") || dateArray.Length < 2)
+            if (!startEndDate.Equals("TBA") && dateArray.Length == 2)
             {
-                return new Tuple<DateTimeOffset, DateTimeOffset>(DateTimeOffset.MinValue,
-                    DateTimeOffset.MaxValue);
+                start = DateOnly.Parse(dateArray[0].Trim());
+                end = DateOnly.Parse(dateArray[1].Trim());
             }
-            else
-            {
-                var start = DateTime.Parse(dateArray[0].Trim());
-                var startTzOffset = timeZone.GetUtcOffset(start);
-                var startDto = new DateTimeOffset(start, startTzOffset);
-
-                var end = DateTime.Parse(dateArray[1].Trim());
-                var endTzOffset = timeZone.GetUtcOffset(end);
-                var endDto = new DateTimeOffset(end, endTzOffset);
-
-                return new Tuple<DateTimeOffset, DateTimeOffset>(startDto, endDto);
-            }
+            return new Tuple<DateOnly?, DateOnly?>(start, end);
         }
     }
 }

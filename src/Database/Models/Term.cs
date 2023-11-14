@@ -16,10 +16,12 @@ namespace PurdueIo.Database.Models
         public string Name { get; set; }
 
         // The date on which the term starts
-        public DateTimeOffset StartDate { get; set; }
+        // This may not be populated if we haven't determined the first/last meeting time
+        public DateOnly? StartDate { get; set; }
 
         // The date on which the term ends
-        public DateTimeOffset EndDate { get; set; }
+        // This may not be populated if we haven't determined the first/last meeting time
+        public DateOnly? EndDate { get; set; }
 
         // The classes that occur in this term
         public virtual ICollection<Class> Classes { get; set; }

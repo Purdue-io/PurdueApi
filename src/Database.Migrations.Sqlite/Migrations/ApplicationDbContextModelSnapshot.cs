@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PurdueIo.Database;
 
+#nullable disable
+
 namespace Database.Migrations.Sqlite.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
@@ -13,8 +15,7 @@ namespace Database.Migrations.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.10");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.0-rc.2.23480.1");
 
             modelBuilder.Entity("PurdueIo.Database.Models.Building", b =>
                 {
@@ -164,8 +165,8 @@ namespace Database.Migrations.Sqlite.Migrations
                     b.Property<TimeSpan>("Duration")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("EndDate")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid?>("RoomId")
                         .HasColumnType("TEXT");
@@ -173,11 +174,11 @@ namespace Database.Migrations.Sqlite.Migrations
                     b.Property<Guid>("SectionId")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("StartDate")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("TEXT");
 
-                    b.Property<long>("StartTime")
-                        .HasColumnType("INTEGER");
+                    b.Property<TimeOnly?>("StartTime")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Type")
                         .HasColumnType("TEXT");
@@ -233,9 +234,6 @@ namespace Database.Migrations.Sqlite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Capacity")
-                        .HasColumnType("INTEGER");
-
                     b.Property<Guid>("ClassId")
                         .HasColumnType("TEXT");
 
@@ -243,32 +241,14 @@ namespace Database.Migrations.Sqlite.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("EndDate")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("Enrolled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RegistrationStatus")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RemainingSpace")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("StartDate")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Type")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("WaitListCapacity")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("WaitListCount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("WaitListSpace")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -312,14 +292,14 @@ namespace Database.Migrations.Sqlite.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("EndDate")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("StartDate")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

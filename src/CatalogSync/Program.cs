@@ -34,11 +34,11 @@ namespace PurdueIo.CatalogSync
                 HelpText = "Sync all terms, don't skip old/existing terms")]
             public bool SyncAllTerms { get; set; }
 
-            [Option(shortName: 't', longName: "terms",
+            [Option(shortName: 't', longName: "terms", Separator = ',',
                 HelpText = "Term codes to sync (ex. 202210)")]
             public IEnumerable<string> Terms { get; set; }
 
-            [Option(shortName: 's', longName: "subjects",
+            [Option(shortName: 's', longName: "subjects", Separator = ',',
                 HelpText = "Subject codes to sync (ex. CS)")]
             public IEnumerable<string> Subjects { get; set; }
         }
@@ -75,6 +75,7 @@ namespace PurdueIo.CatalogSync
             if (options.DataProvider == DataProvider.Sqlite)
             {
                 var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+                    //.UseLoggerFactory(loggerFactory)
                     .UseSqlite(options.ConnectionString,
                         o => o.MigrationsAssembly("Database.Migrations.Sqlite"))
                     .Options;
@@ -83,8 +84,12 @@ namespace PurdueIo.CatalogSync
             else if (options.DataProvider == DataProvider.Npgsql)
             {
                 var dbOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+                    //.UseLoggerFactory(loggerFactory)
                     .UseNpgsql(options.ConnectionString,
-                        o => o.MigrationsAssembly("Database.Migrations.Npgsql"))
+                        o => o.MigrationsAssembly("Database.Migrations.Npgsql")
+                            .MaxBatchSize(16)) // HACK: A batch size any larger than this
+                                               // results in intermittent connection
+                                               // problems on PostgreSQL/Linux
                     .Options;
                 dbContext = new ApplicationDbContext(dbOptions);
             }

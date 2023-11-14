@@ -135,8 +135,8 @@ namespace PurdueIo.CatalogSync
                         Id = Guid.NewGuid(),
                         Code = scrapedTerm.Id,
                         Name = scrapedTerm.Name,
-                        StartDate = DateTimeOffset.MinValue,
-                        EndDate = DateTimeOffset.MaxValue,
+                        StartDate = null,
+                        EndDate = null,
                     };
                     dbContext.Add(dbTerm);
                     terms[scrapedTerm.Id] = dbTerm;
@@ -150,7 +150,9 @@ namespace PurdueIo.CatalogSync
                 {
                     // We only care about terms that haven't ended yet - 
                     // we still want to sync "future" terms.
-                    if (terms[scrapedTerm.Id].EndDate > DateTimeOffset.Now)
+                    if (terms[scrapedTerm.Id].EndDate == null ||
+                        (terms[scrapedTerm.Id].EndDate >
+                            DateOnly.FromDateTime(DateTime.Now.AddDays(-1))))
                     {
                         termsToSync.Add(terms[scrapedTerm.Id]);
                     }
@@ -247,28 +249,16 @@ namespace PurdueIo.CatalogSync
             {
                 dbContext.Entry(term).Property(t => t.StartDate).CurrentValue = 
                     dbContext.Sections
-                        .Where(s => 
-                            (s.Class.TermId == term.Id) &&
-                            (s.StartDate > DateTimeOffset.MinValue.AddDays(7))) // Add this buffer,
-                                                                                // since DTO on
-                                                                                // SQLite has some
-                                                                                // funky timezone
-                                                                                // limitations
+                        .Where(s => (s.Class.TermId == term.Id) && (s.StartDate != null))
                         .Select(s => s.StartDate)
                         .OrderBy(d => d)
-                        .ToList()
-                        .DefaultIfEmpty(DateTimeOffset.MinValue)
-                        .First();
+                        .FirstOrDefault();
                 dbContext.Entry(term).Property(t => t.EndDate).CurrentValue =
                     dbContext.Sections
-                        .Where(s => 
-                            (s.Class.TermId == term.Id) &&
-                            (s.EndDate < DateTimeOffset.MaxValue.AddDays(-7)))
+                        .Where(s => (s.Class.TermId == term.Id) && (s.EndDate != null))
                         .Select(s => s.EndDate)
                         .OrderByDescending(d => d)
-                        .ToList()
-                        .DefaultIfEmpty(DateTimeOffset.MaxValue)
-                        .First();
+                        .FirstOrDefault();
                 dbContext.Entry(term).State = EntityState.Modified;
                 dbContext.SaveChanges();
             }
@@ -470,15 +460,15 @@ namespace PurdueIo.CatalogSync
             ICollection<DatabaseSection> dbSections, ScrapedSection section)
         {
             var startDate = section.Meetings
-                .OrderBy(m => m.StartDate)
                 .Select(m => m.StartDate)
-                .DefaultIfEmpty(DateTimeOffset.MinValue)
+                .Where(d => d != null)
+                .OrderBy(d => d)
                 .FirstOrDefault();
 
             var endDate = section.Meetings
-                .OrderByDescending(m => m.EndDate)
                 .Select(m => m.EndDate)
-                .DefaultIfEmpty(DateTimeOffset.MaxValue)
+                .Where(d => d != null)
+                .OrderByDescending(d => d)
                 .FirstOrDefault();
 
             var existingSection = dbSections.SingleOrDefault(s => (s.Crn == section.Crn));
@@ -511,44 +501,7 @@ namespace PurdueIo.CatalogSync
                     dbEntry.Property(s => s.EndDate).CurrentValue = endDate;
                     modified = true;
                 }
-                if (existingSection.Capacity != section.Capacity)
-                {
-                    existingSection.Capacity = section.Capacity;
-                    dbEntry.Property(s => s.Capacity).CurrentValue = section.Capacity;
-                    modified = true;
-                }
-                if (existingSection.Enrolled != section.Enrolled)
-                {
-                    existingSection.Enrolled = section.Enrolled;
-                    dbEntry.Property(s => s.Enrolled).CurrentValue = section.Enrolled;
-                    modified = true;
-                }
-                if (existingSection.RemainingSpace != section.RemainingSpace)
-                {
-                    existingSection.RemainingSpace = section.RemainingSpace;
-                    dbEntry.Property(s => s.RemainingSpace).CurrentValue = 
-                        section.RemainingSpace;
-                    modified = true;
-                }
-                if (existingSection.WaitListCapacity != section.WaitListCapacity)
-                {
-                    existingSection.WaitListCapacity = section.WaitListCapacity;
-                    dbEntry.Property(s => s.WaitListCapacity).CurrentValue =
-                        section.WaitListCapacity;
-                    modified = true;
-                }
-                if (existingSection.WaitListCount != section.WaitListCount)
-                {
-                    existingSection.WaitListCount = section.WaitListCount;
-                    dbEntry.Property(s => s.WaitListCount).CurrentValue = section.WaitListCount;
-                    modified = true;
-                }
-                if (existingSection.WaitListSpace != section.WaitListSpace)
-                {
-                    existingSection.WaitListSpace = section.WaitListSpace;
-                    dbEntry.Property(s => s.WaitListSpace).CurrentValue = section.WaitListSpace;
-                    modified = true;
-                }
+
                 if (modified)
                 {
                     dbEntry.State = EntityState.Modified;
@@ -563,15 +516,8 @@ namespace PurdueIo.CatalogSync
                     Crn = section.Crn,
                     ClassId = classId,
                     Type = section.Type,
-                    RegistrationStatus = RegistrationStatus.NotAvailable,
                     StartDate = startDate,
                     EndDate = endDate,
-                    Capacity = section.Capacity,
-                    Enrolled = section.Enrolled,
-                    RemainingSpace = section.RemainingSpace,
-                    WaitListCapacity = section.WaitListCapacity,
-                    WaitListCount = section.WaitListCount,
-                    WaitListSpace = section.WaitListSpace,
                 };
                 dbContext.Add(newSection);
                 return newSection;
@@ -587,7 +533,11 @@ namespace PurdueIo.CatalogSync
             var existingMeetingsToKeep = new List<DatabaseMeeting>();
             foreach (var meeting in section.Meetings)
             {
-                var meetingDuration = meeting.EndTime.Subtract(meeting.StartTime);
+                var meetingDuration = TimeSpan.Zero;
+                if ((meeting.EndTime != null) && (meeting.StartTime != null))
+                {
+                    meetingDuration = ((TimeOnly)meeting.EndTime - (TimeOnly)meeting.StartTime);
+                }
                 var dbRoom = FetchOrAddMeetingRoom(campus, meeting);
                 var dbInstructors = FetchOrAddMeetingInstructors(meeting);
 
@@ -598,14 +548,10 @@ namespace PurdueIo.CatalogSync
                 var dbMeeting = dbMeetings.FirstOrDefault(m => 
                     (m.RoomId == dbRoom.Id) &&
                     (m.DaysOfWeek == (DatabaseDaysOfWeek) meeting.DaysOfWeek) &&
-                    (m.StartDate.Subtract(meeting.StartDate).Duration()
-                        <= MEETING_TIME_EQUALITY_TOLERANCE) &&
-                    (m.EndDate.Subtract(meeting.EndDate).Duration()
-                        <= MEETING_TIME_EQUALITY_TOLERANCE) &&
-                    (m.StartTime.Subtract(meeting.StartTime).Duration()
-                        <= MEETING_TIME_EQUALITY_TOLERANCE) &&
-                    (m.Duration.Subtract(meetingDuration).Duration()
-                        <= MEETING_TIME_EQUALITY_TOLERANCE));
+                    (m.StartDate == meeting.StartDate) &&
+                    (m.EndDate == meeting.EndDate) &&
+                    (m.StartTime == meeting.StartTime) &&
+                    (m.Duration == meetingDuration));
 
                 if (dbMeeting == null)
                 {

@@ -42,23 +42,5 @@ namespace PurdueIo.Scraper.Models
 
         // The full name of the campus where this section is scheduled
         public string CampusName { get; init; }
-
-        // This section's attendance capacity
-        public int Capacity { get; init; }
-
-        // This section's enrollment count (referred to as 'Actual' by MyPurdue)
-        public int Enrolled { get; init; }
-
-        // Remaining space for enrollment (usually `Capacity - Enrolled`)
-        public int RemainingSpace { get; init; }
-
-        // Wait list capacity
-        public int WaitListCapacity { get; init; }
-
-        // How many students are on the wait list
-        public int WaitListCount { get; init; }
-
-        // How much space is currently available on the wait list (usually `Capacity - Count`)
-        public int WaitListSpace { get; init; }
     }
 }

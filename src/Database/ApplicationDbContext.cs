@@ -54,14 +54,14 @@ namespace PurdueIo.Database
         // protected override void OnConfiguring(DbContextOptionsBuilder options)
         // {
         //     // Npgsql migrations
-        //     options
-        //         .UseNpgsql("Host=localhost;Database=purdueio;Username=purdueio;Password=purdueio",
-        //             o => o.MigrationsAssembly("Database.Migrations.Npgsql"));
+        //     // options
+        //     //     .UseNpgsql("Host=localhost;Database=purdueio;Username=purdueio;Password=purdueio",
+        //     //         o => o.MigrationsAssembly("Database.Migrations.Npgsql"));
 
         //     // Sqlite migrations
-        //     options
-        //         .UseSqlite("Data Source=purdueio.sqlite",
-        //             o => o.MigrationsAssembly("Database.Migrations.Sqlite"));
+        //     // options
+        //     //     .UseSqlite("Data Source=purdueio.sqlite",
+        //     //         o => o.MigrationsAssembly("Database.Migrations.Sqlite"));
         // }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

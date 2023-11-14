@@ -42,18 +42,6 @@ namespace PurdueIo.Tests
             Assert.Equal("", spotCheck.LinkOther);
             Assert.Equal("PWL", spotCheck.CampusCode);
             Assert.Equal("West Lafayette Campus", spotCheck.CampusName);
-
-            // The loss of authenticated APIs removed our source of information for 
-            // capacity, enrolled, remaining space, and waitlists without querying
-            // each CRN individually.
-            // So now these are all zero.
-            // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/56
-            Assert.Equal(0, spotCheck.Capacity);
-            Assert.Equal(0, spotCheck.Enrolled);
-            Assert.Equal(0, spotCheck.RemainingSpace);
-            Assert.Equal(0, spotCheck.WaitListCapacity);
-            Assert.Equal(0, spotCheck.WaitListCount);
-            Assert.Equal(0, spotCheck.WaitListSpace);
             
             Assert.Equal(2, spotCheck.Meetings.Length);
 
@@ -63,17 +51,17 @@ namespace PurdueIo.Tests
             Assert.NotEmpty(spotCheckMeeting.Instructors);
             Assert.Equal("Fake E. Instructor", spotCheckMeeting.Instructors[0].name);
             Assert.Equal("donotreply@purdue.edu", spotCheckMeeting.Instructors[0].email);
-            Assert.Equal(2021, spotCheckMeeting.StartDate.Year);
-            Assert.Equal(8, spotCheckMeeting.StartDate.Month);
-            Assert.Equal(23, spotCheckMeeting.StartDate.Day);
-            Assert.Equal(2021, spotCheckMeeting.EndDate.Year);
-            Assert.Equal(12, spotCheckMeeting.EndDate.Month);
-            Assert.Equal(11, spotCheckMeeting.EndDate.Day);
+            Assert.Equal(2021, spotCheckMeeting.StartDate?.Year);
+            Assert.Equal(8, spotCheckMeeting.StartDate?.Month);
+            Assert.Equal(23, spotCheckMeeting.StartDate?.Day);
+            Assert.Equal(2021, spotCheckMeeting.EndDate?.Year);
+            Assert.Equal(12, spotCheckMeeting.EndDate?.Month);
+            Assert.Equal(11, spotCheckMeeting.EndDate?.Day);
             Assert.Equal(DaysOfWeek.Monday, spotCheckMeeting.DaysOfWeek);
-            Assert.Equal(11, spotCheckMeeting.StartTime.Hour);
-            Assert.Equal(30, spotCheckMeeting.StartTime.Minute);
-            Assert.Equal(12, spotCheckMeeting.EndTime.Hour);
-            Assert.Equal(20, spotCheckMeeting.EndTime.Minute);
+            Assert.Equal(11, spotCheckMeeting.StartTime?.Hour);
+            Assert.Equal(30, spotCheckMeeting.StartTime?.Minute);
+            Assert.Equal(12, spotCheckMeeting.EndTime?.Hour);
+            Assert.Equal(20, spotCheckMeeting.EndTime?.Minute);
             Assert.Equal("BRNG", spotCheckMeeting.BuildingCode);
             Assert.Equal("Beering Hall of Lib Arts & Ed", spotCheckMeeting.BuildingName);
             Assert.Equal("B232", spotCheckMeeting.RoomNumber);
@@ -83,17 +71,17 @@ namespace PurdueIo.Tests
             Assert.NotEmpty(spotCheckMeeting.Instructors);
             Assert.Equal("Fake E. Instructor", spotCheckMeeting.Instructors[0].name);
             Assert.Equal("donotreply@purdue.edu", spotCheckMeeting.Instructors[0].email);
-            Assert.Equal(2021, spotCheckMeeting.StartDate.Year);
-            Assert.Equal(8, spotCheckMeeting.StartDate.Month);
-            Assert.Equal(23, spotCheckMeeting.StartDate.Day);
-            Assert.Equal(2021, spotCheckMeeting.EndDate.Year);
-            Assert.Equal(12, spotCheckMeeting.EndDate.Month);
-            Assert.Equal(11, spotCheckMeeting.EndDate.Day);
+            Assert.Equal(2021, spotCheckMeeting.StartDate?.Year);
+            Assert.Equal(8, spotCheckMeeting.StartDate?.Month);
+            Assert.Equal(23, spotCheckMeeting.StartDate?.Day);
+            Assert.Equal(2021, spotCheckMeeting.EndDate?.Year);
+            Assert.Equal(12, spotCheckMeeting.EndDate?.Month);
+            Assert.Equal(11, spotCheckMeeting.EndDate?.Day);
             Assert.Equal((DaysOfWeek.Tuesday | DaysOfWeek.Thursday), spotCheckMeeting.DaysOfWeek);
-            Assert.Equal(11, spotCheckMeeting.StartTime.Hour);
-            Assert.Equal(30, spotCheckMeeting.StartTime.Minute);
-            Assert.Equal(12, spotCheckMeeting.EndTime.Hour);
-            Assert.Equal(20, spotCheckMeeting.EndTime.Minute);
+            Assert.Equal(11, spotCheckMeeting.StartTime?.Hour);
+            Assert.Equal(30, spotCheckMeeting.StartTime?.Minute);
+            Assert.Equal(12, spotCheckMeeting.EndTime?.Hour);
+            Assert.Equal(20, spotCheckMeeting.EndTime?.Minute);
             Assert.Equal("BRNG", spotCheckMeeting.BuildingCode);
             Assert.Equal("Beering Hall of Lib Arts & Ed", spotCheckMeeting.BuildingName);
             Assert.Equal("1222", spotCheckMeeting.RoomNumber);
