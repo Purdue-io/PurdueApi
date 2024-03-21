@@ -383,6 +383,7 @@ namespace PurdueIo.Scraper
             { "Greensburg Campus", "TGB" },
             { "Concurrent Credit Campus", "CC" },
             { "Dual Campus Campus", "TDC" },
+            { "West Lafayette at Indianapolis Campus", "PIN" },
         };
 
         // The loss of authenticated APIs removed our source of information for 
@@ -550,13 +551,18 @@ namespace PurdueIo.Scraper
             { "Muncie Central", "MCHS" }, // I made this short code up since this is a dual-credit
                                           // course at Muncie Central High School, presumably
                                           // doesn't have a real short code.
+            { "Engineering/Technology", "ET"},
+            { "Engr/Science & Tech", "SL" },
+            { "Science & Engineering Lab", "EL" },
+            { "Innovation Hall", "IO" },
+
         };
 
         public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
             string locationString)
         {
             // Handle special case
-            if (locationString == "TBA")
+            if ((locationString == "TBA") || locationString.StartsWith("Temp-"))
             {
                 return (buildingName: "TBA", buildingShortCode: "TBA", room: "TBA");
             }
