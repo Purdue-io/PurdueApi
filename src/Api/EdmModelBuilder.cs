@@ -37,8 +37,7 @@ namespace PurdueIo.Api
                 .Count()
                 .Expand(MAX_EXPAND_DEPTH)
                 .OrderBy()
-                // .Page(MAX_RESULTS, MAX_RESULTS) // Pending query gen fix available in .NET 6
-                                                   // https://github.com/dotnet/efcore/issues/24726
+                .Page(MAX_RESULTS, MAX_RESULTS)
                 .Select();
         }
     }
