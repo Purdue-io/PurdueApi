@@ -551,11 +551,75 @@ namespace PurdueIo.Scraper
             { "Muncie Central", "MCHS" }, // I made this short code up since this is a dual-credit
                                           // course at Muncie Central High School, presumably
                                           // doesn't have a real short code.
+
+            // List of IUPUI buildings... this has been a pretty good reference:
+            // https://cfs.iupui.edu/about/building-info.html
+            // also this:
+            // https://cpf.iu.edu/doc/building-list/IU_Bldglist_Public.pdf
+            // also this:
+            // https://cs.iupui.edu/~jzheng/digitalcity/CampusCompass/facilities.htm
+            { "1011 Dr. Martin Luther King, Jr. St.", "MK" },
+            { "Ball Annex", "BA" },
+            { "Business/SPEA", "BS" },
+            { "Biotechnology & Research Training Center", "L3" },
+            { "Campus Services 3", "SC" },
+            { "Campus Services 4", "BP" },
+            { "Cancer Research Institute", "R4" },
+            { "Campus Center", "CE" },
+            { "Cavanaugh Hall", "CA" },
+            { "Center for Young Children", "YC" },
+            { "Coleman Hall", "CF" },
+            { "Dental School", "DS" },
+            { "Dunlap", "DB" },
+            { "Education/Social Work", "ES" },
+            { "Emerson Hall", "EH" },
+            { "Engineering Science & Technology", "SL" },
+            { "Eskenazi Fine Arts", "HE" },
+            { "Eskenazi Hall", "HR" },
+            { "Fesler Hall", "FH" },
+            { "Gatch Clinical", "CL" },
+            { "Glick Eye Institute", "GK" },
+            { "Health Information & Translation Sciences", "HS" },
+            { "Health Sciences", "RG" },
+            { "Hine Hall", "IP" },
+            { "Informatics & Communications Technology Complex", "IT" },
+            { "Inlow Hall", "IH" },
+            { "IU Innovation Center", "TK" },
+            { "Innovation Hall", "IO" },
+            { "Kuhn House", "AC" },
+            { "Lecture Hall", "LE" },
+            { "Lockefield Village", "LV" },
+            { "Long Hall", "LO" },
+            { "Madam Walker Theatre", "MT" },
+            { "Medical Research & Library", "IB" },
+            { "Natatorium", "PE" },
+            { "Neuroscience Research Building", "NB" },
+            { "North Hall", "HM" },
+            { "Nursing School", "NU" },
+            { "Oral Health", "OH" },
+            { "Pediatric Care Center", "PC" },
+            { "Research Institute II", "R2" },
+            { "Riley Research", "RR" },
+            { "Rotary Building", "RO" },
+            { "Science Building", "LD" },
+            { "Science and Engineering Laboratory Building", "EL" },
+            { "Science, Engineering & Technology", "ET" },
+            // { "Service Building", "RV" }, // Duplicate key. May not be needed, as it hasn't
+                                             // appeared in course listings yet.
+            { "Taylor Hall", "UC" },
+            // { "University Hall", "AD" }, // Duplicate key. May not be needed, as it hasn't
+                                            // appeared in course listings yet.
+            { "University Library", "UL" },
+            { "VanNuys Medical Science Building", "MS" },
+            { "Walther Hall", "R3" },
+
+            // Annoyingly, MyPurdue shortens names of some IUPUI buildings. Those are listed here.
             { "Engineering/Technology", "ET"},
             { "Engr/Science & Tech", "SL" },
+            { "ICTC", "ICTC" }, // Not sure why they abbreviated this one...should stand for
+                                // "Informatics and Communications Technology Complex" as above
             { "Science & Engineering Lab", "EL" },
-            { "Innovation Hall", "IO" },
-
+            { "Ezkenazi Hall", "HR" }, // Someone at Purdue must have misspelled "Eskenazi"... 🤦
         };
 
         public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
