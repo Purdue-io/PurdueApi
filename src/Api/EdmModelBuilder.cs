@@ -37,7 +37,9 @@ namespace PurdueIo.Api
                 .Count()
                 .Expand(MAX_EXPAND_DEPTH)
                 .OrderBy()
-                .Page(MAX_RESULTS, MAX_RESULTS)
+                // .Page(MAX_RESULTS, MAX_RESULTS) // Adding pagination introduces performance
+                                                   // problems on expand queries.
+                                                   // https://github.com/OData/AspNetCoreOData/issues/1041
                 .Select();
         }
     }
