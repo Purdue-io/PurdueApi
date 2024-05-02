@@ -383,7 +383,7 @@ namespace PurdueIo.Scraper
             { "Greensburg Campus", "TGB" },
             { "Concurrent Credit Campus", "CC" },
             { "Dual Campus Campus", "TDC" },
-            { "West Lafayette at Indianapolis Campus", "PIN" },
+            { "Indianapolis and W Lafayette Campus", "PIN" },
         };
 
         // The loss of authenticated APIs removed our source of information for 
