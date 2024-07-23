@@ -620,6 +620,9 @@ namespace PurdueIo.Scraper
                                 // "Informatics and Communications Technology Complex" as above
             { "Science & Engineering Lab", "EL" },
             { "Ezkenazi Hall", "HR" }, // Someone at Purdue must have misspelled "Eskenazi"... 🤦
+
+            // Purdue Polytechnic Columbus
+            { "Columbus Learning Center", "CLC" },
         };
 
         public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
