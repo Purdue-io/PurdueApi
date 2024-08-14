@@ -623,6 +623,15 @@ namespace PurdueIo.Scraper
 
             // Purdue Polytechnic Columbus
             { "Columbus Learning Center", "CLC" },
+
+            // Indiana College Network
+            // Course descriptions note:
+            //     "Indiana Partnership for Statewide Education distance course."
+            // Examples:
+            //     Indiana College Network ITCC-BL
+            //     Indiana College Network ITCC-GA
+            //     Indiana College Network VU
+            { "Indiana College Network", "ICN" },
         };
 
         public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
