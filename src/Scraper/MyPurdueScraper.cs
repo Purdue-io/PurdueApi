@@ -368,22 +368,24 @@ namespace PurdueIo.Scraper
         // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/55
         private static readonly Dictionary<string, string> CampusNamesToShortCodes = new()
         {
+            // Updated 2024-09-02 to match the list reported by
+            // https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched
+            { "Indianapolis and W Lafayette Campus", "PIN" },
+            { "SW Anderson Campus", "TAN" },
+            { "SW Columbus Campus", "TCO" },
+            { "SW Indianapolis Intl Airport Campus", "TDY" },
+            { "SW Kokomo Campus", "TKO" },
+            { "SW New Albany Campus", "TNA" },
+            { "SW Richmond Campus", "TRI" },
+            { "SW South Bend Campus", "TSB" },
+            { "SW Subaru Manufacturing Campus Campus", "TLF" },
+            { "SW Vincennes Campus", "TVN" },
             { "West Lafayette Campus", "PWL" },
             { "West Lafayette Continuing Ed Campus", "CEC" },
-            { "IUPUI Campus", "PIU" },
-            { "New Albany Campus", "TNA" },
-            { "Richmond Campus", "TRI" },
-            { "Lafayette Campus", "TLF" },
-            { "Anderson Campus", "TAN" },
-            { "South Bend Campus", "TSB" },
-            { "Columbus Campus", "TCO" },
-            { "Indianapolis Campus", "TDY" },
-            { "Kokomo Campus", "TKO" },
-            { "Vincennes Campus", "TVN" },
-            { "Greensburg Campus", "TGB" },
-            { "Concurrent Credit Campus", "CC" },
+            // These entries do not appear on the course schedule search page,
+            // but are still found in section listings
             { "Dual Campus Campus", "TDC" },
-            { "Indianapolis and W Lafayette Campus", "PIN" },
+            { "Concurrent Credit Campus", "CC" },
         };
 
         // The loss of authenticated APIs removed our source of information for 
