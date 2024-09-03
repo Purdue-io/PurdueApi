@@ -407,7 +407,18 @@ namespace PurdueIo.CatalogSync
             else
             {
                 campus = dbContext.Campuses.SingleOrDefault(c => (c.Code == campusCode));
-                if (campus == null)
+                if (campus != null)
+                {
+                    // Sometimes the campus name will change despite having the same code
+                    if (campus.Name != campusName)
+                    {
+                        campus.Name = campusName;
+                        var campusEntry = dbContext.Entry(campus);
+                        campusEntry.Property(s => s.Name).CurrentValue = campusName;
+                        campusEntry.State = EntityState.Modified;
+                    }
+                }
+                else
                 {
                     campus = new DatabaseCampus()
                     {
