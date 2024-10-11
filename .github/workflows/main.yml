@@ -30,13 +30,13 @@ jobs:
     - name: Publish CatalogSync
       run: dotnet publish -c Release -r linux-x64 --self-contained=true -p:PublishReadyToRun=true -o publish/CatalogSync src/CatalogSync/CatalogSync.csproj
     - name: Upload API Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: Api
         path: publish/Api
         if-no-files-found: error
     - name: Upload CatalogSync Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: CatalogSync
         path: publish/CatalogSync
