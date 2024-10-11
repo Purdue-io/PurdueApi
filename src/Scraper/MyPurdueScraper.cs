@@ -634,6 +634,9 @@ namespace PurdueIo.Scraper
             //     Indiana College Network ITCC-GA
             //     Indiana College Network VU
             { "Indiana College Network", "ICN" },
+
+            // New as of term 202520
+            { "Hall of Data Science and AI", "DSAI" },
         };
 
         public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
