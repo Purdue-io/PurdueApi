@@ -13,12 +13,12 @@ jobs:
 
     steps:
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8'
         dotnet-quality: 'preview' # Change to 'ga' once .NET 8 release
     - name: Clone repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Restore dependencies
       run: dotnet restore src/PurdueIo.sln
     - name: Build
@@ -30,13 +30,13 @@ jobs:
     - name: Publish CatalogSync
       run: dotnet publish -c Release -r linux-x64 --self-contained=true -p:PublishReadyToRun=true -o publish/CatalogSync src/CatalogSync/CatalogSync.csproj
     - name: Upload API Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: Api
         path: publish/Api
         if-no-files-found: error
     - name: Upload CatalogSync Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: CatalogSync
         path: publish/CatalogSync
