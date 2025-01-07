@@ -15,8 +15,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8'
-        dotnet-quality: 'preview' # Change to 'ga' once .NET 8 release
+        dotnet-version: '9'
     - name: Clone repository
       uses: actions/checkout@v4
     - name: Restore dependencies
