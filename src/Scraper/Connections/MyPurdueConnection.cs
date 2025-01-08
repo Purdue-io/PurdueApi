@@ -29,7 +29,11 @@ namespace PurdueIo.Scraper.Connections
         private readonly HttpClient httpClient;
 
         // How many request attempts should be made before failure
-        private const int MAX_RETRIES = 5;
+        private const int MAX_RETRIES = 6;
+
+        // MyPurdue now throttles our requests, and only seems to let us through
+        // after waiting a minimum of one minute.
+        private const int THROTTLE_DELAY_BASE_MS = 60000;
 
         public MyPurdueConnection(ILogger<MyPurdueConnection> logger)
         {
@@ -146,11 +150,19 @@ namespace PurdueIo.Scraper.Connections
                 {
                     this.logger.LogError("Received non-success status code '{}' on " +
                         "GetSectionListPageAsync.", request.StatusCode);
+                    continue;
                 }
-                else
+
+                var content = await request.Content.ReadAsStringAsync();
+                if (content.Contains("We are sorry, but the site has received too many requests."))
                 {
-                    return await request.Content.ReadAsStringAsync();
+                    var retryDelayMs = THROTTLE_DELAY_BASE_MS + ExponentialRetryDelayMs(attempts);
+                    this.logger.LogError("MyPurdue is throttling requests. Retrying in {}ms...",
+                        retryDelayMs);
+                    await Task.Delay(retryDelayMs);
+                    continue;
                 }
+                return content;
             }
             throw new ApplicationException(
                 "Exceeded retries attempting to query MyPurdue section list");
@@ -314,6 +326,11 @@ namespace PurdueIo.Scraper.Connections
                 referrer = url;
             }
             return result;
+        }
+
+        private static int ExponentialRetryDelayMs(int retryNumber)
+        {
+            return (int)(Math.Pow(2, retryNumber) * 1000);
         }
     }
 }
