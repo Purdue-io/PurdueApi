@@ -12,9 +12,6 @@ namespace PurdueIo.Database.Models
         [StringLength(16)]
         public string Crn { get; set; }
 
-        // ID of the class this section belongs to
-        public Guid ClassId { get; set; }
-
         // Classes this section belongs to
         public virtual ICollection<Class> Classes { get; set; }
 

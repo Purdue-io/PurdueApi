@@ -252,9 +252,6 @@ namespace Database.Migrations.Sqlite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ClassId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Crn")
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");

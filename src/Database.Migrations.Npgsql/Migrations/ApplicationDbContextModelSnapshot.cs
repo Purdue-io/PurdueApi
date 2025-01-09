@@ -256,9 +256,6 @@ namespace Database.Migrations.Npgsql.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ClassId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Crn")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
