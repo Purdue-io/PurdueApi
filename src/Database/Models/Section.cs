@@ -15,8 +15,8 @@ namespace PurdueIo.Database.Models
         // ID of the class this section belongs to
         public Guid ClassId { get; set; }
 
-        // Class this section belongs to
-        public virtual Class Class { get; set; }
+        // Classes this section belongs to
+        public virtual ICollection<Class> Classes { get; set; }
 
         // Meetings scheduled for this section
         public virtual ICollection<Meeting> Meetings { get; set; }

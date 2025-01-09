@@ -51,18 +51,18 @@ namespace PurdueIo.Database
         }
 
         // Uncomment this override to add new migrations
-        // protected override void OnConfiguring(DbContextOptionsBuilder options)
-        // {
-        //     // Npgsql migrations
-        //     // options
-        //     //     .UseNpgsql("Host=localhost;Database=purdueio;Username=purdueio;Password=purdueio",
-        //     //         o => o.MigrationsAssembly("Database.Migrations.Npgsql"));
+        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        {
+            // Npgsql migrations
+            options
+                .UseNpgsql("Host=localhost;Database=purdueio;Username=purdueio;Password=purdueio",
+                    o => o.MigrationsAssembly("Database.Migrations.Npgsql"));
 
-        //     // Sqlite migrations
-        //     // options
-        //     //     .UseSqlite("Data Source=purdueio.sqlite",
-        //     //         o => o.MigrationsAssembly("Database.Migrations.Sqlite"));
-        // }
+            // Sqlite migrations
+            // options
+            //     .UseSqlite("Data Source=purdueio.sqlite",
+            //         o => o.MigrationsAssembly("Database.Migrations.Sqlite"));
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -130,8 +130,16 @@ namespace PurdueIo.Database
                 .HasKey(c => c.Id);
             modelBuilder.Entity<Class>()
                 .HasMany<Section>(c => c.Sections)
-                .WithOne(s => s.Class)
-                .HasForeignKey(s => s.ClassId);
+                .WithMany(s => s.Classes)
+                .UsingEntity<ClassSection>(
+                    cs => cs.HasOne(css => css.Section).WithMany()
+                        .HasForeignKey(css => css.SectionId),
+                    cs => cs.HasOne(css => css.Class).WithMany()
+                        .HasForeignKey(css => css.ClassId))
+                .HasKey(cs => new { cs.ClassId, cs.SectionId });
+
+            modelBuilder.Entity<ClassSection>().HasIndex(cs => cs.ClassId);
+            modelBuilder.Entity<ClassSection>().HasIndex(cs => cs.SectionId);
 
             modelBuilder.Entity<Section>()
                 .HasKey(s => s.Id);
