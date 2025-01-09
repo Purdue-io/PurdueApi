@@ -245,17 +245,17 @@ namespace PurdueIo.CatalogSync
             }
 
             // Update term's start and end date to match the earliest and latest meeting
-            if (dbContext.Sections.Where(s => s.Class.TermId == term.Id).Count() > 0)
+            if (dbContext.Sections.Where(s => s.Classes.Any(c => c.TermId == term.Id)).Count() > 0)
             {
                 dbContext.Entry(term).Property(t => t.StartDate).CurrentValue = 
                     dbContext.Sections
-                        .Where(s => (s.Class.TermId == term.Id) && (s.StartDate != null))
+                        .Where(s => s.Classes.Any(c => c.TermId == term.Id) && (s.StartDate != null))
                         .Select(s => s.StartDate)
                         .OrderBy(d => d)
                         .FirstOrDefault();
                 dbContext.Entry(term).Property(t => t.EndDate).CurrentValue =
                     dbContext.Sections
-                        .Where(s => (s.Class.TermId == term.Id) && (s.EndDate != null))
+                        .Where(s => s.Classes.Any(c => c.TermId == term.Id) && (s.EndDate != null))
                         .Select(s => s.EndDate)
                         .OrderByDescending(d => d)
                         .FirstOrDefault();
@@ -272,8 +272,8 @@ namespace PurdueIo.CatalogSync
             // Fetch existing courses, sections for this term + subject
             var existingCrns = dbContext.Sections
                 .Where(s => 
-                    (s.Class.TermId == term.Id) && 
-                    (s.Class.Course.SubjectId == subject.Id))
+                    s.Classes.Any(c => c.TermId == term.Id) && 
+                    s.Classes.Any(c => c.Course.SubjectId == subject.Id))
                 .Select(s => s.Crn)
                 .ToList();
 
@@ -312,7 +312,7 @@ namespace PurdueIo.CatalogSync
             foreach (var crnToRemove in crnsToRemove)
             {
                 var sectionToRemove = dbContext.Sections.SingleOrDefault(s =>
-                    (s.Class.TermId == term.Id) &&
+                    s.Classes.Any(c => c.TermId == term.Id) &&
                     (s.Crn == crnToRemove));
                 if (sectionToRemove != null)
                 {
@@ -370,7 +370,7 @@ namespace PurdueIo.CatalogSync
             Guid classId = Guid.Empty;
             var crns = sectionGroup.Select(s => s.Crn);
             var dbSections = dbContext.Sections
-                .Where(s => (s.Class.TermId == term.Id) && (crns.Contains(s.Crn)))
+                .Where(s => s.Classes.Any(c => c.TermId == term.Id) && crns.Contains(s.Crn))
                 .ToList();
             if (dbSections.Count == 0)
             {
