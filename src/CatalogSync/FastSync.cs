@@ -87,8 +87,9 @@ namespace PurdueIo.CatalogSync
         private Dictionary<string, DatabaseCampus> dbCachedCampuses =
             new Dictionary<string, DatabaseCampus>();
 
-        private Dictionary<(string number, string title), DatabaseCourse> dbCachedCourses = 
-            new Dictionary<(string number, string title), DatabaseCourse>();
+        private Dictionary<(string subjectCode, string number, string title), DatabaseCourse>
+            dbCachedCourses = 
+                new Dictionary<(string subjectCode, string number, string title), DatabaseCourse>();
 
         private Dictionary<(Guid campusId, string buildingCode), DatabaseBuilding> dbCachedBuildings
             = new Dictionary<(Guid campusId, string buildingCode), DatabaseBuilding>();
@@ -438,7 +439,8 @@ namespace PurdueIo.CatalogSync
             string courseTitle, double creditHours, string courseDescription)
         {
             DatabaseCourse course;
-            var courseKey = (number: courseNumber, title: courseTitle);
+            var courseKey = (subjectCode: subject.Abbreviation,
+                number: courseNumber, title: courseTitle);
             if (dbCachedCourses.ContainsKey(courseKey))
             {
                 course = dbCachedCourses[courseKey];
