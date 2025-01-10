@@ -87,8 +87,9 @@ namespace PurdueIo.CatalogSync
         private Dictionary<string, DatabaseCampus> dbCachedCampuses =
             new Dictionary<string, DatabaseCampus>();
 
-        private Dictionary<(string number, string title), DatabaseCourse> dbCachedCourses = 
-            new Dictionary<(string number, string title), DatabaseCourse>();
+        private Dictionary<(string subjectCode, string number, string title), DatabaseCourse>
+            dbCachedCourses = 
+                new Dictionary<(string subjectCode, string number, string title), DatabaseCourse>();
 
         private Dictionary<(Guid campusId, string buildingCode), DatabaseBuilding> dbCachedBuildings
             = new Dictionary<(Guid campusId, string buildingCode), DatabaseBuilding>();
@@ -374,6 +375,7 @@ namespace PurdueIo.CatalogSync
                 .ToList();
             if (dbSections.Count == 0)
             {
+                // The sections don't exist, so the class doesn't either.
                 var newClass = new DatabaseClass()
                 {
                     Id = Guid.NewGuid(),
@@ -386,7 +388,19 @@ namespace PurdueIo.CatalogSync
             }
             else
             {
+                // At least one of the sections exists in the database.
                 classId = dbSections.First().ClassId;
+
+                // Detect if the section's Class has moved to a different Course
+                // (handle the rare case where a CRN gets moved to a different Course)
+                var dbSectionGroupClass = dbContext.Classes.Single(c => c.Id == classId);
+                if (dbSectionGroupClass.CourseId != course.Id)
+                {
+                    dbSectionGroupClass.CourseId = course.Id;
+                    dbContext.Entry(dbSectionGroupClass)
+                        .Property(s => s.CourseId).CurrentValue = course.Id;
+                    dbContext.Entry(dbSectionGroupClass).State = EntityState.Modified;
+                }
             }
 
             // Hydrate each section
@@ -438,7 +452,8 @@ namespace PurdueIo.CatalogSync
             string courseTitle, double creditHours, string courseDescription)
         {
             DatabaseCourse course;
-            var courseKey = (number: courseNumber, title: courseTitle);
+            var courseKey = (subjectCode: subject.Abbreviation,
+                number: courseNumber, title: courseTitle);
             if (dbCachedCourses.ContainsKey(courseKey))
             {
                 course = dbCachedCourses[courseKey];
