@@ -375,6 +375,7 @@ namespace PurdueIo.CatalogSync
                 .ToList();
             if (dbSections.Count == 0)
             {
+                // The sections don't exist, so the class doesn't either.
                 var newClass = new DatabaseClass()
                 {
                     Id = Guid.NewGuid(),
@@ -387,7 +388,19 @@ namespace PurdueIo.CatalogSync
             }
             else
             {
+                // At least one of the sections exists in the database.
                 classId = dbSections.First().ClassId;
+
+                // Detect if the section's Class has moved to a different Course
+                // (handle the rare case where a CRN gets moved to a different Course)
+                var dbSectionGroupClass = dbContext.Classes.Single(c => c.Id == classId);
+                if (dbSectionGroupClass.CourseId != course.Id)
+                {
+                    dbSectionGroupClass.CourseId = course.Id;
+                    dbContext.Entry(dbSectionGroupClass)
+                        .Property(s => s.CourseId).CurrentValue = course.Id;
+                    dbContext.Entry(dbSectionGroupClass).State = EntityState.Modified;
+                }
             }
 
             // Hydrate each section
