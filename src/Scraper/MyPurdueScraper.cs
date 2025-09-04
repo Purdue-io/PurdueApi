@@ -386,6 +386,7 @@ namespace PurdueIo.Scraper
             // but are still found in section listings
             { "Dual Campus Campus", "TDC" },
             { "Concurrent Credit Campus", "CC" },
+            { "Indiana Univ Indianapolis Campus", "IUI" },
         };
 
         // The loss of authenticated APIs removed our source of information for 
