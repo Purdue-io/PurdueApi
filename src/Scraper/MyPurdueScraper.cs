@@ -638,6 +638,11 @@ namespace PurdueIo.Scraper
 
             // New as of term 202520
             { "Hall of Data Science and AI", "DSAI" },
+
+            // New as of term 202610
+            // short code found on https://www.campus-maps.com/purdue-university/moll-mollenkopf-athletic-center/
+            // seems legit.
+            { "Mollenkopf Athletic Center", "MOLL" },
         };
 
         public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
