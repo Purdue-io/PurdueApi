@@ -33,8 +33,37 @@ All services are orchestrated using Docker Compose and communicate over a privat
 
 ## Quick Start
 
+### Option 1: Using Pre-built Images (Recommended for Production)
+
+Use published images from GitHub Container Registry - no build required!
+
 ```bash
-# Clone the repository (if not already done)
+# Download the production docker-compose file
+curl -O https://raw.githubusercontent.com/Purdue-io/PurdueApi/main/docker-compose.production.yml
+curl -O https://raw.githubusercontent.com/Purdue-io/PurdueApi/main/.env.example
+
+# Copy the example environment file
+cp .env.example .env
+
+# (Optional) Edit .env to customize configuration
+nano .env
+
+# Pull and start all services
+docker compose -f docker-compose.production.yml up -d
+
+# View logs
+docker compose -f docker-compose.production.yml logs -f
+
+# Stop services
+docker compose -f docker-compose.production.yml down
+```
+
+### Option 2: Building from Source (Development)
+
+Build images locally from source code:
+
+```bash
+# Clone the repository
 git clone https://github.com/Purdue-io/PurdueApi.git
 cd PurdueApi
 
@@ -45,16 +74,16 @@ cp .env.example .env
 nano .env
 
 # Build and start all services
-docker-compose up -d
+docker compose up -d --build
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop services
-docker-compose down
+docker compose down
 
 # Stop and remove volumes (deletes database data)
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Architecture
@@ -559,6 +588,44 @@ docker-compose down --rmi all
 docker-compose down -v --rmi all --remove-orphans
 ```
 
+## Published Container Images
+
+Pre-built Docker images are automatically published to GitHub Container Registry on every release:
+
+- **API**: `ghcr.io/purdue-io/purdueapi/api:latest`
+- **CatalogSync**: `ghcr.io/purdue-io/purdueapi/catalogsync:latest`
+
+### Available Tags
+
+- `latest` - Most recent release from the main branch
+- `v1.0.0` - Specific semantic version (e.g., v1.0.0, v1.1.0)
+- `1` - Major version tag (e.g., 1, 2)
+- `1.0` - Major.minor version tag (e.g., 1.0, 1.1)
+
+### Pulling Specific Versions
+
+```bash
+# Pull latest version
+docker pull ghcr.io/purdue-io/purdueapi/api:latest
+docker pull ghcr.io/purdue-io/purdueapi/catalogsync:latest
+
+# Pull specific version
+docker pull ghcr.io/purdue-io/purdueapi/api:v1.0.0
+docker pull ghcr.io/purdue-io/purdueapi/catalogsync:v1.0.0
+
+# Use in docker-compose.production.yml
+# Just change the image tag:
+# image: ghcr.io/purdue-io/purdueapi/api:v1.0.0
+```
+
+### Authentication
+
+Images are public and don't require authentication to pull. However, for private repositories, you may need to authenticate:
+
+```bash
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+```
+
 ## Additional Resources
 
 - [Docker Documentation](https://docs.docker.com/)
@@ -566,6 +633,7 @@ docker-compose down -v --rmi all --remove-orphans
 - [PostgreSQL Docker Image](https://hub.docker.com/_/postgres)
 - [ASP.NET Core Docker Documentation](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/docker/)
 - [Supercronic Documentation](https://github.com/aptible/supercronic)
+- [GitHub Container Registry Documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
 - [Purdue.io Wiki](https://github.com/Purdue-io/PurdueApi/wiki/)
 
 ## Support

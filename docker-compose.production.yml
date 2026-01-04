@@ -1,0 +1,71 @@
+version: '3.8'
+
+# Production docker-compose file that pulls pre-built images from GitHub Container Registry
+# Usage: docker compose -f docker-compose.production.yml up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: purdueio-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-purdueio}
+      POSTGRES_USER: ${POSTGRES_USER:-purdueio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-purdueio}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - purdueio-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-purdueio}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: ghcr.io/purdue-io/purdueapi/api:latest
+    container_name: purdueio-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      DbProvider: Npgsql
+      DbConnectionString: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-purdueio};Username=${POSTGRES_USER:-purdueio};Password=${POSTGRES_PASSWORD:-purdueio}"
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - purdueio-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/odata/Terms || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  catalogsync:
+    image: ghcr.io/purdue-io/purdueapi/catalogsync:latest
+    container_name: purdueio-catalogsync
+    restart: unless-stopped
+    environment:
+      DB_PROVIDER: Npgsql
+      DB_CONNECTION_STRING: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-purdueio};Username=${POSTGRES_USER:-purdueio};Password=${POSTGRES_PASSWORD:-purdueio}"
+      SYNC_SCHEDULE: ${SYNC_SCHEDULE:-0 2 * * *}
+      SYNC_TERMS: ${SYNC_TERMS:-}
+      SYNC_SUBJECTS: ${SYNC_SUBJECTS:-}
+      SYNC_ALL_TERMS: ${SYNC_ALL_TERMS:-false}
+      RUN_ONCE: ${RUN_ONCE:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - purdueio-net
+
+networks:
+  purdueio-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
