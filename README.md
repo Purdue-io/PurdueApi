@@ -52,9 +52,40 @@ there through the query tester at [http://api.purdue.io/](api.purdue.io/).
 
 # Building and Running
 
-## Tools
+## Docker (Recommended)
 
-Purdue.io is written in C# on .NET 8. It will run natively on most major
+The easiest way to run Purdue.io is using Docker. This will start all services including PostgreSQL, the API, and the CatalogSync scheduler.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Quick Start
+
+```sh
+# 1. Copy the example environment file
+cp .env.example .env
+
+# 2. (Optional) Edit .env to configure sync schedule, database credentials, etc.
+
+# 3. Build and start all services
+docker-compose up -d
+
+# 4. Watch the logs
+docker logs -f purdueio-api
+docker logs -f purdueio-catalogsync
+
+# 5. Access the API at http://localhost:8080/odata
+```
+
+For detailed Docker deployment instructions, configuration options, and troubleshooting, see [docs/DOCKER.md](docs/DOCKER.md).
+
+## Local Development
+
+### Tools
+
+Purdue.io is written in C# on .NET 9. It will run natively on most major
 architectures and operating systems (Windows, Linux, Mac OS).
 
 Entity Framework is used to communicate with an underlying database provider. Currently,

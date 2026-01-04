@@ -1,0 +1,40 @@
+# Stage 1: Build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copy only the project files needed for API (and its dependencies)
+COPY src/Api/Api.csproj ./Api/
+COPY src/Database/Database.csproj ./Database/
+COPY src/Database.Migrations.Sqlite/Database.Migrations.Sqlite.csproj ./Database.Migrations.Sqlite/
+COPY src/Database.Migrations.Npgsql/Database.Migrations.Npgsql.csproj ./Database.Migrations.Npgsql/
+
+# Restore dependencies for API project only (not entire solution)
+RUN dotnet restore Api/Api.csproj
+
+# Copy all source files
+COPY src/ ./
+
+# Publish the API project
+RUN dotnet publish Api/Api.csproj -c Release -r linux-x64 \
+    --self-contained=true \
+    -p:PublishReadyToRun=true \
+    -o /app/publish
+
+# Stage 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
+WORKDIR /app
+
+# Copy published application (includes wwwroot if present)
+COPY --from=build /app/publish .
+
+# Expose port 8080 (HTTP only for internal Docker network)
+EXPOSE 8080
+
+# Configure ASP.NET Core to listen on port 8080
+ENV ASPNETCORE_URLS=http://+:8080 \
+    ASPNETCORE_ENVIRONMENT=Production
+
+# Run as non-root user for security
+USER app
+
+ENTRYPOINT ["./Api"]

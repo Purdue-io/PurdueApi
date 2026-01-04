@@ -1,0 +1,51 @@
+# Stage 1: Build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copy only the project files needed for CatalogSync (and its dependencies)
+COPY src/CatalogSync/CatalogSync.csproj ./CatalogSync/
+COPY src/Database/Database.csproj ./Database/
+COPY src/Scraper/Scraper.csproj ./Scraper/
+COPY src/Database.Migrations.Sqlite/Database.Migrations.Sqlite.csproj ./Database.Migrations.Sqlite/
+COPY src/Database.Migrations.Npgsql/Database.Migrations.Npgsql.csproj ./Database.Migrations.Npgsql/
+
+# Restore dependencies for CatalogSync project only (not entire solution)
+RUN dotnet restore CatalogSync/CatalogSync.csproj
+
+# Copy all source files
+COPY src/ ./
+
+# Publish the CatalogSync project
+RUN dotnet publish CatalogSync/CatalogSync.csproj -c Release -r linux-x64 \
+    --self-contained=true \
+    -p:PublishReadyToRun=true \
+    -o /app/publish
+
+# Stage 2: Runtime with supercronic
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
+WORKDIR /app
+
+# Install supercronic for Docker-friendly cron scheduling
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.29/supercronic-linux-amd64 \
+    SUPERCRONIC=supercronic-linux-amd64 \
+    SUPERCRONIC_SHA1SUM=cd48d45c4b10f3f0bfdd3a57d054cd05ac96812b
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && curl -fsSLO "$SUPERCRONIC_URL" \
+    && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
+    && chmod +x "$SUPERCRONIC" \
+    && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
+    && apt-get purge -y --auto-remove curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy published application
+COPY --from=build /app/publish .
+
+# Copy entrypoint script and ensure it's executable by all users
+COPY docker/catalogsync-entrypoint.sh /app/entrypoint.sh
+RUN chmod 755 /app/entrypoint.sh
+
+# Run as non-root user for security
+USER app
+
+ENTRYPOINT ["/app/entrypoint.sh"]

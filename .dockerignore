@@ -1,0 +1,56 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/publish/
+**/.vs/
+**/.vscode/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Documentation
+*.md
+!src/**/*.md
+docs/
+
+# Database files
+**/*.sqlite
+**/*.sqlite-shm
+**/*.sqlite-wal
+**/*.mdf
+**/*.ldf
+
+# Node/Frontend
+node_modules/
+**/node_modules/
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Tests
+**/Tests/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.env
+.env.*
+
+# CI/CD
+.github/
+
+# Claude
+.claude/
+
+# Misc
+*.log
+*.tmp
