@@ -194,3 +194,13 @@ $RECYCLE.BIN/
 .DS_Store
 *.mdf
 *.ldf
+
+# =========================
+# Docker
+# =========================
+
+# Environment files (contain secrets)
+.env
+
+# Docker temporary files
+.docker/
