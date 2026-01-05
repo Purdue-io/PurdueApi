@@ -45,6 +45,9 @@ COPY --from=build /app/publish .
 COPY docker/catalogsync-entrypoint.sh /app/entrypoint.sh
 RUN chmod 755 /app/entrypoint.sh
 
+# Change ownership of /app to app user so it can write crontab file
+RUN chown -R app:app /app
+
 # Run as non-root user for security
 USER app
 
