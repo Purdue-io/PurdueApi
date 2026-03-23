@@ -30,7 +30,7 @@ namespace PurdueIo.Scraper
             HtmlDocument document = new HtmlDocument();
             document.LoadHtml(termListPageContent);
             HtmlNode root = document.DocumentNode;
-            HtmlNodeCollection termSelectNodes = 
+            HtmlNodeCollection termSelectNodes =
                 root.SelectNodes("//select[@name='p_term']/option");
             foreach (var node in termSelectNodes)
             {
@@ -86,7 +86,7 @@ namespace PurdueIo.Scraper
             // This method scrapes the relevant information from all sources into
             // one coherent model.
 
-            Dictionary<Crn, SectionListInfo> sectionList = 
+            Dictionary<Crn, SectionListInfo> sectionList =
                 await FetchSectionListAsync(termCode, subjectCode);
 
             var mergedSections = new List<Section>();
@@ -258,7 +258,7 @@ namespace PurdueIo.Scraper
                         // Parse days of week
                         var daysOfWeek = HtmlEntity.DeEntitize(
                             meetingNode.SelectSingleNode("td[3]").InnerText);
-                        DaysOfWeek parsedMeetingDaysOfWeek = 
+                        DaysOfWeek parsedMeetingDaysOfWeek =
                             ParsingUtilities.ParseDaysOfWeek(daysOfWeek);
 
                         // Parse building / room
@@ -362,7 +362,7 @@ namespace PurdueIo.Scraper
             public string CampusName { get; init; }
         }
 
-        // The loss of authenticated APIs removed our source of information for 
+        // The loss of authenticated APIs removed our source of information for
         // campus short codes, so now they are hard-coded here and we just hope
         // new campuses are a fairly rare occurrence.
         // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/55
@@ -389,7 +389,7 @@ namespace PurdueIo.Scraper
             { "Indiana Univ Indianapolis Campus", "IUI" },
         };
 
-        // The loss of authenticated APIs removed our source of information for 
+        // The loss of authenticated APIs removed our source of information for
         // building short codes, so now they are hard-coded here and we just hope
         // new buildings are a fairly rare occurrence.
         // Tracked here: https://github.com/Purdue-io/PurdueApi/issues/54
@@ -643,6 +643,11 @@ namespace PurdueIo.Scraper
             // short code found on https://www.campus-maps.com/purdue-university/moll-mollenkopf-athletic-center/
             // seems legit.
             { "Mollenkopf Athletic Center", "MOLL" },
+
+            // New as of term 202710
+            // short code found https://selfservice.mypurdue.purdue.edu/prod/BZWSLCSR.P_Prep_Search?term_in=202710&crn_in=27888
+            // for class in Dallara Experience Hub (?)
+            { "Dallara", "DAL" }
         };
 
         public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
