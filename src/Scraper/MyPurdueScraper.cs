@@ -647,7 +647,11 @@ namespace PurdueIo.Scraper
             // New as of term 202710
             // short code found https://selfservice.mypurdue.purdue.edu/prod/BZWSLCSR.P_Prep_Search?term_in=202710&crn_in=27888
             // for class in Dallara Experience Hub (?)
-            { "Dallara", "DAL" }
+            { "Dallara", "DAL" },
+
+            // New as of term 202710
+            // short code found https://selfservice.mypurdue.purdue.edu/prod/BZWSLCSR.P_Prep_Search?term_in=202710&crn_in=28971
+            { "Canal Square Apartments", "CSQR" },
         };
 
         public (string buildingName, string buildingShortCode, string room)? ParseLocationDetails(
