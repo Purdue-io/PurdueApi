@@ -1,0 +1,52 @@
+{
+  "name": "Purdue.io",
+  // Debian trixie: its glibc (2.41) is new enough for the NetCoreDbg debugger bundled with the
+  // open-source C# extension used by VSCodium (bookworm's 2.36 is too old).
+  "image": "mcr.microsoft.com/devcontainers/base:2-trixie",
+
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "9.0"
+    }
+  },
+
+  "containerEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1",
+    // Point the API at the SQLite database CatalogSync creates by default
+    // (`dotnet run` from src/CatalogSync writes src/CatalogSync/purdueio.sqlite).
+    "DbProvider": "Sqlite",
+    "DbConnectionString": "Data Source=${containerWorkspaceFolder}/src/CatalogSync/purdueio.sqlite"
+  },
+
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/home/vscode/.dotnet/tools"
+  },
+
+  "forwardPorts": [5000, 5001],
+  "portsAttributes": {
+    "5000": { "label": "API (HTTP)" },
+    "5001": { "label": "API (HTTPS)" }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "customizations": {
+    "vscode": {
+      // Each editor installs what its registry has and skips the rest: the ms-dotnettools
+      // extensions come from Microsoft's marketplace (VS Code), and muhammad-sammy.csharp is
+      // the open-source build of the C# extension on Open VSX (VSCodium and other OSS builds).
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "muhammad-sammy.csharp",
+        "editorconfig.editorconfig"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "src/PurdueIo.sln"
+      }
+    }
+  },
+
+  "remoteUser": "vscode"
+}
