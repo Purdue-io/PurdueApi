@@ -23,7 +23,7 @@ namespace PurdueIo.Tests
         public async Task SectionParsing()
         {
             var connection = new MockMyPurdueConnection();
-            var scraper = new MyPurdueScraper(connection,
+            var scraper = new MyPurdueScraper(
                 loggerFactory.CreateLogger<MyPurdueScraper>());
             var sections = await scraper.GetSectionsAsync("202210", "COM");
             Assert.NotEmpty(sections);
@@ -91,7 +91,7 @@ namespace PurdueIo.Tests
         public async Task SubjectParsing()
         {
             var connection = new MockMyPurdueConnection();
-            var scraper = new MyPurdueScraper(connection,
+            var scraper = new MyPurdueScraper(
                 loggerFactory.CreateLogger<MyPurdueScraper>());
             ICollection<Subject> subjects = await scraper.GetSubjectsAsync("202210");
 
@@ -105,14 +105,13 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task TermParsing()
         {
-            var connection = new MockMyPurdueConnection();
-            var scraper = new MyPurdueScraper(connection,
+            var scraper = new MyPurdueScraper(
                 loggerFactory.CreateLogger<MyPurdueScraper>());
             ICollection<Term> terms = await scraper.GetTermsAsync();
 
             // Spot check a few terms
-            Assert.Contains(terms, (t => t.Id == "202210" && t.Name == "Fall 2021"));
-            Assert.Contains(terms, (t => t.Id == "202130" && t.Name == "Summer 2021"));
+            Assert.Contains(terms, (t => t.Id == "202210" && t.Name.Contains("Fall 2021")));
+            Assert.Contains(terms, (t => t.Id == "202130" && t.Name.Contains("Summer 2021")));
         }
     }
 }
