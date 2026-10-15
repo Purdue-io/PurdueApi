@@ -1,8 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace PurdueIo.Scraper.Models
 {
     public record Subject
     {
-        public string Code { get; init; }
-        public string Name { get; init; }
+        [JsonPropertyName("code")]
+        public string Code { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Name { get; set; }
     }
 }

@@ -66,10 +66,7 @@ namespace PurdueIo.CatalogSync
 
             var behavior = options.SyncAllTerms ? 
                 TermSyncBehavior.SyncAllTerms : TermSyncBehavior.SyncNewAndCurrentTerms;
-            var connection = new MyPurdueConnection(
-                loggerFactory.CreateLogger<MyPurdueConnection>());
-            var scraper = new MyPurdueScraper(connection,
-                loggerFactory.CreateLogger<MyPurdueScraper>());
+            var scraper = new MyPurdueScraper(loggerFactory.CreateLogger<MyPurdueScraper>());
 
             ApplicationDbContext dbContext;
             if (options.DataProvider == DataProvider.Sqlite)

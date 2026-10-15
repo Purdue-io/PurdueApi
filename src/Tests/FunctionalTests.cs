@@ -27,9 +27,7 @@ namespace PurdueIo.Tests
         {
             using (var dbContext = GetDbContextFactory()())
             {
-                var connection = new MockMyPurdueConnection();
-                var scraper = new MyPurdueScraper(connection,
-                    loggerFactory.CreateLogger<MyPurdueScraper>());
+                var scraper = new MyPurdueScraper(loggerFactory.CreateLogger<MyPurdueScraper>());
                 await FastSync.SynchronizeAsync(scraper, dbContext,
                     loggerFactory.CreateLogger<FastSync>());
             }

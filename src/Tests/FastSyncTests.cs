@@ -402,7 +402,7 @@ namespace PurdueIo.Tests
         private readonly TimeZoneInfo timeZone =
             TimeZoneInfo.GetSystemTimeZones().Any(t => (t.Id == "Eastern Standard Time"))
                 ? TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")
-                : TimeZoneInfo.FindSystemTimeZoneById("America/Indianapolis");
+                : TimeZoneInfo.FindSystemTimeZoneById("America/Indiana/Indianapolis");
 
         private Func<ApplicationDbContext> GetDbContextFactory(string path = "")
         {
