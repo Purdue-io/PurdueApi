@@ -1,39 +1,27 @@
-using HtmlAgilityPack;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text.RegularExpressions;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using PurdueIo.Scraper.Connections.Models;
+using PurdueIo.Scraper.Models;
 
 namespace PurdueIo.Scraper.Connections
 {
-    // Implementation of IMyPurdueConnection that fetches actual data from MyPurdue via HTTPS calls
-    public class MyPurdueConnection : IMyPurdueConnection
+    public class MyPurdueConnection
     {
-        // Enum value of implemented HTTP request methods
-        private enum HttpMethod { GET, POST };
-
-        // Logger reference
         private readonly ILogger<MyPurdueConnection> logger;
-
-        // Keeps track of cookies for all requests on this connection
         private readonly CookieContainer cookies = new();
-
-        // Keeps track of the last page requested, used in 'Referrer' HTTP header
-        private string referrer = "";
-
-        // HttpClient used by this connection to communicate with MyPurdue
         private readonly HttpClient httpClient;
+        private const string BASE_URL =
+            "https://apps.mypurdue.purdue.edu/StudentRegistrationSsb/ssb/";
+        private (string sessionId, string sessionTerm)? myPurdueSession = null;
 
-        // How many request attempts should be made before failure
-        private const int MAX_RETRIES = 6;
-
-        // MyPurdue now throttles our requests, and only seems to let us through
-        // after waiting a minimum of one minute.
-        private const int THROTTLE_DELAY_BASE_MS = 60000;
+        // the service seems to enforce a 500-item limit before requiring pagination
+        private const uint MAX_PAGINATION_COUNT = 500;
 
         public MyPurdueConnection(ILogger<MyPurdueConnection> logger)
         {
@@ -45,292 +33,307 @@ namespace PurdueIo.Scraper.Connections
                                            // to persist them to avoid upsetting it
                 AllowAutoRedirect = false, // We'll handle redirects by ourselves
             };
-            httpClient = new HttpClient(httpHandler as HttpMessageHandler);
+            httpClient = new HttpClient(httpHandler)
+            {
+                BaseAddress = new Uri(BASE_URL)
+            };
 
-            // Pretend we're Chrome
+            // Pretend we're Firefox
             httpClient.DefaultRequestHeaders.Add("Accept",
                 "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-            httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+            httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
             httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
             httpClient.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/45.0.2454.99 Safari/537.36");
+                "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) Gecko/20100101 Firefox/157.0");
         }
 
-        public async Task<string> GetTermListPageAsync()
+        public async Task<ICollection<Term>> GetTermListAsync()
         {
-            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
+            // TODO: If there are ever more than 500 terms, we'll need to implement code to pull
+            // down the rest of them.
+            var result = await httpClient.GetAsync(
+                $"classSearch/getTerms?searchTerm=&offset=1&max={MAX_PAGINATION_COUNT}");
+            if (result.IsSuccessStatusCode)
             {
-                var result = await Request(HttpMethod.GET,
-                    "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
+                return JsonSerializer.Deserialize<List<Term>>(
+                    await result.Content.ReadAsStringAsync());
+            }
+            logger.LogError(
+                "Received HTTP '{}' on GetTermListAsync: {}",
+                result.StatusCode, await result.Content.ReadAsStringAsync());
+            throw new ApplicationException(
+                $"Could not fetch term list: HTTP {result.StatusCode}: " +
+                await result.Content.ReadAsStringAsync());
+        }
+
+        public async Task<ICollection<Subject>> GetSubjectListAsync(string termCode)
+        {
+            // TODO: If there are ever more than 500 subjects, we'll need to implement code to pull
+            // down the rest of them.
+            var result = await httpClient.GetAsync(
+                $"classSearch/get_subject?searchTerm=&term={termCode}&offset=1&max={MAX_PAGINATION_COUNT}");
+            if (result.IsSuccessStatusCode)
+            {
+                var subjects = JsonSerializer.Deserialize<List<Subject>>(
+                    await result.Content.ReadAsStringAsync());
+
+                // the subject names returned from the service are a little funky - they have
+                // html-encoded characters and are prefixed with their codes.
+                foreach (var subject in subjects)
+                {
+                    subject.Name = WebUtility.HtmlDecode(subject.Name);
+                    subject.Name = subject.Name.Replace($"{subject.Code}-", "");
+                }
+
+                return subjects;
+            }
+            logger.LogError(
+                "Received HTTP '{}' on GetSubjectListAsync: {}",
+                result.StatusCode, await result.Content.ReadAsStringAsync());
+            throw new ApplicationException(
+                $"Could not fetch subject list: HTTP {result.StatusCode}: " +
+                await result.Content.ReadAsStringAsync());
+        }
+
+        public async Task<ICollection<MyPurdueSection>> GetSectionsAsync(string termCode,
+            string subjectCode)
+        {
+            // Using this API appears to require us to have an active "session".
+            await EnsureSession(termCode);
+            int pageOffset = 0;
+            List<MyPurdueSection> sections = [];
+            while (true)
+            {
+                var result = await httpClient.GetAsync("searchResults/searchResults" +
+                    $"?txt_subject={subjectCode}&txt_term={termCode}&startDatepicker=" +
+                    $"&endDatepicker=&uniqueSessionId={myPurdueSession.Value.sessionId}" +
+                    $"&pageOffset={pageOffset}&pageMaxSize={MAX_PAGINATION_COUNT}" +
+                    "&sortColumn=subjectDescription&sortDirection=asc");
                 if (!result.IsSuccessStatusCode)
                 {
-                    this.logger.LogError("Received non-success status code '{}' on " +
-                        "GetTermListPageAsync.", result.StatusCode);
+                    logger.LogError(
+                        "Received HTTP '{}' on GetSectionsAsync: {}",
+                        result.StatusCode, await result.Content.ReadAsStringAsync());
+                    throw new ApplicationException(
+                        $"Could not fetch subject list: HTTP {result.StatusCode}: " +
+                        await result.Content.ReadAsStringAsync());
                 }
-                else
-                {
-                    return await result.Content.ReadAsStringAsync();
+                var parsed = JsonSerializer.Deserialize<MyPurdueSectionResponse>(
+                    await result.Content.ReadAsStringAsync());
+                if (!parsed.Success) {
+                    logger.LogError(
+                        "Received error on GetSectionsAsync: `success` not set to true");
+                    throw new ApplicationException(
+                        "Received error on GetSectionsAsync: `success` not set to true");
                 }
-            }
-            throw new ApplicationException(
-                "Exceeded retries attempting to query MyPurdue term list");
-        }
-
-        public async Task<string> GetSubjectListPageAsync(string termCode)
-        {
-            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
-            {
-                var request = await Request(HttpMethod.POST,
-                    "https://selfservice.mypurdue.purdue.edu/prod/bwckgens.p_proc_term_date",
-                    new FormUrlEncodedContent(new[]
-                        {
-                            new KeyValuePair<string, string>("p_calling_proc",
-                                "bwckschd.p_disp_dyn_sched"),
-                            new KeyValuePair<string, string>("p_term", termCode)
-                        }),
-                    true,
-                    "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched");
-                if (!request.IsSuccessStatusCode)
+                sections.AddRange(parsed.Sections);
+                pageOffset = parsed.Sections.Count;
+                if (sections.Count >= parsed.TotalCount)
                 {
-                    this.logger.LogError("Received non-success status code '{}' on " +
-                        "GetSubjectListPageAsync.", request.StatusCode);
-                }
-                else
-                {
-                    var content = await request.Content.ReadAsStringAsync();
-                    return content;
+                    break;
                 }
             }
-            throw new ApplicationException(
-                "Exceeded retries attempting to query MyPurdue subject list");
+            return sections;
         }
 
-        public async Task<string> GetSectionListPageAsync(string termCode, string subjectCode)
+        private async Task EnsureSession(string termCode)
         {
-            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
+            if (myPurdueSession == null || myPurdueSession.Value.sessionTerm != termCode)
             {
-                var postBody = new FormUrlEncodedContent(new[] 
+                // Assign ourselves a session ID
+                var sessionId = Guid.NewGuid().ToString();
+
+                // Register the session ID with the server
+                var form = new FormUrlEncodedContent(new Dictionary<string, string>
                 {
-                    new KeyValuePair<string, string>("term_in", termCode),
-                    new KeyValuePair<string, string>("sel_subj", "dummy"),
-                    new KeyValuePair<string, string>("sel_day", "dummy"),
-                    new KeyValuePair<string, string>("sel_schd", "dummy"),
-                    new KeyValuePair<string, string>("sel_insm", "dummy"),
-                    new KeyValuePair<string, string>("sel_camp", "dummy"),
-                    new KeyValuePair<string, string>("sel_levl", "dummy"),
-                    new KeyValuePair<string, string>("sel_sess", "dummy"),
-                    new KeyValuePair<string, string>("sel_instr", "dummy"),
-                    new KeyValuePair<string, string>("sel_ptrm", "dummy"),
-                    new KeyValuePair<string, string>("sel_attr", "dummy"),
-                    new KeyValuePair<string, string>("sel_subj", subjectCode),
-                    new KeyValuePair<string, string>("sel_crse", "%"),
-                    new KeyValuePair<string, string>("sel_title", ""),
-                    new KeyValuePair<string, string>("sel_schd", "%"),
-                    new KeyValuePair<string, string>("sel_from_cred", ""),
-                    new KeyValuePair<string, string>("sel_to_cred", ""),
-                    new KeyValuePair<string, string>("sel_camp", "%"),
-                    new KeyValuePair<string, string>("sel_ptrm", "%"),
-                    new KeyValuePair<string, string>("sel_instr", "%"),
-                    new KeyValuePair<string, string>("sel_sess", "%"),
-                    new KeyValuePair<string, string>("sel_attr", "%"),
-                    new KeyValuePair<string, string>("begin_hh", "0"),
-                    new KeyValuePair<string, string>("begin_mi", "0"),
-                    new KeyValuePair<string, string>("begin_ap", "a"),
-                    new KeyValuePair<string, string>("end_hh", "0"),
-                    new KeyValuePair<string, string>("end_mi", "0"),
-                    new KeyValuePair<string, string>("end_ap", "a"),
+                    ["term"] = termCode,
+                    ["studyPath"] = "",
+                    ["studyPathText"] = "",
+                    ["startDatepicker"] = "",
+                    ["endDatepicker"] = "",
+                    ["uniqueSessionId"] = sessionId,
                 });
-
-                var request = await Request(HttpMethod.POST,
-                    "https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_get_crse_unsec",
-                    postBody);
-
-                if (!request.IsSuccessStatusCode)
-                {
-                    this.logger.LogError("Received non-success status code '{}' on " +
-                        "GetSectionListPageAsync.", request.StatusCode);
-                    continue;
-                }
-
-                var content = await request.Content.ReadAsStringAsync();
-                if (content.Contains("We are sorry, but the site has received too many requests."))
-                {
-                    var retryDelayMs = THROTTLE_DELAY_BASE_MS + ExponentialRetryDelayMs(attempts);
-                    this.logger.LogError("MyPurdue is throttling requests. Retrying in {}ms...",
-                        retryDelayMs);
-                    await Task.Delay(retryDelayMs);
-                    continue;
-                }
-                return content;
+                var response = await httpClient.PostAsync("term/search?mode=search", form);
+                response.EnsureSuccessStatusCode();
+                myPurdueSession = (sessionId, termCode);
             }
-            throw new ApplicationException(
-                "Exceeded retries attempting to query MyPurdue section list");
+        }
+    }
+
+    namespace Models {
+        public struct MyPurdueSectionResponse {
+            [JsonPropertyName("success")]
+            public bool Success { get; set; }
+
+            [JsonPropertyName("totalCount")]
+            public int TotalCount { get; set; }
+
+            [JsonPropertyName("data")]
+            public ICollection<MyPurdueSection> Sections { get; set; }
+        }
+        
+        public struct MyPurdueSection {
+            [JsonPropertyName("id")]
+            public long Id { get; set; }
+
+            [JsonPropertyName("term")]
+            public string TermCode { get; set; }
+
+            [JsonPropertyName("termDesc")]
+            public string TermName { get; set; }
+
+            [JsonPropertyName("courseReferenceNumber")]
+            public string Crn { get; set; }
+
+            [JsonPropertyName("courseNumber")]
+            public string CourseNumber { get; set; }
+
+            [JsonPropertyName("subject")]
+            public string SubjectCode { get; set; }
+
+            [JsonPropertyName("subjectDescription")]
+            public string SubjectName { get; set; }
+
+            [JsonPropertyName("campusDescription")]
+            public string CampusName { get; set; }
+
+            [JsonPropertyName("scheduleTypeDescription")]
+            public string SectionType { get; set; }
+
+            [JsonPropertyName("courseTitle")]
+            public string CourseTitle { get; set; }
+
+            [JsonPropertyName("creditHours")]
+            public double? CreditHours { get; set; }
+
+            [JsonPropertyName("maximumEnrollment")]
+            public int MaximumEnrollment { get; set; }
+
+            [JsonPropertyName("enrollment")]
+            public int Enrollment { get; set; }
+
+            [JsonPropertyName("seatsAvailable")]
+            public int SeatsAvailable { get; set; }
+
+            [JsonPropertyName("faculty")]
+            public ICollection<MyPurdueFaculty> Faculty { get; set; }
+
+            [JsonPropertyName("meetingsFaculty")]
+            public ICollection<MyPurdueMeeting> Meetings { get; set; }
+
+            // fields not mapped:
+            // crossList, crossListCapacity, crossListCount, crossListAvailable, creditHourHigh
+            // creditHourLow, creditHourIndicator, openSection, linkIdentifier, isSectionLinked,
+            // subjectCourse, reservedSeatSummary, sectionAttributes, instructionalMethod,
+            // instructionalMethodDescription
         }
 
-        public async Task<string> GetSectionDetailsPageAsync(string termCode, string subjectCode)
-        {
-            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
-            {
-                var postBody = new FormUrlEncodedContent(new[] 
-                {
-                    new KeyValuePair<string, string>("rsts", "dummy"),
-                    new KeyValuePair<string, string>("crn", "dummy"),
-                    new KeyValuePair<string, string>("term_in", termCode),
-                    new KeyValuePair<string, string>("sel_subj", "dummy"),
-                    new KeyValuePair<string, string>("sel_day", "dummy"),
-                    new KeyValuePair<string, string>("sel_schd", "dummy"),
-                    new KeyValuePair<string, string>("sel_insm", "dummy"),
-                    new KeyValuePair<string, string>("sel_camp", "dummy"),
-                    new KeyValuePair<string, string>("sel_levl", "dummy"),
-                    new KeyValuePair<string, string>("sel_sess", "dummy"),
-                    new KeyValuePair<string, string>("sel_instr", "dummy"),
-                    new KeyValuePair<string, string>("sel_ptrm", "dummy"),
-                    new KeyValuePair<string, string>("sel_attr", "dummy"),
-                    new KeyValuePair<string, string>("sel_subj", subjectCode),
-                    new KeyValuePair<string, string>("sel_crse", ""),
-                    new KeyValuePair<string, string>("sel_title", ""),
-                    new KeyValuePair<string, string>("sel_schd", "%"),
-                    new KeyValuePair<string, string>("sel_insm", "%"),
-                    new KeyValuePair<string, string>("sel_from_cred", ""),
-                    new KeyValuePair<string, string>("sel_to_cred", ""),
-                    new KeyValuePair<string, string>("sel_camp", "%"),
-                    new KeyValuePair<string, string>("sel_ptrm", "%"),
-                    new KeyValuePair<string, string>("sel_instr", "%"),
-                    new KeyValuePair<string, string>("sel_sess", "%"),
-                    new KeyValuePair<string, string>("sel_attr", "%"),
-                    new KeyValuePair<string, string>("begin_hh", "0"),
-                    new KeyValuePair<string, string>("begin_mi", "0"),
-                    new KeyValuePair<string, string>("begin_ap", "a"),
-                    new KeyValuePair<string, string>("end_hh", "0"),
-                    new KeyValuePair<string, string>("end_mi", "0"),
-                    new KeyValuePair<string, string>("end_ap", "a"),
-                    new KeyValuePair<string, string>("SUB_BTN", "Section Search"),
-                    new KeyValuePair<string, string>("path", "1"),
-                });
+        public struct MyPurdueFaculty {
+            [JsonPropertyName("bannerId")]
+            public string Id { get; set; }
 
-                var request = await Request(HttpMethod.POST,
-                    "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse_Advanced",
-                    postBody,
-                    true,
-                    "https://selfservice.mypurdue.purdue.edu/prod/bwskfcls.P_GetCrse");
-                if (!request.IsSuccessStatusCode)
-                {
-                    this.logger.LogError("Received non-success status code '{}' on " +
-                        "GetSectionListPageAsync.", request.StatusCode);
-                }
-                else
-                {
-                    return await request.Content.ReadAsStringAsync();
-                }
-            }
-            throw new ApplicationException(
-                "Exceeded retries attempting to query MyPurdue section details");
+            [JsonPropertyName("courseReferenceNumber")]
+            public string Crn { get; set; }
+
+            [JsonPropertyName("displayName")]
+            public string Name { get; set; }
+
+            [JsonPropertyName("emailAddress")]
+            public string Email { get; set; }
+
+            [JsonPropertyName("primaryIndicator")]
+            public bool IsPrimary { get; set; }
+
+            [JsonPropertyName("term")]
+            public string TermCode { get; set; }
         }
 
-        // Generates a basic request, providing POST body, following redirects, and storing cookies.
-        private async Task<HttpResponseMessage> Request(HttpMethod method, string url,
-            FormUrlEncodedContent postContent = null, bool followRedirect = true,
-            string requestReferrer = null)
-        {
-            logger.LogDebug("{} Request: {}", method.ToString(), url);
+        public struct MyPurdueMeeting {
+            [JsonPropertyName("category")]
+            public string Category { get; set; }
 
-            if (requestReferrer != null)
-            {
-                referrer = requestReferrer;
-            }
+            [JsonPropertyName("courseReferenceNumber")]
+            public string Crn { get; set; }
 
-            logger.LogDebug("Referrer: {}", referrer);
-            if (referrer.Length > 0)
-            {
-                httpClient.DefaultRequestHeaders.Referrer = new Uri(referrer);
-            }
-            else
-            {
-                if (httpClient.DefaultRequestHeaders.Contains("Referrer"))
-                {
-                    httpClient.DefaultRequestHeaders.Remove("Referrer");
-                }
-            }
+            [JsonPropertyName("faculty")]
+            public ICollection<MyPurdueFaculty> Faculty { get; set; }
 
-            // Print out our POST data
-            if (postContent != null)
-            {
-                var postString = await postContent.ReadAsStringAsync();
-                postString = postString.Replace("&", "\n\t\t");
-                logger.LogDebug("POST data: \n{}", postString);
-            }
+            [JsonPropertyName("meetingTime")]
+            public MyPurdueMeetingTime MeetingTime { get; set; }
 
-            // Print out all the cookies we're sending
-            var cookiesToSend = cookies.GetCookies(new Uri(url));
-            logger.LogDebug("Outgoing cookies: \n{}",
-                string.Join("\n", cookiesToSend.Select(c => c.ToString())));
-
-            HttpResponseMessage result = null;
-            for (int attempts = 0; attempts < MAX_RETRIES; ++attempts)
-            {
-                try
-                {
-                    switch (method)
-                    {
-                        case HttpMethod.POST:
-                            result = await httpClient.PostAsync(url, postContent);
-                            break;
-                        case HttpMethod.GET:
-                            result = await httpClient.GetAsync(url);
-                            break;
-                    }
-                }
-                catch (Exception e)
-                {
-                    logger.LogWarning("HTTP request exception, retrying ({} / {})\n{}",
-                        (attempts + 1), MAX_RETRIES, e.ToString());
-                    continue;
-                }
-                break;
-            }
-            if (result == null)
-            {
-                throw new InvalidOperationException(
-                    "No request was made - most likely due to invalid HTTP method.");
-            }
-
-            if (result.Headers.TryGetValues("set-cookie", out IEnumerable<string> incomingCookies))
-            {
-                logger.LogDebug("Incoming cookies:\n{}", string.Join("\n", incomingCookies));
-                foreach (var c in incomingCookies)
-                {
-                    if (c.StartsWith("SESSID") && !c.Contains("expires"))
-                    {
-                        var sessidCookieValue = c.Substring((c.IndexOf('=') + 1),
-                            (c.IndexOf(';') - c.IndexOf('=') - 1));
-                        var sessidCookie = new Cookie("SESSID", sessidCookieValue)
-                        {
-                            Domain = new Uri(url).Host,
-                            Path = "/"
-                        };
-                        cookies.Add(sessidCookie);
-                    }
-                    cookies.SetCookies(new Uri(url), c);
-                }
-            }
-
-            if (followRedirect && (result.Headers.Location != null))
-            {
-                logger.LogDebug("Redirect to {}", result.Headers.Location.ToString());
-                // All redirects are converted to GET
-                result = await Request(HttpMethod.GET, result.Headers.Location.ToString(), null);
-            }
-            else
-            {
-                referrer = url;
-            }
-            return result;
+            [JsonPropertyName("term")]
+            public string TermCode { get; set; }
         }
 
-        private static int ExponentialRetryDelayMs(int retryNumber)
-        {
-            return (int)(Math.Pow(2, retryNumber) * 1000);
+        public struct MyPurdueMeetingTime {
+            [JsonPropertyName("beginTime")]
+            public string BeginTime { get; set; }
+
+            [JsonPropertyName("building")]
+            public string BuildingCode { get; set; }
+
+            [JsonPropertyName("buildingDescription")]
+            public string BuildingName { get; set; }
+
+            [JsonPropertyName("campus")]
+            public string CampusCode { get; set; }
+
+            [JsonPropertyName("campusDescription")]
+            public string CampusName { get; set; }
+
+            [JsonPropertyName("courseReferenceNumber")]
+            public string Crn { get; set; }
+
+            [JsonPropertyName("creditHourSession")]
+            public double CreditHours { get; set; }
+
+            [JsonPropertyName("endDate")]
+            public string EndDate { get; set; }
+
+            [JsonPropertyName("endTime")]
+            public string EndTime { get; set; }
+
+            [JsonPropertyName("hoursWeek")]
+            public double HoursPerWeek { get; set; }
+
+            [JsonPropertyName("meetingScheduleType")]
+            public string ScheduleType { get; set; }
+
+            [JsonPropertyName("meetingType")]
+            public string MeetingType { get; set; }
+
+            [JsonPropertyName("meetingTypeDescription")]
+            public string MeetingTypeDescription { get; set; }
+
+            [JsonPropertyName("room")]
+            public string Room { get; set; }
+
+            [JsonPropertyName("startDate")]
+            public string StartDate { get; set; }
+
+            [JsonPropertyName("term")]
+            public string TermCode { get; set; }
+
+            [JsonPropertyName("sunday")]
+            public bool IsSunday { get; set; }
+
+            [JsonPropertyName("monday")]
+            public bool IsMonday { get; set; }
+
+            [JsonPropertyName("tuesday")]
+            public bool IsTuesday { get; set; }
+
+            [JsonPropertyName("wednesday")]
+            public bool IsWednesday { get; set; }
+
+            [JsonPropertyName("thursday")]
+            public bool IsThursday { get; set; }
+
+            [JsonPropertyName("friday")]
+            public bool IsFriday { get; set; }
+
+            [JsonPropertyName("saturday")]
+            public bool IsSaturday { get; set; }
         }
     }
 }

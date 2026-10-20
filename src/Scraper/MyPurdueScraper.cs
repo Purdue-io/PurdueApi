@@ -39,7 +39,7 @@ namespace PurdueIo.Scraper
         public async Task<ICollection<Section>> GetSectionsAsync(
             string termCode, string subjectCode)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public async Task<ICollection<Subject>> GetSubjectsAsync(
