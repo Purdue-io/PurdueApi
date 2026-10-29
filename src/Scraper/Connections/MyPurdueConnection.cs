@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
@@ -7,7 +8,6 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using PurdueIo.Scraper.Connections.Models;
-using PurdueIo.Scraper.Models;
 
 namespace PurdueIo.Scraper.Connections
 {
@@ -47,7 +47,7 @@ namespace PurdueIo.Scraper.Connections
                 "Mozilla/5.0 (X11; Linux x86_64; rv:157.0) Gecko/20100101 Firefox/157.0");
         }
 
-        public async Task<ICollection<Term>> GetTermListAsync()
+        public async Task<ICollection<MyPurdueTerm>> GetTermListAsync()
         {
             // TODO: If there are ever more than 500 terms, we'll need to implement code to pull
             // down the rest of them.
@@ -55,7 +55,7 @@ namespace PurdueIo.Scraper.Connections
                 $"classSearch/getTerms?searchTerm=&offset=1&max={MAX_PAGINATION_COUNT}");
             if (result.IsSuccessStatusCode)
             {
-                return JsonSerializer.Deserialize<List<Term>>(
+                return JsonSerializer.Deserialize<List<MyPurdueTerm>>(
                     await result.Content.ReadAsStringAsync());
             }
             logger.LogError(
@@ -66,7 +66,7 @@ namespace PurdueIo.Scraper.Connections
                 await result.Content.ReadAsStringAsync());
         }
 
-        public async Task<ICollection<Subject>> GetSubjectListAsync(string termCode)
+        public async Task<ICollection<MyPurdueSubject>> GetSubjectListAsync(string termCode)
         {
             // TODO: If there are ever more than 500 subjects, we'll need to implement code to pull
             // down the rest of them.
@@ -74,7 +74,7 @@ namespace PurdueIo.Scraper.Connections
                 $"classSearch/get_subject?searchTerm=&term={termCode}&offset=1&max={MAX_PAGINATION_COUNT}");
             if (result.IsSuccessStatusCode)
             {
-                var subjects = JsonSerializer.Deserialize<List<Subject>>(
+                var subjects = JsonSerializer.Deserialize<List<MyPurdueSubject>>(
                     await result.Content.ReadAsStringAsync());
 
                 // the subject names returned from the service are a little funky - they have
@@ -136,6 +136,43 @@ namespace PurdueIo.Scraper.Connections
             return sections;
         }
 
+        public async Task<MyPurdueLinkedSectionsResponse> GetLinkedSectionsAsync(
+            string termCode, string crn)
+        {
+            var result = await httpClient.GetAsync(
+                $"searchResults/fetchLinkedSections?term={termCode}&courseReferenceNumber{crn}");
+            if (result.IsSuccessStatusCode)
+            {
+                return JsonSerializer.Deserialize<MyPurdueLinkedSectionsResponse>(
+                    await result.Content.ReadAsStringAsync());
+            }
+            logger.LogError(
+                "Received HTTP '{}' on GetLinkedSectionsAsync: {}",
+                result.StatusCode, await result.Content.ReadAsStringAsync());
+            throw new ApplicationException(
+                $"Could not fetch linked sections: HTTP {result.StatusCode}: " +
+                await result.Content.ReadAsStringAsync());
+        }
+
+        public async Task<ICollection<ICollection<MyPurdueSection>>> GroupLinkedSectionsAsync(
+            string termCode, ICollection<MyPurdueSection> sections)
+        {
+            var sectionMap = sections.ToDictionary(s => s.Crn);
+            while (sectionMap.Count > 0)
+            {
+                var sectionGroup = new List<MyPurdueSection>();
+                var startingSection = sectionMap.Last().Value;
+                sectionMap.Remove(startingSection.Crn);
+                sectionGroup.Add(startingSection);
+                while (true)
+                {
+                    var linkedResponse = await GetLinkedSectionsAsync(termCode,
+                        startingSection.Crn);
+                    var linkedSections = linkedResponse.SectionGroups;
+                }
+            }
+        }
+
         private async Task EnsureSession(string termCode)
         {
             if (myPurdueSession == null || myPurdueSession.Value.sessionTerm != termCode)
@@ -160,8 +197,16 @@ namespace PurdueIo.Scraper.Connections
         }
     }
 
-    namespace Models {
-        public struct MyPurdueSectionResponse {
+    namespace Models
+    {
+        public class MyPurdueLinkedSectionsResponse
+        {
+            [JsonPropertyName("linkedData")]
+            public ICollection<ICollection<MyPurdueSection>> SectionGroups { get; set; }
+        }
+
+        public class MyPurdueSectionResponse
+        {
             [JsonPropertyName("success")]
             public bool Success { get; set; }
 
@@ -171,8 +216,24 @@ namespace PurdueIo.Scraper.Connections
             [JsonPropertyName("data")]
             public ICollection<MyPurdueSection> Sections { get; set; }
         }
-        
-        public struct MyPurdueSection {
+        public class MyPurdueTerm
+        {
+            [JsonPropertyName("code")]
+            public string Id { get; init; }
+
+            [JsonPropertyName("description")]
+            public string Name { get; init; }
+        }
+
+        public class MyPurdueSubject
+        {
+            [JsonPropertyName("code")]
+            public string Code { get; set; }
+
+            [JsonPropertyName("description")]
+            public string Name { get; set; }
+        }
+        public class MyPurdueSection {
             [JsonPropertyName("id")]
             public long Id { get; set; }
 
@@ -228,7 +289,7 @@ namespace PurdueIo.Scraper.Connections
             // instructionalMethodDescription
         }
 
-        public struct MyPurdueFaculty {
+        public class MyPurdueFaculty {
             [JsonPropertyName("bannerId")]
             public string Id { get; set; }
 
@@ -248,7 +309,7 @@ namespace PurdueIo.Scraper.Connections
             public string TermCode { get; set; }
         }
 
-        public struct MyPurdueMeeting {
+        public class MyPurdueMeeting {
             [JsonPropertyName("category")]
             public string Category { get; set; }
 
@@ -265,7 +326,7 @@ namespace PurdueIo.Scraper.Connections
             public string TermCode { get; set; }
         }
 
-        public struct MyPurdueMeetingTime {
+        public class MyPurdueMeetingTime {
             [JsonPropertyName("beginTime")]
             public string BeginTime { get; set; }
 

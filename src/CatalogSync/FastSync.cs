@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using PurdueIo.Database;
 using PurdueIo.Database.Models;
 using PurdueIo.Scraper;
+using PurdueIo.Scraper.Connections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,8 +20,6 @@ using DatabaseRoom = PurdueIo.Database.Models.Room;
 using DatabaseSection = PurdueIo.Database.Models.Section;
 using DatabaseSubject = PurdueIo.Database.Models.Subject;
 using DatabaseTerm = PurdueIo.Database.Models.Term;
-using ScrapedMeeting = PurdueIo.Scraper.Models.Meeting;
-using ScrapedSection = PurdueIo.Scraper.Models.Section;
 
 namespace PurdueIo.CatalogSync
 {
@@ -34,35 +33,35 @@ namespace PurdueIo.CatalogSync
             SyncNewAndCurrentTerms,
         }
 
-        public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            ILogger<FastSync> logger,
+        public static async Task SynchronizeAsync(MyPurdueConnection connection,
+            ApplicationDbContext dbContext, ILogger<FastSync> logger,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext, logger)).InternalSynchronizeAsync(
+            await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
                 termSyncBehavior, progress: progress);
         }
 
-        public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            ILogger<FastSync> logger, IEnumerable<string> termCodes,
+        public static async Task SynchronizeAsync(MyPurdueConnection connection,
+            ApplicationDbContext dbContext, ILogger<FastSync> logger, IEnumerable<string> termCodes,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext, logger)).InternalSynchronizeAsync(
+            await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
                 TermSyncBehavior.SyncAllTerms, termCodes, progress: progress);
         }
 
-        public static async Task SynchronizeAsync(IScraper scraper, ApplicationDbContext dbContext,
-            ILogger<FastSync> logger, IEnumerable<string> termCodes,
+        public static async Task SynchronizeAsync(MyPurdueConnection connection,
+            ApplicationDbContext dbContext, ILogger<FastSync> logger, IEnumerable<string> termCodes,
             IEnumerable<string> subjectCodes,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(scraper, dbContext, logger)).InternalSynchronizeAsync(
+            await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
                 termSyncBehavior, termCodes, subjectCodes, progress);
         }
 
-        private readonly IScraper scraper;
+        private readonly MyPurdueConnection connection;
 
         private readonly ApplicationDbContext dbContext;
 
@@ -97,10 +96,10 @@ namespace PurdueIo.CatalogSync
         private Dictionary<string, DatabaseInstructor> dbCachedInstructors =
             new Dictionary<string, DatabaseInstructor>();
 
-        private FastSync(IScraper scraper, ApplicationDbContext dbContext,
+        private FastSync(MyPurdueConnection connection, ApplicationDbContext dbContext,
             ILogger<FastSync> logger)
         {
-            this.scraper = scraper;
+            this.connection = connection;
             this.dbContext = dbContext;
             this.logger = logger;
 
@@ -118,7 +117,7 @@ namespace PurdueIo.CatalogSync
 
             // Scrape new terms from service
             progress?.Invoke(new (0, "Updating term list..."));
-            var scrapedTerms = await scraper.GetTermsAsync();
+            var scrapedTerms = await connection.GetTermListAsync();
             var termsToSync = new List<DatabaseTerm>();
 
             // Add any new terms to the database
@@ -197,7 +196,7 @@ namespace PurdueIo.CatalogSync
             var subjects = dbContext.Subjects.ToDictionary(s => s.Abbreviation);
 
             // Scrape new subjects from service
-            var scrapedSubjects = await scraper.GetSubjectsAsync(term.Code);
+            var scrapedSubjects = await connection.GetSubjectListAsync(term.Code);
             var subjectsToSync = new List<DatabaseSubject>();
 
             // Add any new subjects to the database
@@ -280,7 +279,8 @@ namespace PurdueIo.CatalogSync
 
             // Scrape new sections, group into classes
             progress?.Invoke(new (PROGRESS_SUBJECT_CACHING_ENTITIES, "Scraping sections..."));
-            var scrapedSections = await scraper.GetSectionsAsync(term.Code, subject.Abbreviation);
+            var scrapedSections = await connection.GetSectionsAsync(term.Code,
+                subject.Abbreviation);
             var groupedSections = SectionLinker.GroupLinkedSections(scrapedSections);
 
             // Sync each section group as a "Class"
