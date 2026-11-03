@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Api",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/Api/bin/Debug/net9.0/Api.dll",
+      "cwd": "${workspaceFolder}/src/Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://0.0.0.0:5000",
+        "DbProvider": "Sqlite",
+        "DbConnectionString": "Data Source=${workspaceFolder}/purdueio.sqlite"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+https?://\\S+:([0-9]+)",
+        "uriFormat": "http://localhost:%s/"
+      },
+      "stopAtEntry": false
+    },
+    {
+      "name": "CatalogSync",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/CatalogSync/bin/Debug/net9.0/CatalogSync.dll",
+      "args": ["-d", "Sqlite", "-c", "Data Source=${workspaceFolder}/purdueio.sqlite"],
+      "cwd": "${workspaceFolder}/src/CatalogSync",
+      "console": "integratedTerminal",
+      "stopAtEntry": false
+    }
+  ]
+}

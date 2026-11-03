@@ -104,6 +104,25 @@ To start developing locally, install the .NET SDK.
 
 [Install .NET SDK](https://dotnet.microsoft.com/download)
 
+### Dev Container
+
+A [dev container](https://containers.dev) definition is provided in `.devcontainer/` with the
+.NET 9 SDK, the `sqlite3` CLI, and a shared SQLite database at the repository root
+(`$PURDUEIO_SQLITE`). It is configured to work with rootless Podman (e.g. via
+[DevPod](https://devpod.sh)) as well as Docker.
+
+```sh
+devpod up . --ide codium
+```
+
+Inside the container, run CatalogSync against the shared database, then start the API
+(or use the `CatalogSync` / `Api` launch configurations):
+
+```sh
+cd src/CatalogSync && dotnet run -- -d Sqlite -c "Data Source=$PURDUEIO_SQLITE"
+cd src/Api && ASPNETCORE_URLS=http://0.0.0.0:5000 dotnet run --no-launch-profile
+```
+
 ## CatalogSync
 
 CatalogSync is the process used to pull course data from MyPurdue and synchronize it to a

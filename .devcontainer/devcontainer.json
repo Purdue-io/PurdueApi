@@ -1,0 +1,44 @@
+{
+  "name": "PurdueApi (.NET 9)",
+  // Ubuntu 24.04: the Open VSX C# extension's debugger (netcoredbg) needs glibc >= 2.38 (bookworm has 2.36)
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-noble",
+
+  // Rootless Podman: keep host UID (1000) mapped to the container's 'vscode' user (also 1000)
+  // so workspace files stay owned by you, and disable SELinux relabeling for the bind mount.
+  "runArgs": ["--userns=keep-id", "--security-opt=label=disable"],
+  "containerUser": "vscode",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": false,
+
+  "containerEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1",
+    "ASPNETCORE_ENVIRONMENT": "Development",
+    // Shared SQLite database used by both CatalogSync and the Api
+    "PURDUEIO_SQLITE": "${containerWorkspaceFolder}/purdueio.sqlite",
+    // Read by the Api via ASP.NET Core configuration (overrides appsettings.json)
+    "DbProvider": "Sqlite",
+    "DbConnectionString": "Data Source=${containerWorkspaceFolder}/purdueio.sqlite"
+  },
+
+  "postCreateCommand": "sudo rm -f /etc/apt/sources.list.d/yarn.list && sudo apt-get update && sudo apt-get install -y --no-install-recommends sqlite3 && cd src && dotnet tool restore && dotnet restore PurdueIo.sln",
+
+  "forwardPorts": [5000],
+  "portsAttributes": {
+    "5000": { "label": "Api (http)", "onAutoForward": "notify" }
+  },
+
+  "customizations": {
+    "vscode": {
+      // VSCodium pulls from Open VSX: use the free OmniSharp-based C# extension (bundles netcoredbg)
+      "extensions": [
+        "muhammad-sammy.csharp",
+        "qwtel.sqlite-viewer"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "src/PurdueIo.sln",
+        "omnisharp.useModernNet": true
+      }
+    }
+  }
+}
