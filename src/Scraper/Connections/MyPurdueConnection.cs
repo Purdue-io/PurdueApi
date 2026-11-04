@@ -140,7 +140,7 @@ namespace PurdueIo.Scraper.Connections
             string termCode, string crn)
         {
             var result = await httpClient.GetAsync(
-                $"searchResults/fetchLinkedSections?term={termCode}&courseReferenceNumber{crn}");
+                $"searchResults/fetchLinkedSections?term={termCode}&courseReferenceNumber={crn}");
             if (result.IsSuccessStatusCode)
             {
                 return JsonSerializer.Deserialize<MyPurdueLinkedSectionsResponse>(
@@ -157,20 +157,90 @@ namespace PurdueIo.Scraper.Connections
         public async Task<ICollection<ICollection<MyPurdueSection>>> GroupLinkedSectionsAsync(
             string termCode, ICollection<MyPurdueSection> sections)
         {
-            var sectionMap = sections.ToDictionary(s => s.Crn);
-            while (sectionMap.Count > 0)
+            var byCrn = sections.ToDictionary(s => s.Crn);
+
+            var linkGroups = sections
+                .Where(s => s.IsSectionLinked)
+                .GroupBy(s => (s.SubjectCourseNumber, s.LinkIdentifier))
+                .ToDictionary(g => g.Key, g => g.Select(s => s.Crn).ToList());
+
+            var remaining = new HashSet<string>(byCrn.Keys);
+            var groups = new List<HashSet<string>>();
+            var owner = new Dictionary<string, HashSet<string>>(); // CRN -> group containing it
+
+            // Closed = every link-ID group touched by this group is entirely inside it.
+            // Only used to decide when to stop making calls, never to add sections.
+            bool IsClosed(HashSet<string> groupCrns) =>
+                groupCrns.All(crn =>
+                    !byCrn.TryGetValue(crn, out var s) ||
+                    !linkGroups.TryGetValue((s.SubjectCourseNumber, s.LinkIdentifier), out var members) ||
+                    members.All(groupCrns.Contains));
+
+            // Seed from labs/recitations/PSOs; expanding their lecture is the cheap direction.
+            var ordered = sections.OrderBy(s => s.SectionType == "Lecture");
+
+            foreach (var section in ordered)
             {
-                var sectionGroup = new List<MyPurdueSection>();
-                var startingSection = sectionMap.Last().Value;
-                sectionMap.Remove(startingSection.Crn);
-                sectionGroup.Add(startingSection);
-                while (true)
+                if (!remaining.Remove(section.Crn)) continue;
+
+                if (!section.IsSectionLinked)
                 {
-                    var linkedResponse = await GetLinkedSectionsAsync(termCode,
-                        startingSection.Crn);
-                    var linkedSections = linkedResponse.SectionGroups;
+                    groups.Add([section.Crn]);
+                    continue;
                 }
+
+                var groupCrns = new HashSet<string> { section.Crn };
+                var neighbors = await GetLinkedCrnsAsync(termCode, section.Crn);
+                groupCrns.UnionWith(neighbors);
+
+                // Lectures first: querying one usually closes the group in one call.
+                var toExpand = neighbors
+                    .Where(crn => crn != section.Crn)
+                    .OrderBy(crn => byCrn.TryGetValue(crn, out var s)
+                        && s.SectionType == "Lecture" ? 0 : 1)
+                    .ToList();
+
+                foreach (var crn in toExpand)
+                {
+                    if (IsClosed(groupCrns)) break;
+                    groupCrns.UnionWith(await GetLinkedCrnsAsync(termCode, crn));
+                }
+
+                remaining.ExceptWith(groupCrns);
+
+                // If an early stop ever missed something, a later seed will find it and
+                // overlap an existing group; merge instead of producing duplicates.
+                var overlapping = groupCrns.Where(owner.ContainsKey)
+                    .Select(crn => owner[crn]).Distinct().ToList();
+
+                var target = overlapping.FirstOrDefault() ?? [];
+                if (overlapping.Count == 0) groups.Add(target);
+
+                foreach (var other in overlapping.Skip(1))
+                {
+                    target.UnionWith(other);
+                    groups.Remove(other);
+                }
+
+                target.UnionWith(groupCrns);
+                foreach (var crn in target) owner[crn] = target;
             }
+
+            return groups
+                .Select(g => (ICollection<MyPurdueSection>)g
+                    .Where(byCrn.ContainsKey) // drop CRNs outside this search (crosslists, etc.)
+                    .Select(crn => byCrn[crn])
+                    .ToList())
+                .ToList();
+        }
+
+        private async Task<IReadOnlyCollection<string>> GetLinkedCrnsAsync(string termCode, string crn)
+        {
+            var response = await GetLinkedSectionsAsync(termCode, crn);
+            return response.SectionGroups
+                .SelectMany(group => group)
+                .Select(s => s.Crn)
+                .ToHashSet();
         }
 
         private async Task EnsureSession(string termCode)
@@ -282,10 +352,19 @@ namespace PurdueIo.Scraper.Connections
             [JsonPropertyName("meetingsFaculty")]
             public ICollection<MyPurdueMeeting> Meetings { get; set; }
 
+            [JsonPropertyName("isSectionLinked")]
+            public bool IsSectionLinked { get; set; }
+
+            [JsonPropertyName("linkIdentifier")]
+            public string LinkIdentifier { get; set; }
+
+            [JsonPropertyName("subjectCourse")]
+            public string SubjectCourseNumber { get; set; }
+
             // fields not mapped:
             // crossList, crossListCapacity, crossListCount, crossListAvailable, creditHourHigh
-            // creditHourLow, creditHourIndicator, openSection, linkIdentifier, isSectionLinked,
-            // subjectCourse, reservedSeatSummary, sectionAttributes, instructionalMethod,
+            // creditHourLow, creditHourIndicator, openSection,
+            // reservedSeatSummary, sectionAttributes, instructionalMethod,
             // instructionalMethodDescription
         }
 

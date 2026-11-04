@@ -22,6 +22,9 @@ namespace PurdueIo.Tests
                 loggerFactory.CreateLogger<MyPurdueConnection>());
             var sections = await connection.GetSectionsAsync("202720", "CS");
             Assert.True(sections.Count > 0);
+
+            var groupedSections = await connection.GroupLinkedSectionsAsync("202720", sections);
+            Assert.True(groupedSections.Count > 0);
         }
     }
 }

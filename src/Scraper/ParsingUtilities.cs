@@ -1,23 +1,9 @@
-using PurdueIo.Scraper.Models;
 using System;
 
 namespace PurdueIo.Scraper
 {
     public static class ParsingUtilities
     {
-        public static DaysOfWeek ParseDaysOfWeek(string daysOfWeek)
-        {
-            DaysOfWeek dow = 0;
-            if (daysOfWeek.Contains("M")) { dow |= DaysOfWeek.Monday; }
-            if (daysOfWeek.Contains("T")) { dow |= DaysOfWeek.Tuesday; }
-            if (daysOfWeek.Contains("W")) { dow |= DaysOfWeek.Wednesday; }
-            if (daysOfWeek.Contains("R")) { dow |= DaysOfWeek.Thursday; }
-            if (daysOfWeek.Contains("F")) { dow |= DaysOfWeek.Friday; }
-            if (daysOfWeek.Contains("S")) { dow |= DaysOfWeek.Saturday; }
-            if (daysOfWeek.Contains("U")) { dow |= DaysOfWeek.Sunday; }
-            return dow;
-        }
-
         public static Tuple<TimeOnly?, TimeOnly?> ParseStartEndTime(string startEndTime)
         {
             TimeOnly? start = null;

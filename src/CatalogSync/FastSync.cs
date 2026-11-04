@@ -4,6 +4,7 @@ using PurdueIo.Database;
 using PurdueIo.Database.Models;
 using PurdueIo.Scraper;
 using PurdueIo.Scraper.Connections;
+using PurdueIo.Scraper.Connections.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -281,7 +282,8 @@ namespace PurdueIo.CatalogSync
             progress?.Invoke(new (PROGRESS_SUBJECT_CACHING_ENTITIES, "Scraping sections..."));
             var scrapedSections = await connection.GetSectionsAsync(term.Code,
                 subject.Abbreviation);
-            var groupedSections = SectionLinker.GroupLinkedSections(scrapedSections);
+            var groupedSections = await connection.GroupLinkedSectionsAsync(term.Code,
+                scrapedSections);
 
             // Sync each section group as a "Class"
             var syncedSectionGroups = 0;
@@ -336,11 +338,13 @@ namespace PurdueIo.CatalogSync
         }
 
         private void InternalSynchronizeClass(DatabaseTerm term, DatabaseSubject subject,
-            ICollection<ScrapedSection> sectionGroup)
+            ICollection<MyPurdueSection> sectionGroup)
         {
             // Hydrate campus
             var campusCode = "";
             var campusName = "";
+            // TODO
+            sectionGroup.FirstOrDefault(s => s.Meetings.FirstOrDefault(m => m.MeetingTime.CampusCode.Length > 0))
             var sectionWithCampus = sectionGroup.FirstOrDefault(s => s.CampusCode.Length > 0);
             if (sectionWithCampus != null)
             {

@@ -30,7 +30,7 @@
   <!-- References -->
   <ItemGroup>
     <ProjectReference Include="..\Scraper\Scraper.csproj" />
-    <ProjectReference Include="..\CatalogSync\CatalogSync.csproj" />
+    <!-- <ProjectReference Include="..\CatalogSync\CatalogSync.csproj" /> -->
   </ItemGroup>
 
 </Project>
