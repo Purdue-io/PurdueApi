@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PurdueIo.Database;
-using PurdueIo.Database.Models;
-using PurdueIo.Scraper;
 using PurdueIo.Scraper.Connections;
 using PurdueIo.Scraper.Connections.Models;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -68,8 +67,6 @@ namespace PurdueIo.CatalogSync
 
         private readonly ILogger<FastSync> logger;
 
-        private readonly TimeSpan MEETING_TIME_EQUALITY_TOLERANCE = TimeSpan.FromMinutes(1);
-
         private const double PROGRESS_UPDATING_TERM_LIST = 0.05;
 
         private const double PROGRESS_UPDATING_TERM_SECTIONS = 0.95;
@@ -83,6 +80,13 @@ namespace PurdueIo.CatalogSync
         private const double PROGRESS_SUBJECT_SCRAPING_SECTIONS = 0.05;
 
         private const double PROGRESS_SUBJECT_UPDATING_CLASSES = 0.90;
+
+        private const string Tba = "TBA";
+
+        private readonly Dictionary<string, string> campusCodesByName =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private readonly HashSet<Guid> claimedClassIds = new();
 
         private Dictionary<string, DatabaseCampus> dbCachedCampuses =
             new Dictionary<string, DatabaseCampus>();
@@ -103,10 +107,6 @@ namespace PurdueIo.CatalogSync
             this.connection = connection;
             this.dbContext = dbContext;
             this.logger = logger;
-
-            // Disable change tracking
-            this.dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
-            this.dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
 
         private async Task InternalSynchronizeAsync(TermSyncBehavior termSyncBehavior,
@@ -246,7 +246,7 @@ namespace PurdueIo.CatalogSync
             }
 
             // Update term's start and end date to match the earliest and latest meeting
-            if (dbContext.Sections.Where(s => s.Class.TermId == term.Id).Count() > 0)
+            if (dbContext.Sections.Where(s => s.Class.TermId == term.Id).Any())
             {
                 dbContext.Entry(term).Property(t => t.StartDate).CurrentValue = 
                     dbContext.Sections
@@ -278,10 +278,20 @@ namespace PurdueIo.CatalogSync
                 .Select(s => s.Crn)
                 .ToList();
 
-            // Scrape new sections, group into classes
+            // Scrape all sections for the given term/subject
             progress?.Invoke(new (PROGRESS_SUBJECT_CACHING_ENTITIES, "Scraping sections..."));
             var scrapedSections = await connection.GetSectionsAsync(term.Code,
                 subject.Abbreviation);
+
+            // Populate campus code <-> name map
+            foreach (var t in scrapedSections.SelectMany(s => s.Meetings ?? [])
+                .Select(m => m.MeetingTime))
+            {
+                if (!string.IsNullOrEmpty(t?.CampusCode) && !string.IsNullOrEmpty(t.CampusName))
+                    campusCodesByName[t.CampusName] = t.CampusCode;
+            }
+
+            // Group linked sections into classes
             var groupedSections = await connection.GroupLinkedSectionsAsync(term.Code,
                 scrapedSections);
 
@@ -290,11 +300,11 @@ namespace PurdueIo.CatalogSync
             foreach (var sectionGroup in groupedSections)
             {
                 var sectionCourseNumber = sectionGroup
-                    .FirstOrDefault(s => (s.CourseNumber.Length > 0))
-                    .CourseNumber;
+                    .FirstOrDefault(s => !string.IsNullOrEmpty(s.CourseNumber))
+                    ?.CourseNumber;
                 var sectionCourseTitle = sectionGroup
-                    .FirstOrDefault(s => (s.CourseTitle.Length > 0))
-                    .CourseTitle;
+                    .FirstOrDefault(s => !string.IsNullOrEmpty(s.CourseTitle))
+                    ?.CourseTitle;
                 progress?.Invoke(new (PROGRESS_SUBJECT_CACHING_ENTITIES + 
                     PROGRESS_SUBJECT_SCRAPING_SECTIONS +
                     ((PROGRESS_SUBJECT_UPDATING_CLASSES / groupedSections.Count)
@@ -309,9 +319,9 @@ namespace PurdueIo.CatalogSync
                 PROGRESS_SUBJECT_SCRAPING_SECTIONS +
                 PROGRESS_SUBJECT_UPDATING_CLASSES),
                 $"Cleaning up outdated sections..."));
-            var scrapedSectionsByCrn = scrapedSections.ToDictionary(s => s.Crn);
+            var scrapedCrns = scrapedSections.Select(s => s.Crn).ToHashSet();
             var crnsToRemove = existingCrns
-                .Where(s => !scrapedSectionsByCrn.ContainsKey(s));
+                .Where(s => !scrapedCrns.Contains(s));
             foreach (var crnToRemove in crnsToRemove)
             {
                 var sectionToRemove = dbContext.Sections.SingleOrDefault(s =>
@@ -319,7 +329,7 @@ namespace PurdueIo.CatalogSync
                     (s.Crn == crnToRemove));
                 if (sectionToRemove != null)
                 {
-                    dbContext.Entry(sectionToRemove).State = EntityState.Deleted;
+                    dbContext.Sections.Remove(sectionToRemove);
                 }
             }
 
@@ -330,57 +340,83 @@ namespace PurdueIo.CatalogSync
                 (c.TermId == term.Id) &&
                 (c.Course.SubjectId == subject.Id) &&
                 (c.Sections.Count == 0));
-            foreach (var removedClass in removedClasses)
-            {
-                dbContext.Entry(removedClass).State = EntityState.Deleted;
-            }
+            dbContext.Classes.RemoveRange(removedClasses.ToList());
+
             dbContext.SaveChanges();
+            dbContext.ChangeTracker.Clear();
+            dbCachedCampuses.Clear();
+            dbCachedCourses.Clear();
+            dbCachedBuildings.Clear();
+            dbCachedInstructors.Clear();
+            claimedClassIds.Clear();
         }
+
+        private static (string Code, string Name)? GetCampus(ICollection<MyPurdueSection> sectionGroup) =>
+            sectionGroup
+                .SelectMany(s => s.Meetings ?? [])
+                .Select(m => m.MeetingTime)
+                .Where(t => !string.IsNullOrEmpty(t?.CampusCode) &&
+                    !string.IsNullOrEmpty(t.CampusName))
+                .GroupBy(t => (Code: t.CampusCode, Name: t.CampusName))
+                .OrderByDescending(g => g.Count())
+                .Select(g => ((string Code, string Name)?)g.Key)
+                .FirstOrDefault();
+
+        private static double? EffectiveCreditHours(MyPurdueSection s) =>
+            s.CreditHours ?? s.CreditHourHigh ?? s.CreditHourLow;
 
         private void InternalSynchronizeClass(DatabaseTerm term, DatabaseSubject subject,
             ICollection<MyPurdueSection> sectionGroup)
         {
-            // Hydrate campus
-            var campusCode = "";
-            var campusName = "";
-            // TODO
-            sectionGroup.FirstOrDefault(s => s.Meetings.FirstOrDefault(m => m.MeetingTime.CampusCode.Length > 0))
-            var sectionWithCampus = sectionGroup.FirstOrDefault(s => s.CampusCode.Length > 0);
-            if (sectionWithCampus != null)
+            var campusSearch = GetCampus(sectionGroup);
+            if (campusSearch is null)
             {
-                campusCode = sectionWithCampus.CampusCode;
-                campusName = sectionWithCampus.CampusName;
+                var name = sectionGroup.Select(s => s.CampusName)
+                    .FirstOrDefault(n => !string.IsNullOrEmpty(n));
+                if (name != null && campusCodesByName.TryGetValue(name, out var code))
+                    campusSearch = (code, name);
             }
+            if (campusSearch is null)
+            {
+                logger.LogWarning("No campus found for CRNs {Crns}",
+                    string.Join(", ", sectionGroup.Select(s => s.Crn)));
+            }
+            var (campusCode, campusName) = campusSearch ?? ("", "");
             DatabaseCampus campus = FetchOrAddCampus(campusCode, campusName);
 
             // Hydrate course
             var sectionWithCourse = sectionGroup
                 .FirstOrDefault(s => 
-                    (s.CourseNumber.Length > 0) && 
-                    (s.CourseTitle.Length > 0));
+                    !string.IsNullOrEmpty(s.CourseNumber) && 
+                    !string.IsNullOrEmpty(s.CourseTitle));
             if (sectionWithCourse == null)
             {
                 logger.LogError("WARNING: No course information found for CRNs " + 
                     $"{string.Join(", ", sectionGroup.Select(s => s.Crn))}");
                 return;
             }
-            var creditHours = sectionGroup
-                .OrderByDescending(c => c.CreditHours)
-                .FirstOrDefault()
-                .CreditHours;
+            var creditHours = sectionGroup.Max(EffectiveCreditHours);
             DatabaseCourse course = FetchOrAddCourse(subject, sectionWithCourse.CourseNumber,
-                sectionWithCourse.CourseTitle, creditHours, sectionWithCourse.Description);
+                sectionWithCourse.CourseTitle, creditHours, "");
+            // TODO: Fetch an actual course description separately
 
             // Hydrate class
-            Guid classId = Guid.Empty;
             var crns = sectionGroup.Select(s => s.Crn);
             var dbSections = dbContext.Sections
                 .Where(s => (s.Class.TermId == term.Id) && (crns.Contains(s.Crn)))
                 .ToList();
-            if (dbSections.Count == 0)
+            // Re-use the existing class that holds most of this group's sections,
+            // unless another group in this subject already claimed it.
+            var reusableClassId = dbSections
+                .GroupBy(s => s.ClassId)
+                .OrderByDescending(g => g.Count())
+                .Select(g => (Guid?)g.Key)
+                .FirstOrDefault(id => !claimedClassIds.Contains(id.Value));
+
+            Guid classId;
+            if (reusableClassId is null)
             {
-                // The sections don't exist, so the class doesn't either.
-                var newClass = new DatabaseClass()
+                var newClass = new DatabaseClass
                 {
                     Id = Guid.NewGuid(),
                     CourseId = course.Id,
@@ -392,20 +428,12 @@ namespace PurdueIo.CatalogSync
             }
             else
             {
-                // At least one of the sections exists in the database.
-                classId = dbSections.First().ClassId;
-
-                // Detect if the section's Class has moved to a different Course
-                // (handle the rare case where a CRN gets moved to a different Course)
+                classId = reusableClassId.Value;
                 var dbSectionGroupClass = dbContext.Classes.Single(c => c.Id == classId);
-                if (dbSectionGroupClass.CourseId != course.Id)
-                {
-                    dbSectionGroupClass.CourseId = course.Id;
-                    dbContext.Entry(dbSectionGroupClass)
-                        .Property(s => s.CourseId).CurrentValue = course.Id;
-                    dbContext.Entry(dbSectionGroupClass).State = EntityState.Modified;
-                }
+                dbSectionGroupClass.CourseId = course.Id;
+                dbSectionGroupClass.CampusId = campus.Id;
             }
+            claimedClassIds.Add(classId);
 
             // Hydrate each section
             foreach (var section in sectionGroup)
@@ -431,9 +459,6 @@ namespace PurdueIo.CatalogSync
                     if (campus.Name != campusName)
                     {
                         campus.Name = campusName;
-                        var campusEntry = dbContext.Entry(campus);
-                        campusEntry.Property(s => s.Name).CurrentValue = campusName;
-                        campusEntry.State = EntityState.Modified;
                     }
                 }
                 else
@@ -453,204 +478,197 @@ namespace PurdueIo.CatalogSync
         }
 
         private DatabaseCourse FetchOrAddCourse(DatabaseSubject subject, string courseNumber,
-            string courseTitle, double creditHours, string courseDescription)
+            string courseTitle, double? creditHours, string courseDescription)
         {
             DatabaseCourse course;
             var courseKey = (subjectCode: subject.Abbreviation,
                 number: courseNumber, title: courseTitle);
-            if (dbCachedCourses.ContainsKey(courseKey))
+            if (!dbCachedCourses.TryGetValue(courseKey, out course))
             {
-                course = dbCachedCourses[courseKey];
-            }
-            else
-            {
-                course = dbContext.Courses.SingleOrDefault(c => 
+                course = dbContext.Courses.SingleOrDefault(c =>
                     (c.SubjectId == subject.Id) &&
-                    (c.Number == courseNumber) && 
+                    (c.Number == courseNumber) &&
                     (c.Title == courseTitle));
                 if (course == null)
                 {
-                    course = new DatabaseCourse()
+                    course = new DatabaseCourse
                     {
                         Id = Guid.NewGuid(),
                         Number = courseNumber,
                         SubjectId = subject.Id,
                         Title = courseTitle,
-                        CreditHours = creditHours,
                         Description = courseDescription,
+                        CreditHours = creditHours ?? 0,
                     };
                     dbContext.Add(course);
                 }
                 dbCachedCourses[courseKey] = course;
             }
+            if (creditHours.HasValue)
+            {
+                course.CreditHours = creditHours.Value;
+            }
             return course;
         }
 
-        private DatabaseSection AddOrUpdateSection(Guid classId,
-            ICollection<DatabaseSection> dbSections, ScrapedSection section)
+        private static DateOnly? ParseMyPurdueDate(string? value) =>
+            DateOnly.TryParseExact(value, "MM/dd/yyyy", CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out var date)
+                ? date
+                : null;
+
+        private static TimeOnly? ParseMyPurdueTime(string? value) =>
+            TimeOnly.TryParseExact(value, "HHmm", CultureInfo.InvariantCulture, DateTimeStyles.None,
+                out var time)
+                ? time
+                : null;
+
+        private static DatabaseDaysOfWeek GetDaysOfWeek(MyPurdueMeetingTime t)
         {
-            var startDate = section.Meetings
-                .Select(m => m.StartDate)
-                .Where(d => d != null)
-                .OrderBy(d => d)
-                .FirstOrDefault();
+            var days = DatabaseDaysOfWeek.None;
+            if (t.IsSunday)    days |= DatabaseDaysOfWeek.Sunday;
+            if (t.IsMonday)    days |= DatabaseDaysOfWeek.Monday;
+            if (t.IsTuesday)   days |= DatabaseDaysOfWeek.Tuesday;
+            if (t.IsWednesday) days |= DatabaseDaysOfWeek.Wednesday;
+            if (t.IsThursday)  days |= DatabaseDaysOfWeek.Thursday;
+            if (t.IsFriday)    days |= DatabaseDaysOfWeek.Friday;
+            if (t.IsSaturday)  days |= DatabaseDaysOfWeek.Saturday;
+            return days;
+        }
 
-            var endDate = section.Meetings
-                .Select(m => m.EndDate)
-                .Where(d => d != null)
-                .OrderByDescending(d => d)
-                .FirstOrDefault();
+        private DatabaseSection AddOrUpdateSection(Guid classId,
+            ICollection<DatabaseSection> dbSections, MyPurdueSection section)
+        {
+            var meetingTimes = (section.Meetings ?? [])
+                .Select(m => m.MeetingTime)
+                .Where(t => t != null)
+                .ToList();
 
-            var existingSection = dbSections.SingleOrDefault(s => (s.Crn == section.Crn));
+            var startDate = meetingTimes.Select(t => ParseMyPurdueDate(t.StartDate)).Min();
+            var endDate = meetingTimes.Select(t => ParseMyPurdueDate(t.EndDate)).Max();
+
+            var existingSection = dbSections.SingleOrDefault(s => s.Crn == section.Crn);
             if (existingSection != null)
             {
-                var modified = false;
-                var dbEntry = dbContext.Entry(existingSection);
-                if (existingSection.ClassId != classId)
-                {
-                    existingSection.ClassId = classId;
-                    dbEntry.Property(s => s.ClassId).CurrentValue = classId;
-                    modified = true;
-                }
-                if (existingSection.Type != section.Type)
-                {
-                    existingSection.Type = section.Type;
-                    dbEntry.Property(s => s.Type).CurrentValue = section.Type;
-                    modified = true;
-                }
+                existingSection.ClassId = classId;
+                existingSection.Type = section.SectionType;
+                existingSection.StartDate = startDate;
+                existingSection.EndDate = endDate;
                 // TODO: Registration status..?
-                if (existingSection.StartDate != startDate)
-                {
-                    existingSection.StartDate = startDate;
-                    dbEntry.Property(s => s.StartDate).CurrentValue = startDate;
-                    modified = true;
-                }
-                if (existingSection.EndDate != endDate)
-                {
-                    existingSection.EndDate = endDate;
-                    dbEntry.Property(s => s.EndDate).CurrentValue = endDate;
-                    modified = true;
-                }
-
-                if (modified)
-                {
-                    dbEntry.State = EntityState.Modified;
-                }
                 return existingSection;
             }
-            else
+
+            var newSection = new DatabaseSection
             {
-                var newSection = new DatabaseSection()
-                {
-                    Id = Guid.NewGuid(),
-                    Crn = section.Crn,
-                    ClassId = classId,
-                    Type = section.Type,
-                    StartDate = startDate,
-                    EndDate = endDate,
-                };
-                dbContext.Add(newSection);
-                return newSection;
-            }
+                Id = Guid.NewGuid(),
+                Crn = section.Crn,
+                ClassId = classId,
+                Type = section.SectionType,
+                StartDate = startDate,
+                EndDate = endDate,
+            };
+            dbContext.Add(newSection);
+            return newSection;
         }
 
         private void AddOrUpdateSectionMeetings(DatabaseCampus campus, DatabaseSection dbSection,
-            ScrapedSection section)
+            MyPurdueSection section)
         {
             var dbMeetings = dbContext.Meetings
-                .Where(m => (m.SectionId == dbSection.Id))
+                .Include(m => m.Instructors)
+                .Where(m => m.SectionId == dbSection.Id)
                 .ToList();
-            var existingMeetingsToKeep = new List<DatabaseMeeting>();
-            foreach (var meeting in section.Meetings)
-            {
-                var meetingDuration = TimeSpan.Zero;
-                if ((meeting.EndTime != null) && (meeting.StartTime != null))
-                {
-                    meetingDuration = ((TimeOnly)meeting.EndTime - (TimeOnly)meeting.StartTime);
-                }
-                var dbRoom = FetchOrAddMeetingRoom(campus, meeting);
-                var dbInstructors = FetchOrAddMeetingInstructors(meeting);
 
-                // MyPurdue doesn't expose any sort of unique ID for each meeting,
-                // so we need to determine equality via a heuristic:
-                // If it happens at the same time at the same location, it is the same
-                // meeting.
-                var dbMeeting = dbMeetings.FirstOrDefault(m => 
-                    (m.RoomId == dbRoom.Id) &&
-                    (m.DaysOfWeek == (DatabaseDaysOfWeek) meeting.DaysOfWeek) &&
-                    (m.StartDate == meeting.StartDate) &&
-                    (m.EndDate == meeting.EndDate) &&
-                    (m.StartTime == meeting.StartTime) &&
-                    (m.Duration == meetingDuration));
+            // Existing meetings not yet matched to a scraped one; whatever is left gets deleted.
+            var unmatched = new List<DatabaseMeeting>(dbMeetings);
+
+            // Banner 9 search results only list faculty per section, not per meeting.
+            var dbInstructors = FetchOrAddSectionInstructors(section);
+
+            var meetingTimes = (section.Meetings ?? [])
+                .Select(m => m.MeetingTime)
+                .Where(t => t != null);
+
+            foreach (var meetingTime in meetingTimes)
+            {
+                var startDate = ParseMyPurdueDate(meetingTime.StartDate);
+                var endDate = ParseMyPurdueDate(meetingTime.EndDate);
+                var startTime = ParseMyPurdueTime(meetingTime.BeginTime);
+                var endTime = ParseMyPurdueTime(meetingTime.EndTime);
+                var duration = (startTime is { } start && endTime is { } end) ?
+                    end - start : TimeSpan.Zero;
+                var daysOfWeek = GetDaysOfWeek(meetingTime);
+                var roomId = FetchOrAddMeetingRoom(campus, meetingTime).Id;
+
+                // MyPurdue has no meeting ID, so match on time + place.
+                var dbMeeting = unmatched.FirstOrDefault(m =>
+                    m.RoomId == roomId &&
+                    m.DaysOfWeek == daysOfWeek &&
+                    m.StartDate == startDate &&
+                    m.EndDate == endDate &&
+                    m.StartTime == startTime &&
+                    m.Duration == duration);
 
                 if (dbMeeting == null)
                 {
-                    dbMeeting = new DatabaseMeeting()
+                    dbMeeting = new DatabaseMeeting
                     {
                         Id = Guid.NewGuid(),
                         SectionId = dbSection.Id,
-                        Type = meeting.Type,
-                        StartDate = meeting.StartDate,
-                        EndDate = meeting.EndDate,
-                        DaysOfWeek = (DatabaseDaysOfWeek) meeting.DaysOfWeek,
-                        StartTime = meeting.StartTime,
-                        Duration = meetingDuration,
-                        RoomId = dbRoom.Id,
+                        Type = section.SectionType,
+                        StartDate = startDate,
+                        EndDate = endDate,
+                        DaysOfWeek = daysOfWeek,
+                        StartTime = startTime,
+                        Duration = duration,
+                        RoomId = roomId,
                         Instructors = new List<DatabaseInstructor>(),
                     };
                     dbContext.Add(dbMeeting);
                 }
                 else
                 {
-                    existingMeetingsToKeep.Add(dbMeeting);
+                    unmatched.Remove(dbMeeting); // so two identical scraped meetings can't claim the same row
+                    dbMeeting.Type = section.SectionType;
                 }
 
-                var dbMeetingInstructors = dbContext.Instructors
-                    .Where(i => i.Meetings.Any(m => (m.Id == dbMeeting.Id))).ToList();
-
-                var instructorsToRemove = dbMeetingInstructors.Where(i => 
-                    dbInstructors.SingleOrDefault(di => di.Id == i.Id) == null)
-                    .ToList();
-                foreach (var instructorToRemove in instructorsToRemove)
+                // Sync instructors via the navigation; EF adds/deletes MeetingInstructor rows.
+                foreach (var stale in dbMeeting.Instructors.Where(i => 
+                    dbInstructors.All(d => d.Id != i.Id)).ToList())
                 {
-                    dbContext.Remove(new MeetingInstructor() 
-                    {
-                        MeetingId = dbMeeting.Id,
-                        InstructorId = instructorToRemove.Id 
-                    });
+                    dbMeeting.Instructors.Remove(stale);
                 }
+
                 foreach (var dbInstructor in dbInstructors)
                 {
-                    if (dbMeetingInstructors.SingleOrDefault(i => 
-                        (i.Id == dbInstructor.Id)) == null)
+                    if (dbMeeting.Instructors.All(i => i.Id != dbInstructor.Id))
                     {
-                        dbContext.Add(new MeetingInstructor()
-                        {
-                            MeetingId = dbMeeting.Id,
-                            InstructorId = dbInstructor.Id,
-                        });
+                        dbMeeting.Instructors.Add(dbInstructor);
                     }
                 }
             }
 
-            // Remove any "orphaned" meetings
-            var dbMeetingsToRemove = dbMeetings.Where(m => !existingMeetingsToKeep.Contains(m));
-            foreach (var dbMeetingToRemove in dbMeetingsToRemove)
-            {
-                dbContext.Entry(dbMeetingToRemove).State = EntityState.Deleted;
-            }
+            dbContext.Meetings.RemoveRange(unmatched);
         }
 
-        private DatabaseRoom FetchOrAddMeetingRoom(DatabaseCampus campus, ScrapedMeeting meeting)
+        private DatabaseRoom FetchOrAddMeetingRoom(DatabaseCampus campus,
+            MyPurdueMeetingTime meetingTime)
         {
-            var dbBuilding = FetchOrAddMeetingBuilding(campus, meeting);
-            var dbRoom = dbBuilding.Rooms.FirstOrDefault(r => (r.Number == meeting.RoomNumber));
+            var hasLocation = !string.IsNullOrWhiteSpace(meetingTime.BuildingCode)
+                && !string.IsNullOrWhiteSpace(meetingTime.Room);
+
+            var buildingCode = hasLocation ? meetingTime.BuildingCode.Trim() : Tba;
+            var buildingName = hasLocation ? (meetingTime.BuildingName ?? buildingCode) : Tba;
+            var roomNumber = hasLocation ? meetingTime.Room.Trim() : Tba;
+
+            var dbBuilding = FetchOrAddMeetingBuilding(campus, buildingCode, buildingName);
+            var dbRoom = dbBuilding.Rooms.FirstOrDefault(r => r.Number == roomNumber);
             if (dbRoom == null)
             {
-                dbRoom = new DatabaseRoom()
+                dbRoom = new DatabaseRoom
                 {
                     Id = Guid.NewGuid(),
-                    Number = meeting.RoomNumber,
+                    Number = roomNumber,
                     BuildingId = dbBuilding.Id,
                 };
                 dbContext.Add(dbRoom);
@@ -660,61 +678,67 @@ namespace PurdueIo.CatalogSync
         }
 
         private DatabaseBuilding FetchOrAddMeetingBuilding(DatabaseCampus campus,
-            ScrapedMeeting meeting)
+            string buildingCode, string buildingName)
         {
-            var buildingKey = (campusId: campus.Id, code: meeting.BuildingCode);
-            if (dbCachedBuildings.ContainsKey(buildingKey))
+            var buildingKey = (campusId: campus.Id, buildingCode: buildingCode);
+            if (dbCachedBuildings.TryGetValue(buildingKey, out var cached))
             {
-                return dbCachedBuildings[buildingKey];
+                return cached;
             }
-            else
+
+            var dbBuilding = dbContext.Buildings
+                .Include(b => b.Rooms)
+                .SingleOrDefault(b => b.CampusId == campus.Id && b.ShortCode == buildingCode);
+
+            if (dbBuilding == null)
             {
-                var dbBuilding = dbContext.Buildings
-                    .Include(b => b.Rooms)
-                    .SingleOrDefault(b =>
-                        (b.CampusId == campus.Id) &&
-                        (b.ShortCode == meeting.BuildingCode));
-                if (dbBuilding == null)
+                dbBuilding = new DatabaseBuilding
                 {
-                    dbBuilding = new DatabaseBuilding()
-                    {
-                        Id = Guid.NewGuid(),
-                        CampusId = campus.Id,
-                        Name = meeting.BuildingName,
-                        ShortCode = meeting.BuildingCode,
-                        Rooms = new List<DatabaseRoom>(),
-                    };
-                    dbContext.Add(dbBuilding);
-                }
-                dbCachedBuildings[buildingKey] = dbBuilding;
-                return dbBuilding;
+                    Id = Guid.NewGuid(),
+                    CampusId = campus.Id,
+                    Name = buildingName,
+                    ShortCode = buildingCode,
+                    Rooms = new List<DatabaseRoom>(),
+                };
+                dbContext.Add(dbBuilding);
             }
+
+            dbCachedBuildings[buildingKey] = dbBuilding;
+            return dbBuilding;
         }
 
-        private ICollection<DatabaseInstructor> FetchOrAddMeetingInstructors(ScrapedMeeting meeting)
+        // Banner 9 search results only list faculty per section, so every meeting
+        // in a section gets the section's instructors.
+        private ICollection<DatabaseInstructor> FetchOrAddSectionInstructors(
+            MyPurdueSection section)
         {
             var returnVal = new List<DatabaseInstructor>();
-            foreach (var scrapedInstructor in meeting.Instructors)
+            foreach (var faculty in section.Faculty ?? [])
             {
-                if (dbCachedInstructors.ContainsKey(scrapedInstructor.email))
+                if (string.IsNullOrWhiteSpace(faculty.Email))
                 {
-                    returnVal.Add(dbCachedInstructors[scrapedInstructor.email]);
+                    continue;
                 }
-                else
+                var email = faculty.Email.Trim();
+
+                if (!dbCachedInstructors.TryGetValue(email, out var dbInstructor))
                 {
-                    var dbInstructor = dbContext.Instructors.SingleOrDefault(i =>
-                        (i.Email == scrapedInstructor.email));
+                    dbInstructor = dbContext.Instructors.SingleOrDefault(i => i.Email == email);
                     if (dbInstructor == null)
                     {
-                        dbInstructor = new DatabaseInstructor()
+                        dbInstructor = new DatabaseInstructor
                         {
                             Id = Guid.NewGuid(),
-                            Name = scrapedInstructor.name,
-                            Email = scrapedInstructor.email,
+                            Name = faculty.Name,
+                            Email = email,
                         };
                         dbContext.Add(dbInstructor);
                     }
-                    dbCachedInstructors[scrapedInstructor.email] = dbInstructor;
+                    dbCachedInstructors[email] = dbInstructor;
+                }
+
+                if (!returnVal.Contains(dbInstructor))
+                {
                     returnVal.Add(dbInstructor);
                 }
             }

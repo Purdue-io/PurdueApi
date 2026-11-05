@@ -76,15 +76,13 @@ namespace PurdueIo.Scraper.Connections
             {
                 var subjects = JsonSerializer.Deserialize<List<MyPurdueSubject>>(
                     await result.Content.ReadAsStringAsync());
-
-                // the subject names returned from the service are a little funky - they have
-                // html-encoded characters and are prefixed with their codes.
+                // For some reason, the subject name has the subject abbreviation prepended to it
+                // ex. code: `AGRY` / name: `AGRY-Agronomy`
+                // let's strip out the prefix.
                 foreach (var subject in subjects)
                 {
-                    subject.Name = WebUtility.HtmlDecode(subject.Name);
                     subject.Name = subject.Name.Replace($"{subject.Code}-", "");
                 }
-
                 return subjects;
             }
             logger.LogError(
@@ -100,6 +98,7 @@ namespace PurdueIo.Scraper.Connections
         {
             // Using this API appears to require us to have an active "session".
             await EnsureSession(termCode);
+            await ResetSearchAsync();
             int pageOffset = 0;
             List<MyPurdueSection> sections = [];
             while (true)
@@ -115,7 +114,7 @@ namespace PurdueIo.Scraper.Connections
                         "Received HTTP '{}' on GetSectionsAsync: {}",
                         result.StatusCode, await result.Content.ReadAsStringAsync());
                     throw new ApplicationException(
-                        $"Could not fetch subject list: HTTP {result.StatusCode}: " +
+                        $"Could not fetch section list: HTTP {result.StatusCode}: " +
                         await result.Content.ReadAsStringAsync());
                 }
                 var parsed = JsonSerializer.Deserialize<MyPurdueSectionResponse>(
@@ -126,11 +125,26 @@ namespace PurdueIo.Scraper.Connections
                     throw new ApplicationException(
                         "Received error on GetSectionsAsync: `success` not set to true");
                 }
+                var wrongSubject = parsed.Sections.FirstOrDefault(
+                    s => s.SubjectCode != subjectCode);
+                if (wrongSubject != null)
+                {
+                    throw new ApplicationException(
+                        $"Search for {subjectCode} returned a {wrongSubject.SubjectCode} section " +
+                        $"(CRN {wrongSubject.Crn}); search state is stale.");
+                }
                 sections.AddRange(parsed.Sections);
-                pageOffset = parsed.Sections.Count;
+                pageOffset = sections.Count;
                 if (sections.Count >= parsed.TotalCount)
                 {
                     break;
+                }
+                if (parsed.Sections.Count == 0)
+                {
+                    // An incomplete scrape would cause the sync to delete the missing sections.
+                    throw new ApplicationException(
+                        $"Search for {subjectCode} stopped at {sections.Count} of " +
+                        $"{parsed.TotalCount} sections.");
                 }
             }
             return sections;
@@ -265,6 +279,14 @@ namespace PurdueIo.Scraper.Connections
                 myPurdueSession = (sessionId, termCode);
             }
         }
+
+        private async Task ResetSearchAsync()
+        {
+            // Clears the session's cached search so the next searchResults call re-queries.
+            var response = await httpClient.PostAsync("classSearch/resetDataForm",
+                new FormUrlEncodedContent([]));
+            response.EnsureSuccessStatusCode();
+        }
     }
 
     namespace Models
@@ -292,6 +314,7 @@ namespace PurdueIo.Scraper.Connections
             public string Id { get; init; }
 
             [JsonPropertyName("description")]
+            [JsonConverter(typeof(HtmlDecodedStringConverter))]
             public string Name { get; init; }
         }
 
@@ -301,6 +324,7 @@ namespace PurdueIo.Scraper.Connections
             public string Code { get; set; }
 
             [JsonPropertyName("description")]
+            [JsonConverter(typeof(HtmlDecodedStringConverter))]
             public string Name { get; set; }
         }
         public class MyPurdueSection {
@@ -311,6 +335,7 @@ namespace PurdueIo.Scraper.Connections
             public string TermCode { get; set; }
 
             [JsonPropertyName("termDesc")]
+            [JsonConverter(typeof(HtmlDecodedStringConverter))]
             public string TermName { get; set; }
 
             [JsonPropertyName("courseReferenceNumber")]
@@ -323,6 +348,7 @@ namespace PurdueIo.Scraper.Connections
             public string SubjectCode { get; set; }
 
             [JsonPropertyName("subjectDescription")]
+            [JsonConverter(typeof(HtmlDecodedStringConverter))]
             public string SubjectName { get; set; }
 
             [JsonPropertyName("campusDescription")]
@@ -332,10 +358,20 @@ namespace PurdueIo.Scraper.Connections
             public string SectionType { get; set; }
 
             [JsonPropertyName("courseTitle")]
+            [JsonConverter(typeof(HtmlDecodedStringConverter))]
             public string CourseTitle { get; set; }
 
             [JsonPropertyName("creditHours")]
             public double? CreditHours { get; set; }
+
+            [JsonPropertyName("creditHourLow")]
+            public double? CreditHourLow { get; set; }
+
+            [JsonPropertyName("creditHourHigh")]
+            public double? CreditHourHigh { get; set; }
+
+            [JsonPropertyName("creditHourIndicator")]
+            public string CreditHourIndicator { get; set; } // "OR", "TO", or null
 
             [JsonPropertyName("maximumEnrollment")]
             public int MaximumEnrollment { get; set; }
@@ -362,10 +398,9 @@ namespace PurdueIo.Scraper.Connections
             public string SubjectCourseNumber { get; set; }
 
             // fields not mapped:
-            // crossList, crossListCapacity, crossListCount, crossListAvailable, creditHourHigh
-            // creditHourLow, creditHourIndicator, openSection,
+            // crossList, crossListCapacity, crossListCount, crossListAvailable,
             // reservedSeatSummary, sectionAttributes, instructionalMethod,
-            // instructionalMethodDescription
+            // instructionalMethodDescription, openSection
         }
 
         public class MyPurdueFaculty {
@@ -376,6 +411,7 @@ namespace PurdueIo.Scraper.Connections
             public string Crn { get; set; }
 
             [JsonPropertyName("displayName")]
+            [JsonConverter(typeof(HtmlDecodedStringConverter))]
             public string Name { get; set; }
 
             [JsonPropertyName("emailAddress")]
@@ -413,6 +449,7 @@ namespace PurdueIo.Scraper.Connections
             public string BuildingCode { get; set; }
 
             [JsonPropertyName("buildingDescription")]
+            [JsonConverter(typeof(HtmlDecodedStringConverter))]
             public string BuildingName { get; set; }
 
             [JsonPropertyName("campus")]
