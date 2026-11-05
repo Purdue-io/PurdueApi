@@ -68,8 +68,6 @@ namespace PurdueIo.CatalogSync
                 TermSyncBehavior.SyncAllTerms : TermSyncBehavior.SyncNewAndCurrentTerms;
             var connection = new MyPurdueConnection(
                 loggerFactory.CreateLogger<MyPurdueConnection>());
-            var scraper = new MyPurdueScraper(connection,
-                loggerFactory.CreateLogger<MyPurdueScraper>());
 
             ApplicationDbContext dbContext;
             if (options.DataProvider == DataProvider.Sqlite)
@@ -99,7 +97,7 @@ namespace PurdueIo.CatalogSync
             }
             dbContext.Database.Migrate();
 
-            await FastSync.SynchronizeAsync(scraper, dbContext,
+            await FastSync.SynchronizeAsync(connection, dbContext,
                 loggerFactory.CreateLogger<FastSync>(), options.Terms, options.Subjects,
                 behavior, reportProgress);
         }
