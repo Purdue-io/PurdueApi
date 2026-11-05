@@ -1,11 +1,5 @@
 # Purdue.io
 
-# Notes on new catalog service
-- [Term list](https://apps.mypurdue.purdue.edu/StudentRegistrationSsb/ssb/classSearch/getTerms?searchTerm=&offset=1&max=10)
-- [Subject list](https://apps.mypurdue.purdue.edu/StudentRegistrationSsb/ssb/classSearch/get_subject?searchTerm=&term=202720&offset=1&max=10)
-- [Class list](https://apps.mypurdue.purdue.edu/StudentRegistrationSsb/ssb/searchResults/searchResults?txt_subject=CS&txt_term=202720&pageOffset=0&pageMaxSize=10)
-- [Fetch linked sections](https://apps.mypurdue.purdue.edu/StudentRegistrationSsb/ssb/searchResults/fetchLinkedSections?term=202720&courseReferenceNumber=10787)
-
 ### An open API for Purdue University's course catalog and scheduling system.
 
 Purdue.io was started in 2015 as a CS Senior Design project with the goal of improving
