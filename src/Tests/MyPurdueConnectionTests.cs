@@ -20,6 +20,10 @@ namespace PurdueIo.Tests
         {
             var connection = new MyPurdueConnection(
                 loggerFactory.CreateLogger<MyPurdueConnection>());
+
+            var terms = await connection.GetTermListAsync();
+            Assert.True(terms.Count > 0);
+
             var sections = await connection.GetSectionsAsync("202720", "CS");
             Assert.True(sections.Count > 0);
 

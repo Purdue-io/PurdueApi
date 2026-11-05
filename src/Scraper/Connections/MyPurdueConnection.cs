@@ -23,6 +23,8 @@ namespace PurdueIo.Scraper.Connections
         // the service seems to enforce a 500-item limit before requiring pagination
         private const uint MAX_PAGINATION_COUNT = 500;
 
+        private const string VIEW_ONLY_TAG = "(View Only)";
+
         public MyPurdueConnection(ILogger<MyPurdueConnection> logger)
         {
             this.logger = logger;
@@ -55,8 +57,14 @@ namespace PurdueIo.Scraper.Connections
                 $"classSearch/getTerms?searchTerm=&offset=1&max={MAX_PAGINATION_COUNT}");
             if (result.IsSuccessStatusCode)
             {
-                return JsonSerializer.Deserialize<List<MyPurdueTerm>>(
+                var terms = JsonSerializer.Deserialize<List<MyPurdueTerm>>(
                     await result.Content.ReadAsStringAsync());
+                // Remove the "(View Only)" label from old terms
+                foreach (var term in terms)
+                {
+                    term.Name = term.Name.Replace(VIEW_ONLY_TAG, "").Trim();
+                }
+                return terms;
             }
             logger.LogError(
                 "Received HTTP '{}' on GetTermListAsync: {}",
@@ -311,11 +319,11 @@ namespace PurdueIo.Scraper.Connections
         public class MyPurdueTerm
         {
             [JsonPropertyName("code")]
-            public string Id { get; init; }
+            public string Id { get; set; }
 
             [JsonPropertyName("description")]
             [JsonConverter(typeof(HtmlDecodedStringConverter))]
-            public string Name { get; init; }
+            public string Name { get; set; }
         }
 
         public class MyPurdueSubject
