@@ -22,7 +22,9 @@ RUN dotnet publish CatalogSync/CatalogSync.csproj -c Release -r linux-x64 \
     -o /app/publish
 
 # Stage 2: Runtime with supercronic
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+# The app is published self-contained (it carries its own .NET runtime), so the
+# base image only needs its native dependencies.
+FROM mcr.microsoft.com/dotnet/runtime-deps:9.0
 WORKDIR /app
 
 # Install supercronic for Docker-friendly cron scheduling

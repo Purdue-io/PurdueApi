@@ -21,7 +21,9 @@ RUN dotnet publish Api/Api.csproj -c Release -r linux-x64 \
     -o /app/publish
 
 # Stage 2: Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+# The app is published self-contained (it carries its own .NET and ASP.NET Core
+# runtime), so the base image only needs the native dependencies.
+FROM mcr.microsoft.com/dotnet/runtime-deps:9.0
 WORKDIR /app
 
 # Copy published application (includes wwwroot if present)
