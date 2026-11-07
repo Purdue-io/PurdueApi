@@ -292,6 +292,10 @@ namespace PurdueIo.Scraper.Connections
             }
         }
 
+        // Forces a fresh MyPurdue session on the next section search, e.g. after a failure
+        // that may have left the current session's search state stale.
+        public void ResetSession() => myPurdueSession = null;
+
         private async Task ResetSearchAsync()
         {
             // Clears the session's cached search so the next searchResults call re-queries.

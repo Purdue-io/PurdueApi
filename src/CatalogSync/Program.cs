@@ -6,6 +6,7 @@ using PurdueIo.Scraper;
 using PurdueIo.Scraper.Connections;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using static PurdueIo.CatalogSync.FastSync;
 
@@ -47,7 +48,15 @@ namespace PurdueIo.CatalogSync
         {
             (await Parser.Default.ParseArguments<Options>(args)
                 .WithParsedAsync(async options => await RunASync(options)))
-                .WithNotParsed(errors => errors.Output());
+                .WithNotParsed(errors =>
+                {
+                    errors.Output();
+                    // --help and --version are reported as "errors" but aren't failures.
+                    if (!errors.IsHelp() && !errors.IsVersion())
+                    {
+                        Environment.ExitCode = 1;
+                    }
+                });
         }
 
         static async Task RunASync(Options options)
@@ -97,9 +106,18 @@ namespace PurdueIo.CatalogSync
             }
             dbContext.Database.Migrate();
 
-            await FastSync.SynchronizeAsync(connection, dbContext,
+            var result = await FastSync.SynchronizeAsync(connection, dbContext,
                 loggerFactory.CreateLogger<FastSync>(), options.Terms, options.Subjects,
                 behavior, reportProgress);
+            if (!result.Succeeded)
+            {
+                // Everything else was synced; exit non-zero so cron/CI still flag the run.
+                logger.LogError("Sync completed with {Count} failure(s): {Failures}",
+                    result.Failures.Count,
+                    string.Join(", ", result.Failures.Select(f =>
+                        $"{f.TermCode} {f.SubjectCode ?? "(term)"}")));
+                Environment.ExitCode = 1;
+            }
         }
     }
 }

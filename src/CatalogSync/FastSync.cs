@@ -27,37 +27,54 @@ namespace PurdueIo.CatalogSync
     {
         public record SyncProgress (double Progress, string Description);
 
+        // A term or subject that failed to sync. SubjectCode is null when the whole term
+        // failed (e.g. its subject list couldn't be fetched).
+        public record SyncFailure (string TermCode, string SubjectCode, Exception Exception);
+
+        public record SyncResult (IReadOnlyList<SyncFailure> Failures)
+        {
+            public bool Succeeded => Failures.Count == 0;
+        }
+
+        // Thrown when too many consecutive terms/subjects fail, which usually means MyPurdue
+        // or the database is down rather than one subject being bad.
+        public class SyncAbortedException : Exception
+        {
+            public SyncAbortedException(string message, Exception innerException)
+                : base(message, innerException) { }
+        }
+
         public enum TermSyncBehavior
         {
             SyncAllTerms,
             SyncNewAndCurrentTerms,
         }
 
-        public static async Task SynchronizeAsync(MyPurdueConnection connection,
+        public static async Task<SyncResult> SynchronizeAsync(MyPurdueConnection connection,
             ApplicationDbContext dbContext, ILogger<FastSync> logger,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
+            return await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
                 termSyncBehavior, progress: progress);
         }
 
-        public static async Task SynchronizeAsync(MyPurdueConnection connection,
+        public static async Task<SyncResult> SynchronizeAsync(MyPurdueConnection connection,
             ApplicationDbContext dbContext, ILogger<FastSync> logger, IEnumerable<string> termCodes,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
+            return await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
                 termSyncBehavior, termCodes, progress: progress);
         }
 
-        public static async Task SynchronizeAsync(MyPurdueConnection connection,
+        public static async Task<SyncResult> SynchronizeAsync(MyPurdueConnection connection,
             ApplicationDbContext dbContext, ILogger<FastSync> logger, IEnumerable<string> termCodes,
             IEnumerable<string> subjectCodes,
             TermSyncBehavior termSyncBehavior = TermSyncBehavior.SyncAllTerms,
             Action<SyncProgress> progress = null)
         {
-            await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
+            return await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
                 termSyncBehavior, termCodes, subjectCodes, progress);
         }
 
@@ -82,6 +99,13 @@ namespace PurdueIo.CatalogSync
         private const double PROGRESS_SUBJECT_UPDATING_CLASSES = 0.90;
 
         private const string Tba = "TBA";
+
+        // Stop the run once this many terms/subjects in a row have failed.
+        public const int MAX_CONSECUTIVE_FAILURES = 5;
+
+        private readonly List<SyncFailure> failures = new();
+
+        private int consecutiveFailures = 0;
 
         private readonly Dictionary<string, string> campusCodesByName =
             new(StringComparer.OrdinalIgnoreCase);
@@ -109,7 +133,7 @@ namespace PurdueIo.CatalogSync
             this.logger = logger;
         }
 
-        private async Task InternalSynchronizeAsync(TermSyncBehavior termSyncBehavior,
+        private async Task<SyncResult> InternalSynchronizeAsync(TermSyncBehavior termSyncBehavior,
             IEnumerable<string> termCodes = null, IEnumerable<string> subjectCodes = null,
             Action<SyncProgress> progress = null)
         {
@@ -184,10 +208,61 @@ namespace PurdueIo.CatalogSync
                     ((PROGRESS_UPDATING_TERM_SECTIONS / termsToSync.Count) * 
                         (double)numTermsSynced),
                     $"Synchronizing {term.Code} / {term.Name}"));
-                await InternalSynchronizeTermAsync(term, subjectCodes, termProgress);
+                try
+                {
+                    // Not resetting consecutiveFailures here: only a subject that actually
+                    // synced proves MyPurdue and the DB are healthy.
+                    await InternalSynchronizeTermAsync(term, subjectCodes, termProgress);
+                }
+                catch (Exception e) when (e is not SyncAbortedException)
+                {
+                    RecordFailure(term, null, e);
+                }
                 ++numTermsSynced;
             }
-            progress?.Invoke(new (1.0, $"Synchronized {termsToSync.Count} terms!"));
+
+            if (failures.Count == 0)
+            {
+                progress?.Invoke(new (1.0, $"Synchronized {termsToSync.Count} terms!"));
+            }
+            else
+            {
+                progress?.Invoke(new (1.0, $"Synchronized {termsToSync.Count} terms with " +
+                    $"{failures.Count} failure(s): " + string.Join(", ",
+                        failures.Select(f => $"{f.TermCode} {f.SubjectCode ?? "(term)"}"))));
+            }
+            return new SyncResult(failures.ToList());
+        }
+
+        // Logs a failed term/subject, discards its unsaved changes so they can't leak into
+        // the next SaveChanges, and starts a fresh MyPurdue session (stale search state is a
+        // common cause of failures). Aborts the run after too many failures in a row.
+        private void RecordFailure(DatabaseTerm term, DatabaseSubject subject, Exception e)
+        {
+            logger.LogError(e, "Failed to synchronize {Term} {Subject}; continuing with the rest",
+                term.Code, subject?.Abbreviation ?? "(term)");
+            failures.Add(new SyncFailure(term.Code, subject?.Abbreviation, e));
+            ResetSyncState();
+            connection.ResetSession();
+
+            if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES)
+            {
+                throw new SyncAbortedException(
+                    $"Aborting sync after {consecutiveFailures} consecutive failures " +
+                    $"({failures.Count} total)", e);
+            }
+        }
+
+        // Forgets every tracked entity and per-subject cache. Cached entities are tracked
+        // instances, so the caches must be cleared together with the change tracker.
+        private void ResetSyncState()
+        {
+            dbContext.ChangeTracker.Clear();
+            dbCachedCampuses.Clear();
+            dbCachedCourses.Clear();
+            dbCachedBuildings.Clear();
+            dbCachedInstructors.Clear();
+            claimedClassIds.Clear();
         }
 
         private async Task InternalSynchronizeTermAsync(DatabaseTerm term,
@@ -241,7 +316,15 @@ namespace PurdueIo.CatalogSync
                     ((PROGRESS_TERM_UPDATING_SUBJECTS / subjectsToSync.Count) *
                         (double)numSubjectsSynced),
                     $"Synchronizing {subject.Abbreviation} / {subject.Name}"));
-                await InternalSynchronizeTermSubjectAsync(term, subject, subjectProgress);
+                try
+                {
+                    await InternalSynchronizeTermSubjectAsync(term, subject, subjectProgress);
+                    consecutiveFailures = 0;
+                }
+                catch (Exception e) when (e is not SyncAbortedException)
+                {
+                    RecordFailure(term, subject, e);
+                }
                 ++numSubjectsSynced;
             }
 
@@ -321,12 +404,14 @@ namespace PurdueIo.CatalogSync
                 $"Cleaning up outdated sections..."));
             var scrapedCrns = scrapedSections.Select(s => s.Crn).ToHashSet();
             var crnsToRemove = existingCrns
-                .Where(s => !scrapedCrns.Contains(s));
-            foreach (var crnToRemove in crnsToRemove)
+                .Where(s => !scrapedCrns.Contains(s))
+                .ToList();
+            if (crnsToRemove.Count > 0)
             {
+                // One query for all of them; meetings and instructor links cascade in the DB.
                 dbContext.Sections.RemoveRange(dbContext.Sections.Where(s =>
                     (s.Class.TermId == term.Id) &&
-                    (s.Crn == crnToRemove)));
+                    crnsToRemove.Contains(s.Crn)));
             }
 
             dbContext.SaveChanges();
@@ -339,12 +424,7 @@ namespace PurdueIo.CatalogSync
             dbContext.Classes.RemoveRange(removedClasses.ToList());
 
             dbContext.SaveChanges();
-            dbContext.ChangeTracker.Clear();
-            dbCachedCampuses.Clear();
-            dbCachedCourses.Clear();
-            dbCachedBuildings.Clear();
-            dbCachedInstructors.Clear();
-            claimedClassIds.Clear();
+            ResetSyncState();
         }
 
         private static (string Code, string Name)? GetCampus(ICollection<MyPurdueSection> sectionGroup) =>

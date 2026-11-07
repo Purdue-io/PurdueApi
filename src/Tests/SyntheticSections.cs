@@ -24,7 +24,8 @@ namespace PurdueIo.Tests
             double? creditHourHigh = null,
             MyPurdueMeetingTime[] meetings = null,
             MyPurdueFaculty[] faculty = null,
-            string linkIdentifier = null) =>
+            string linkIdentifier = null,
+            string subject = SyncSubject) =>
             new()
             {
                 Id = long.Parse(crn),
@@ -32,8 +33,8 @@ namespace PurdueIo.Tests
                 TermName = "Spring 2027",
                 Crn = crn,
                 CourseNumber = courseNumber,
-                SubjectCode = SyncSubject,
-                SubjectName = "Computer Sciences",
+                SubjectCode = subject,
+                SubjectName = subject,
                 CampusName = CampusName,
                 SectionType = type,
                 CourseTitle = title,
@@ -42,11 +43,16 @@ namespace PurdueIo.Tests
                 CreditHourHigh = creditHourHigh,
                 Faculty = (faculty ?? [Faculty("Ada Lovelace", "alovelace@purdue.edu")]).ToList(),
                 Meetings = (meetings ?? [Meeting()])
-                    .Select(t => new MyPurdueMeeting { Crn = crn, TermCode = SyncTerm, MeetingTime = t })
+                    .Select(t => new MyPurdueMeeting
+                    {
+                        Crn = crn,
+                        TermCode = SyncTerm,
+                        MeetingTime = t,
+                    })
                     .ToList(),
                 IsSectionLinked = linkIdentifier != null,
                 LinkIdentifier = linkIdentifier,
-                SubjectCourseNumber = SyncSubject + courseNumber,
+                SubjectCourseNumber = subject + courseNumber,
             };
 
         // `days` uses Banner-style letters: U M T W R F S. Pass building: null for TBA.
@@ -105,8 +111,8 @@ namespace PurdueIo.Tests
         // Replaces the handler's recorded pages with a single synthetic page.
         public static void Serve(FakeMyPurdueHandler handler, string page)
         {
-            handler.SearchPages.Clear();
-            handler.SearchPages[0] = page;
+            handler.SectionSearchPages.Clear();
+            handler.SectionSearchPages[0] = page;
         }
     }
 }

@@ -19,19 +19,21 @@ namespace PurdueIo.Tests
         // Recorded as (HTTP method, path + query, request body) for wiring assertions.
         public List<(string Method, string PathAndQuery, string Body)> Requests { get; } = [];
 
-        // Canned responses for searchResults/searchResults keyed by the requested
-        // pageOffset. Individual tests replace entries to simulate bad or truncated
-        // responses.
-        public Dictionary<int, string> SearchPages { get; } = new()
+        // Canned section search (searchResults/searchResults) pages keyed by the requested
+        // pageOffset, served for any term/subject without an entry in
+        // SectionSearchPagesByTermAndSubject. Individual tests replace entries to simulate
+        // bad or truncated responses.
+        public Dictionary<int, string> SectionSearchPages { get; } = new()
         {
             [0] = TestResources.ReadText(TestResources.SectionPage0),
             [500] = TestResources.ReadText(TestResources.SectionPage500),
         };
 
-        // Verbatim fetchLinkedSections responses captured from the live service while
-        // running the real GroupLinkedSectionsAsync heuristic, keyed by the queried CRN.
-        // Only those exact CRNs can be served: if the grouping heuristic ever queries
-        // something else, that is a behavior change worth failing on.
+        // Canned section search pages for specific term/subject searches, keyed by
+        // (txt_term, txt_subject) and then by pageOffset like SectionSearchPages.
+        public Dictionary<(string Term, string Subject), Dictionary<int, string>>
+            SectionSearchPagesByTermAndSubject { get; } = [];
+
         // fetchLinkedSections responses that take precedence over the recorded fixture,
         // keyed by queried CRN. Lets tests with synthetic sections define linked groups.
         public Dictionary<string, string> LinkedSectionOverrides { get; } = [];
@@ -45,6 +47,10 @@ namespace PurdueIo.Tests
         public string SubjectsJson { get; set; } =
             "[{\"code\":\"CS\",\"description\":\"CS-Computer Sciences\"}]";
 
+        // Verbatim fetchLinkedSections responses captured from the live service while
+        // running the real GroupLinkedSectionsAsync heuristic, keyed by the queried CRN.
+        // Only those exact CRNs can be served: if the grouping heuristic ever queries
+        // something else, that is a behavior change worth failing on.
         private Dictionary<string, string> linkedResponses;
         private Dictionary<string, string> LinkedResponses => linkedResponses ??=
             JsonSerializer
@@ -76,9 +82,13 @@ namespace PurdueIo.Tests
             }
             if (path.EndsWith("/searchResults/searchResults"))
             {
-                var offset = int.Parse(
-                    HttpUtility.ParseQueryString(request.RequestUri.Query)["pageOffset"]);
-                return SearchPages.TryGetValue(offset, out var page)
+                var query = HttpUtility.ParseQueryString(request.RequestUri.Query);
+                var offset = int.Parse(query["pageOffset"]);
+                var pages = SectionSearchPagesByTermAndSubject.TryGetValue(
+                    (query["txt_term"], query["txt_subject"]), out var termSubjectPages)
+                        ? termSubjectPages
+                        : SectionSearchPages;
+                return pages.TryGetValue(offset, out var page)
                     ? Json(page)
                     : Error($"FakeMyPurdueHandler has no canned page for pageOffset={offset}");
             }
