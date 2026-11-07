@@ -14,6 +14,7 @@ using PurdueIo.Scraper.Connections.Models;
 using Xunit;
 using static PurdueIo.CatalogSync.FastSync;
 using static PurdueIo.Tests.SyntheticSections;
+using static PurdueIo.Tests.TestResources;
 
 namespace PurdueIo.Tests
 {
@@ -40,8 +41,20 @@ namespace PurdueIo.Tests
                 .UseSqlite(connection, o => o.MigrationsAssembly("Database.Migrations.Sqlite"))
                 .Options);
 
-        // One sync "run", mirroring CatalogSync/Program.cs: fresh connection and context.
+        // One sync "run" that must succeed. FastSync isolates failures instead of throwing,
+        // so without this check a broken run could leave the DB unchanged and still "pass".
         private async Task<SyncResult> SyncAsync(FakeMyPurdueHandler handler,
+            TermSyncBehavior behavior = TermSyncBehavior.SyncAllTerms,
+            string[] terms = null, string[] subjects = null)
+        {
+            var result = await SyncAllowingFailuresAsync(handler, behavior, terms, subjects);
+            Assert.True(result.Succeeded, "Sync failed: " + string.Join("; ",
+                result.Failures.Select(f => $"{f.Description}: {f.Exception.Message}")));
+            return result;
+        }
+
+        // One sync "run", mirroring CatalogSync/Program.cs: fresh connection and context.
+        private async Task<SyncResult> SyncAllowingFailuresAsync(FakeMyPurdueHandler handler,
             TermSyncBehavior behavior = TermSyncBehavior.SyncAllTerms,
             string[] terms = null, string[] subjects = null)
         {
@@ -52,22 +65,17 @@ namespace PurdueIo.Tests
                 termCodes: terms, subjectCodes: subjects, termSyncBehavior: behavior);
         }
 
-        private static string SubjectsJson(params string[] codes) =>
-            "[" + string.Join(",", codes.Select(c =>
-                $"{{\"code\":\"{c}\",\"description\":\"{c}-Subject {c}\"}}")) + "]";
+        // A subject list for FakeMyPurdueHandler.Subjects where only the codes matter.
+        private static List<(string Code, string Name)> SubjectList(params string[] codes) =>
+            [.. codes.Select(c => (c, $"Subject {c}"))];
 
-        // Distinct subjects the sync searched for, in request order.
+        // Distinct subjects the sync searched sections for, in request order.
         private static List<string> SearchedSubjects(FakeMyPurdueHandler handler) =>
-            handler.Requests
-                .Where(r => r.PathAndQuery.Contains("searchResults/searchResults"))
-                .Select(r => System.Web.HttpUtility.ParseQueryString(
-                    new Uri(new Uri("http://x"), r.PathAndQuery).Query)["txt_subject"])
-                .Distinct()
-                .ToList();
+            handler.SectionSearches.Select(s => s.Subject).Distinct().ToList();
 
         private static List<MyPurdueSection> RecordedSections() =>
-            TestResources.LoadSectionPage(TestResources.SectionPage0).Sections
-                .Concat(TestResources.LoadSectionPage(TestResources.SectionPage500).Sections)
+            LoadSectionPage(SectionPage0).Sections
+                .Concat(LoadSectionPage(SectionPage500).Sections)
                 .ToList();
 
         private static DateOnly ParseDate(string value) =>
@@ -128,8 +136,7 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task FullSyncPersistsEveryScrapedSection()
         {
-            var result = await SyncAsync(new FakeMyPurdueHandler());
-            Assert.True(result.Succeeded);
+            await SyncAsync(new FakeMyPurdueHandler());
 
             var scraped = RecordedSections();
             using var ctx = NewContext();
@@ -143,8 +150,8 @@ namespace PurdueIo.Tests
             // MyPurdueConnectionOfflineTests).
             var grouping = new MyPurdueConnection(
                 NullLogger<MyPurdueConnection>.Instance, new FakeMyPurdueHandler());
-            var groups = await grouping.GroupLinkedSectionsAsync(SyncTerm,
-                await grouping.GetSectionsAsync(SyncTerm, SyncSubject));
+            var groups = await grouping.GroupLinkedSectionsAsync(RecordedTerm,
+                await grouping.GetSectionsAsync(RecordedTerm, RecordedSubject));
             Assert.Equal(groups.Count, ctx.Classes.Count());
             Assert.All(ctx.Classes.Select(c => c.Sections.Count).ToList(),
                 n => Assert.True(n > 0));
@@ -159,9 +166,11 @@ namespace PurdueIo.Tests
                 actualMeetings.OrderBy(kv => kv.Key));
 
             var term = Assert.Single(ctx.Terms);
-            Assert.Equal((SyncTerm, "Spring 2027"), (term.Code, term.Name));
+            Assert.Equal((RecordedTerm, RecordedTermName), (term.Code, term.Name));
+            // The fake serves MyPurdue's "CS-Computer Sciences"; the prefix is stripped.
             var subject = Assert.Single(ctx.Subjects);
-            Assert.Equal(("CS", "Computer Sciences"), (subject.Abbreviation, subject.Name));
+            Assert.Equal((RecordedSubject, RecordedSubjectName),
+                (subject.Abbreviation, subject.Name));
 
             // Instructors are de-duplicated by (trimmed) e-mail.
             var expectedEmails = scraped
@@ -215,7 +224,7 @@ namespace PurdueIo.Tests
                 meetings: [Meeting(building: "WALC", room: "1055", days: "TR")],
                 faculty: [Faculty("Grace Hopper", "ghopper@purdue.edu")]);
             var handler = new FakeMyPurdueHandler();
-            Serve(handler, Page(keep, drop));
+            handler.SetSections(DefaultTerm, DefaultSubject, keep, drop);
             await SyncAsync(handler);
 
             Guid droppedSectionId, droppedClassId;
@@ -226,7 +235,7 @@ namespace PurdueIo.Tests
             }
             var before = Snapshot();
 
-            Serve(handler, Page(keep));
+            handler.SetSections(DefaultTerm, DefaultSubject, keep);
             await SyncAsync(handler);
 
             using (var ctx = NewContext())
@@ -250,13 +259,14 @@ namespace PurdueIo.Tests
         public async Task MultipleRemovedSectionsAreDeletedTogether()
         {
             var handler = new FakeMyPurdueHandler();
-            Serve(handler, Page(
+            var survivor = Section("10002", courseNumber: "25100", title: "Data Structures");
+            handler.SetSections(DefaultTerm, DefaultSubject,
                 Section("10001"),
-                Section("10002", courseNumber: "25100", title: "Data Structures"),
-                Section("10003", courseNumber: "25200", title: "Systems Programming")));
+                survivor,
+                Section("10003", courseNumber: "25200", title: "Systems Programming"));
             await SyncAsync(handler);
 
-            Serve(handler, Page(Section("10002", courseNumber: "25100", title: "Data Structures")));
+            handler.SetSections(DefaultTerm, DefaultSubject, survivor);
             await SyncAsync(handler);
 
             using var ctx = NewContext();
@@ -270,11 +280,11 @@ namespace PurdueIo.Tests
         {
             var lecture = Meeting();
             var handler = new FakeMyPurdueHandler();
-            Serve(handler, Page(Section("10001",
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001",
                 meetings: [
                     lecture,
                     Meeting(begin: "1500", end: "1650", room: "B160", days: "T"),
-                ])));
+                ]));
             await SyncAsync(handler);
 
             Guid lectureMeetingId, labMeetingId;
@@ -282,14 +292,15 @@ namespace PurdueIo.Tests
             {
                 lectureMeetingId = ctx.Meetings
                     .Single(m => m.Duration == TimeSpan.FromMinutes(50)).Id;
-                labMeetingId = ctx.Meetings.Single(m => m.Duration == TimeSpan.FromMinutes(110)).Id;
+                labMeetingId = ctx.Meetings
+                    .Single(m => m.Duration == TimeSpan.FromMinutes(110)).Id;
             }
 
-            Serve(handler, Page(Section("10001",
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001",
                 meetings: [
                     lecture,
                     Meeting(begin: "1600", end: "1750", room: "B160", days: "T"),
-                ])));
+                ]));
             await SyncAsync(handler);
 
             using (var ctx = NewContext())
@@ -308,15 +319,15 @@ namespace PurdueIo.Tests
         public async Task InstructorChangesUpdateLinksButKeepInstructorRows()
         {
             var handler = new FakeMyPurdueHandler();
-            Serve(handler, Page(Section("10001",
-                faculty: [Faculty("Ada Lovelace", "alovelace@purdue.edu")])));
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001",
+                faculty: [Faculty("Ada Lovelace", "alovelace@purdue.edu")]));
             await SyncAsync(handler);
 
             // Replace the instructor; the same e-mail also appears padded with whitespace.
-            Serve(handler, Page(Section("10001", faculty: [
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001", faculty: [
                 Faculty("Alan Turing", "aturing@purdue.edu"),
                 Faculty("Alan Turing", "  aturing@purdue.edu "),
-            ])));
+            ]));
             await SyncAsync(handler);
 
             using var ctx = NewContext();
@@ -332,10 +343,10 @@ namespace PurdueIo.Tests
         public async Task MeetingWithoutLocationUsesTbaRoom()
         {
             var handler = new FakeMyPurdueHandler();
-            Serve(handler, Page(
+            handler.SetSections(DefaultTerm, DefaultSubject,
                 Section("10001", meetings: [Meeting(building: null)]),
                 Section("10002", courseNumber: "25100", title: "Data Structures",
-                    meetings: [Meeting(building: null, days: "TR")])));
+                    meetings: [Meeting(building: null, days: "TR")]));
             await SyncAsync(handler);
 
             using var ctx = NewContext();
@@ -351,15 +362,15 @@ namespace PurdueIo.Tests
         {
             var handler = new FakeMyPurdueHandler();
             // Variable-credit sections report a range instead of creditHours.
-            Serve(handler, Page(Section("10001", creditHours: null,
-                creditHourLow: 1, creditHourHigh: 4)));
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001", creditHours: null,
+                creditHourLow: 1, creditHourHigh: 4));
             await SyncAsync(handler);
             using (var ctx = NewContext())
             {
                 Assert.Equal(4, Assert.Single(ctx.Courses).CreditHours);
             }
 
-            Serve(handler, Page(Section("10001", creditHours: 3)));
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001", creditHours: 3));
             await SyncAsync(handler);
             using (var ctx = NewContext())
             {
@@ -374,9 +385,8 @@ namespace PurdueIo.Tests
             var lab = Section("10002", type: "Laboratory", linkIdentifier: "L1",
                 meetings: [Meeting(begin: "1500", end: "1650", room: "B160", days: "T")]);
             var handler = new FakeMyPurdueHandler();
-            handler.LinkedSectionOverrides["10001"] = LinkedResponse(lecture, lab);
-            handler.LinkedSectionOverrides["10002"] = LinkedResponse(lecture, lab);
-            Serve(handler, Page(lecture, lab));
+            handler.SetSections(DefaultTerm, DefaultSubject, lecture, lab);
+            handler.SetLinkedSections(lecture, lab);
 
             await SyncAsync(handler);
             Guid classId;
@@ -399,9 +409,9 @@ namespace PurdueIo.Tests
         public async Task SectionsWithoutCourseInfoAreSkipped()
         {
             var handler = new FakeMyPurdueHandler();
-            Serve(handler, Page(
+            handler.SetSections(DefaultTerm, DefaultSubject,
                 Section("10001"),
-                Section("10002", courseNumber: "25100", title: "")));
+                Section("10002", courseNumber: "25100", title: ""));
 
             await SyncAsync(handler);
 
@@ -414,22 +424,24 @@ namespace PurdueIo.Tests
         // C. Term and subject selection
         // ---------------------------------------------------------------------------
 
-        private const string TwoTermsJson =
-            "[{\"code\":\"202720\",\"description\":\"Spring 2027\"}," +
-            "{\"code\":\"202710\",\"description\":\"Fall 2026\"}]";
+        private const string OtherTerm = "202710";
+
+        // The default term plus an earlier one with no sections configured.
+        private static List<(string Code, string Name)> TwoTerms() =>
+            [(DefaultTerm, RecordedTermName), (OtherTerm, "Fall 2026")];
 
         [Fact]
         public async Task TermFilterSyncsOnlyRequestedTerms()
         {
-            var handler = new FakeMyPurdueHandler { TermsJson = TwoTermsJson };
-            Serve(handler, Page(Section("10001")));
+            var handler = new FakeMyPurdueHandler { Terms = TwoTerms() };
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001"));
 
-            await SyncAsync(handler, terms: [SyncTerm]);
+            await SyncAsync(handler, terms: [DefaultTerm]);
 
             using var ctx = NewContext();
-            Assert.Equal(SyncTerm, Assert.Single(ctx.Terms).Code);
-            Assert.DoesNotContain(handler.Requests, r =>
-                r.PathAndQuery.Contains("term=202710") || r.Body.Contains("term=202710"));
+            Assert.Equal(DefaultTerm, Assert.Single(ctx.Terms).Code);
+            Assert.Equal([DefaultTerm], handler.SubjectListTerms);
+            Assert.All(handler.SectionSearches, s => Assert.Equal(DefaultTerm, s.Term));
         }
 
         [Fact]
@@ -440,20 +452,19 @@ namespace PurdueIo.Tests
                 ctx.Terms.Add(new Term
                 {
                     Id = Guid.NewGuid(),
-                    Code = "202710",
+                    Code = OtherTerm,
                     Name = "Fall 2026",
                     StartDate = DateOnly.FromDateTime(DateTime.Today.AddYears(-1).AddMonths(-4)),
                     EndDate = DateOnly.FromDateTime(DateTime.Today.AddYears(-1)),
                 });
                 ctx.SaveChanges();
             }
-            var handler = new FakeMyPurdueHandler { TermsJson = TwoTermsJson };
-            Serve(handler, Page(Section("10001")));
+            var handler = new FakeMyPurdueHandler { Terms = TwoTerms() };
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001"));
 
             await SyncAsync(handler, TermSyncBehavior.SyncNewAndCurrentTerms);
 
-            Assert.DoesNotContain(handler.Requests, r =>
-                r.PathAndQuery.Contains("term=202710") || r.Body.Contains("term=202710"));
+            Assert.Equal([DefaultTerm], handler.SubjectListTerms);
             using var check = NewContext();
             Assert.Equal("10001", Assert.Single(check.Sections).Crn);
         }
@@ -463,17 +474,16 @@ namespace PurdueIo.Tests
         {
             var handler = new FakeMyPurdueHandler
             {
-                SubjectsJson = "[{\"code\":\"CS\",\"description\":\"CS-Computer Sciences\"}," +
-                    "{\"code\":\"MA\",\"description\":\"MA-Mathematics\"}]",
+                Subjects = [(DefaultSubject, RecordedSubjectName), ("MA", "Mathematics")],
             };
-            Serve(handler, Page(Section("10001")));
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001"));
 
-            // Without the filter this would fail: MA has no canned section search pages.
-            await SyncAsync(handler, subjects: ["CS"]);
+            // Without the filter this would fail: MA has no sections configured.
+            await SyncAsync(handler, subjects: [DefaultSubject]);
 
-            Assert.DoesNotContain(handler.Requests, r => r.PathAndQuery.Contains("txt_subject=MA"));
+            Assert.Equal([DefaultSubject], SearchedSubjects(handler));
             using var ctx = NewContext();
-            Assert.Equal("CS", Assert.Single(ctx.Subjects).Abbreviation);
+            Assert.Equal(DefaultSubject, Assert.Single(ctx.Subjects).Abbreviation);
         }
 
         // ---------------------------------------------------------------------------
@@ -484,20 +494,20 @@ namespace PurdueIo.Tests
         public async Task FailedScrapeLeavesExistingDataIntact()
         {
             var handler = new FakeMyPurdueHandler();
-            Serve(handler, Page(Section("10001"),
-                Section("10002", courseNumber: "25100", title: "Data Structures")));
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001"),
+                Section("10002", courseNumber: "25100", title: "Data Structures"));
             await SyncAsync(handler);
             var before = Snapshot();
 
             // The service claims 2 results but stops after the first page.
-            var pages = handler.SectionSearchPagesFor(SyncTerm, SyncSubject);
+            var pages = handler.SectionSearchPagesFor(DefaultTerm, DefaultSubject);
             pages[0] = Page(2, Section("10001"));
             pages[1] = Page(2);
 
-            var result = await SyncAsync(handler);
+            var result = await SyncAllowingFailuresAsync(handler);
 
             var failure = Assert.Single(result.Failures);
-            Assert.Equal((SyncTerm, "CS"), (failure.TermCode, failure.SubjectCode));
+            Assert.Equal((DefaultTerm, DefaultSubject), (failure.TermCode, failure.SubjectCode));
             Assert.IsType<ApplicationException>(failure.Exception);
             AssertSnapshotsEqual(before, Snapshot());
         }
@@ -505,11 +515,11 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task FailingSubjectDoesNotStopLaterSubjects()
         {
-            // MA has no canned section search pages, so its search fails.
-            var handler = new FakeMyPurdueHandler { SubjectsJson = SubjectsJson("MA", "CS") };
-            Serve(handler, Page(Section("10001")));
+            // MA has no sections configured, so its search fails.
+            var handler = new FakeMyPurdueHandler { Subjects = SubjectList("MA", DefaultSubject) };
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001"));
 
-            var result = await SyncAsync(handler);
+            var result = await SyncAllowingFailuresAsync(handler);
 
             Assert.False(result.Succeeded);
             var failure = Assert.Single(result.Failures);
@@ -518,7 +528,7 @@ namespace PurdueIo.Tests
             using var ctx = NewContext();
             Assert.Equal("10001", Assert.Single(ctx.Sections).Crn);
             // The failure started a fresh MyPurdue session for the next subject.
-            Assert.Equal(2, handler.Requests.Count(r => r.PathAndQuery.Contains("term/search")));
+            Assert.Equal(2, handler.Requests.Count(r => r.PathAndQuery.Contains("/term/search")));
         }
 
         [Fact]
@@ -526,21 +536,19 @@ namespace PurdueIo.Tests
         {
             var handler = new FakeMyPurdueHandler
             {
-                SubjectsJson = SubjectsJson("CS", "MA", "EE"),
+                Subjects = SubjectList(DefaultSubject, "MA", "EE"),
             };
-            Serve(handler, Page(Section("10001")));
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001"));
             // MA's campus reuses CS's campus name under a different code, so its SaveChanges
             // violates the unique index on Campus.Name after entities are already tracked.
-            var clashingMeeting = Meeting();
-            clashingMeeting.CampusCode = "WL2";
-            handler.SectionSearchPagesFor(SyncTerm, "MA")[0] =
-                Page(Section("20001", courseNumber: "16100", title: "Calculus I",
-                    subject: "MA", meetings: [clashingMeeting]));
-            handler.SectionSearchPagesFor(SyncTerm, "EE")[0] =
-                Page(Section("30001", courseNumber: "20100", title: "Linear Circuits",
+            handler.SetSections(DefaultTerm, "MA",
+                Section("20001", courseNumber: "16100", title: "Calculus I", subject: "MA",
+                    meetings: [Meeting(campusCode: "WL2")]));
+            handler.SetSections(DefaultTerm, "EE",
+                Section("30001", courseNumber: "20100", title: "Linear Circuits",
                     subject: "EE"));
 
-            var result = await SyncAsync(handler);
+            var result = await SyncAllowingFailuresAsync(handler);
 
             Assert.Equal("MA", Assert.Single(result.Failures).SubjectCode);
             Assert.IsType<DbUpdateException>(result.Failures[0].Exception);
@@ -554,19 +562,18 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task ConsecutiveFailuresAbortTheRun()
         {
-            // None of these subjects have canned section search pages, so every one fails.
+            // None of these subjects have sections configured, so every one fails.
             var subjects = Enumerable.Range(1, MAX_CONSECUTIVE_FAILURES + 2)
                 .Select(i => $"X{i}").ToArray();
-            var handler = new FakeMyPurdueHandler { SubjectsJson = SubjectsJson(subjects) };
-            Serve(handler, Page(Section("10001")));
+            var handler = new FakeMyPurdueHandler { Subjects = SubjectList(subjects) };
 
             var aborted = await Assert.ThrowsAsync<SyncAbortedException>(
-                () => SyncAsync(handler));
+                () => SyncAllowingFailuresAsync(handler));
 
             Assert.Equal(subjects.Take(MAX_CONSECUTIVE_FAILURES), SearchedSubjects(handler));
             // The exception carries every failure so far, so the caller can report them.
             Assert.Equal(
-                subjects.Take(MAX_CONSECUTIVE_FAILURES).Select(s => $"{SyncTerm} {s}"),
+                subjects.Take(MAX_CONSECUTIVE_FAILURES).Select(s => $"{DefaultTerm} {s}"),
                 aborted.Failures.Select(f => f.Description));
             Assert.Same(aborted.Failures[^1].Exception, aborted.InnerException);
         }
@@ -578,13 +585,13 @@ namespace PurdueIo.Tests
             var perTerm = MAX_CONSECUTIVE_FAILURES / 2 + 1;
             var handler = new FakeMyPurdueHandler
             {
-                TermsJson = TwoTermsJson,
-                SubjectsJson = SubjectsJson(
-                    [.. Enumerable.Range(1, perTerm).Select(i => $"X{i}")]),
+                Terms = TwoTerms(),
+                Subjects = SubjectList([.. Enumerable.Range(1, perTerm).Select(i => $"X{i}")]),
             };
-            Serve(handler, Page(Section("10001")));
 
-            await Assert.ThrowsAsync<SyncAbortedException>(() => SyncAsync(handler));
+            await Assert.ThrowsAsync<SyncAbortedException>(
+                () => SyncAllowingFailuresAsync(handler));
+            Assert.Equal([DefaultTerm, OtherTerm], handler.SubjectListTerms);
         }
 
         [Fact]
@@ -594,15 +601,13 @@ namespace PurdueIo.Tests
             // limit despite MAX_CONSECUTIVE_FAILURES failures in total.
             var subjects = Enumerable.Range(1, MAX_CONSECUTIVE_FAILURES)
                 .SelectMany(i => new[] { $"X{i}", $"G{i}" }).ToList();
-            var handler = new FakeMyPurdueHandler { SubjectsJson = SubjectsJson([.. subjects]) };
-            Serve(handler, Page(Section("10001")));
+            var handler = new FakeMyPurdueHandler { Subjects = SubjectList([.. subjects]) };
             for (var i = 1; i <= MAX_CONSECUTIVE_FAILURES; i++)
             {
-                handler.SectionSearchPagesFor(SyncTerm, $"G{i}")[0] =
-                    Page(Section($"1100{i}", subject: $"G{i}"));
+                handler.SetSections(DefaultTerm, $"G{i}", Section($"1100{i}", subject: $"G{i}"));
             }
 
-            var result = await SyncAsync(handler);
+            var result = await SyncAllowingFailuresAsync(handler);
 
             Assert.Equal(MAX_CONSECUTIVE_FAILURES, result.Failures.Count);
             Assert.Equal(subjects, SearchedSubjects(handler));
@@ -612,14 +617,14 @@ namespace PurdueIo.Tests
         public async Task EmptyScrapeCurrentlyDeletesSubjectSections()
         {
             var handler = new FakeMyPurdueHandler();
-            Serve(handler, Page(Section("10001"),
-                Section("10002", courseNumber: "25100", title: "Data Structures")));
+            handler.SetSections(DefaultTerm, DefaultSubject, Section("10001"),
+                Section("10002", courseNumber: "25100", title: "Data Structures"));
             await SyncAsync(handler);
 
             // A "successful" empty response is indistinguishable from a subject with no
             // sections, so everything for the subject is deleted. Review item #5 proposes
             // a guard; flip this assertion when that lands.
-            Serve(handler, Page());
+            handler.SetSections(DefaultTerm, DefaultSubject);
             await SyncAsync(handler);
 
             using var ctx = NewContext();

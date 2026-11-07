@@ -12,8 +12,8 @@ namespace PurdueIo.Tests
     // (cached embedded responses), so the scraper wiring is tested without the network.
     public class MyPurdueConnectionOfflineTests
     {
-        private const string Term = "202720";
-        private const string Subject = "CS";
+        private const string Term = TestResources.RecordedTerm;
+        private const string Subject = TestResources.RecordedSubject;
 
         private static (MyPurdueConnection Connection, FakeMyPurdueHandler Handler)
             CreateConnection()
@@ -43,6 +43,22 @@ namespace PurdueIo.Tests
                 Assert.Contains($"txt_subject={Subject}", r.PathAndQuery);
                 Assert.Contains("pageMaxSize=500", r.PathAndQuery);
             });
+        }
+
+        [Fact]
+        public async Task SetSectionsPaginatesLikeTheRecordedService()
+        {
+            // Guards the fake: synthetic results must page the same way the recorded ones do.
+            var (connection, handler) = CreateConnection();
+            var synthetic = Enumerable.Range(0, 1001)
+                .Select(i => SyntheticSections.Section($"{20000 + i}"))
+                .ToArray();
+            handler.SetSections(Term, Subject, synthetic);
+
+            var sections = await connection.GetSectionsAsync(Term, Subject);
+
+            Assert.Equal(synthetic.Select(s => s.Crn), sections.Select(s => s.Crn));
+            Assert.Equal([0, 500, 1000], handler.SectionSearches.Select(s => s.Offset));
         }
 
         [Fact]

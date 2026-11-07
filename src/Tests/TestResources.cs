@@ -15,6 +15,12 @@ namespace PurdueIo.Tests
         public const string SectionPage500 = "202720-CS-section-dump-500-500.json";
         public const string LinkedSectionsFixture = "202720-CS-linked-sections.json";
 
+        // The term and subject the recorded fixtures above were captured for.
+        public const string RecordedTerm = "202720";
+        public const string RecordedTermName = "Spring 2027";
+        public const string RecordedSubject = "CS";
+        public const string RecordedSubjectName = "Computer Sciences";
+
         public static Stream Open(string fileName)
         {
             var stream = typeof(TestResources).Assembly

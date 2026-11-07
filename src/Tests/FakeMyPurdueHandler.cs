@@ -8,34 +8,60 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using PurdueIo.Scraper.Connections.Models;
+using static PurdueIo.Tests.TestResources;
 
 namespace PurdueIo.Tests
 {
     // An HttpMessageHandler that mimics the slice of the MyPurdue class search API
-    // that MyPurdueConnection talks to, backed by the cached JSON responses embedded
-    // in the test assembly. It never touches the network.
+    // that MyPurdueConnection talks to. It never touches the network.
+    //
+    // By default it serves the recorded 202720 CS responses embedded in the test assembly
+    // (see TestResources). Tests change what it serves through the public members below;
+    // anything it hasn't been given gets a 404 that says what was missing.
     public class FakeMyPurdueHandler : HttpMessageHandler
     {
-        // Recorded as (HTTP method, path + query, request body) for wiring assertions.
+        // MyPurdue's page size for section searches (see MyPurdueConnection).
+        private const int PageSize = 500;
+
+        // Every request, as (HTTP method, path + query, request body), for wiring assertions.
         public List<(string Method, string PathAndQuery, string Body)> Requests { get; } = [];
 
-        // Term and subject of the recorded section search served by default.
-        public const string RecordedTerm = "202720";
-        public const string RecordedSubject = "CS";
+        // Every section search, in request order.
+        public List<(string Term, string Subject, int Offset)> SectionSearches { get; } = [];
 
-        // Canned section search (searchResults/searchResults) pages, keyed by
-        // (txt_term, txt_subject) and then by the requested pageOffset. Starts with the
-        // recorded 202720 CS search; a search for any term/subject not listed here gets a
-        // 404. Individual tests replace entries to simulate bad or truncated responses.
+        // The terms whose subject list was requested, in request order.
+        public List<string> SubjectListTerms { get; } = [];
+
+        // Served by classSearch/getTerms.
+        public List<(string Code, string Name)> Terms { get; set; } =
+            [(RecordedTerm, RecordedTermName)];
+
+        // Served by classSearch/get_subject, for every term.
+        public List<(string Code, string Name)> Subjects { get; set; } =
+            [(RecordedSubject, RecordedSubjectName)];
+
+        // Section search (searchResults/searchResults) responses, keyed by
+        // (txt_term, txt_subject) and then by pageOffset. Starts with the recorded search.
+        // Most tests use SetSections; edit pages directly to simulate bad responses.
         public Dictionary<(string Term, string Subject), Dictionary<int, string>>
             SectionSearchPages { get; } = new()
             {
                 [(RecordedTerm, RecordedSubject)] = new()
                 {
-                    [0] = TestResources.ReadText(TestResources.SectionPage0),
-                    [500] = TestResources.ReadText(TestResources.SectionPage500),
+                    [0] = ReadText(SectionPage0),
+                    [500] = ReadText(SectionPage500),
                 },
             };
+
+        // fetchLinkedSections responses keyed by the queried CRN. Starts with the verbatim
+        // responses recorded while running the real GroupLinkedSectionsAsync heuristic, so
+        // a heuristic change that queries an unrecorded CRN fails loudly.
+        public Dictionary<string, string> LinkedSections => linkedSections ??=
+            JsonSerializer
+                .Deserialize<Dictionary<string, JsonElement>>(ReadText(LinkedSectionsFixture))
+                .ToDictionary(kv => kv.Key, kv => kv.Value.GetRawText());
+        private Dictionary<string, string> linkedSections;
 
         // The pages (by pageOffset) for one term/subject search, created empty if missing.
         public Dictionary<int, string> SectionSearchPagesFor(string term, string subject)
@@ -47,29 +73,33 @@ namespace PurdueIo.Tests
             return pages;
         }
 
-        // fetchLinkedSections responses that take precedence over the recorded fixture,
-        // keyed by queried CRN. Lets tests with synthetic sections define linked groups.
-        public Dictionary<string, string> LinkedSectionOverrides { get; } = [];
+        // Makes `sections` the complete result of a term/subject search, paginated like
+        // the live service. Replaces anything previously served for that search.
+        public void SetSections(string term, string subject, params MyPurdueSection[] sections)
+        {
+            var pages = SectionSearchPagesFor(term, subject);
+            pages.Clear();
+            pages[0] = SyntheticSections.Page(sections.Length, sections.Take(PageSize).ToArray());
+            for (var offset = PageSize; offset < sections.Length; offset += PageSize)
+            {
+                pages[offset] = SyntheticSections.Page(sections.Length,
+                    sections.Skip(offset).Take(PageSize).ToArray());
+            }
+        }
 
-        // Canned classSearch/getTerms response.
-        public string TermsJson { get; set; } =
-            "[{\"code\":\"202720\",\"description\":\"Spring 2027\"}]";
-
-        // Canned classSearch/get_subject response. MyPurdue prefixes the name with the
-        // code, which MyPurdueConnection strips.
-        public string SubjectsJson { get; set; } =
-            "[{\"code\":\"CS\",\"description\":\"CS-Computer Sciences\"}]";
-
-        // Verbatim fetchLinkedSections responses captured from the live service while
-        // running the real GroupLinkedSectionsAsync heuristic, keyed by the queried CRN.
-        // Only those exact CRNs can be served: if the grouping heuristic ever queries
-        // something else, that is a behavior change worth failing on.
-        private Dictionary<string, string> linkedResponses;
-        private Dictionary<string, string> LinkedResponses => linkedResponses ??=
-            JsonSerializer
-                .Deserialize<Dictionary<string, JsonElement>>(
-                    TestResources.ReadText(TestResources.LinkedSectionsFixture))
-                .ToDictionary(kv => kv.Key, kv => kv.Value.GetRawText());
+        // Makes fetchLinkedSections report `group` as one class when queried for any of
+        // its members.
+        public void SetLinkedSections(params MyPurdueSection[] group)
+        {
+            var response = JsonSerializer.Serialize(new MyPurdueLinkedSectionsResponse
+            {
+                SectionGroups = [group.ToList()],
+            });
+            foreach (var section in group)
+            {
+                LinkedSections[section.Crn] = response;
+            }
+        }
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
@@ -80,13 +110,18 @@ namespace PurdueIo.Tests
             Requests.Add((request.Method.Method, request.RequestUri.PathAndQuery, body));
 
             var path = request.RequestUri.AbsolutePath;
+            var query = HttpUtility.ParseQueryString(request.RequestUri.Query);
             if (path.EndsWith("/classSearch/getTerms"))
             {
-                return Json(TermsJson);
+                return Json(JsonSerializer.Serialize(
+                    Terms.Select(t => new { code = t.Code, description = t.Name })));
             }
             if (path.EndsWith("/classSearch/get_subject"))
             {
-                return Json(SubjectsJson);
+                SubjectListTerms.Add(query["term"]);
+                // MyPurdue prefixes the name with the code; MyPurdueConnection strips it.
+                return Json(JsonSerializer.Serialize(Subjects.Select(s =>
+                    new { code = s.Code, description = $"{s.Code}-{s.Name}" })));
             }
             if (path.EndsWith("/term/search") || path.EndsWith("/classSearch/resetDataForm"))
             {
@@ -95,9 +130,9 @@ namespace PurdueIo.Tests
             }
             if (path.EndsWith("/searchResults/searchResults"))
             {
-                var query = HttpUtility.ParseQueryString(request.RequestUri.Query);
                 var (term, subject) = (query["txt_term"], query["txt_subject"]);
                 var offset = int.Parse(query["pageOffset"]);
+                SectionSearches.Add((term, subject, offset));
                 if (!SectionSearchPages.TryGetValue((term, subject), out var pages))
                 {
                     return Error("FakeMyPurdueHandler has no section search pages for " +
@@ -110,18 +145,14 @@ namespace PurdueIo.Tests
             }
             if (path.EndsWith("/searchResults/fetchLinkedSections"))
             {
-                var crn = HttpUtility.ParseQueryString(request.RequestUri.Query)
-                    ["courseReferenceNumber"];
-                if (LinkedSectionOverrides.TryGetValue(crn, out var overridden))
-                {
-                    return Json(overridden);
-                }
-                return LinkedResponses.TryGetValue(crn, out var response)
+                var crn = query["courseReferenceNumber"];
+                return LinkedSections.TryGetValue(crn, out var response)
                     ? Json(response)
                     : Error(
-                        $"FakeMyPurdueHandler has no recorded fetchLinkedSections response " +
-                        $"for CRN {crn}. The grouping heuristic requested a section that " +
-                        "was never captured - re-record the linked-sections fixture.");
+                        $"FakeMyPurdueHandler has no fetchLinkedSections response for CRN " +
+                        $"{crn}. If this came from the recorded fixture, the grouping " +
+                        "heuristic requested a section that was never captured - re-record " +
+                        "the linked-sections fixture.");
             }
             return Error($"FakeMyPurdueHandler received unexpected request: {path}");
         }
