@@ -468,8 +468,7 @@ namespace PurdueIo.Tests
             };
             Serve(handler, Page(Section("10001")));
 
-            // Without the filter this would fail: the canned page only holds CS sections,
-            // which trips the wrong-subject check for MA.
+            // Without the filter this would fail: MA has no canned section search pages.
             await SyncAsync(handler, subjects: ["CS"]);
 
             Assert.DoesNotContain(handler.Requests, r => r.PathAndQuery.Contains("txt_subject=MA"));
@@ -491,8 +490,9 @@ namespace PurdueIo.Tests
             var before = Snapshot();
 
             // The service claims 2 results but stops after the first page.
-            handler.SectionSearchPages[0] = Page(2, Section("10001"));
-            handler.SectionSearchPages[1] = Page(2);
+            var pages = handler.SectionSearchPagesFor(SyncTerm, SyncSubject);
+            pages[0] = Page(2, Section("10001"));
+            pages[1] = Page(2);
 
             var result = await SyncAsync(handler);
 
@@ -505,14 +505,16 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task FailingSubjectDoesNotStopLaterSubjects()
         {
-            // MA has no canned page, so it gets the CS page and trips the wrong-subject check.
+            // MA has no canned section search pages, so its search fails.
             var handler = new FakeMyPurdueHandler { SubjectsJson = SubjectsJson("MA", "CS") };
             Serve(handler, Page(Section("10001")));
 
             var result = await SyncAsync(handler);
 
             Assert.False(result.Succeeded);
-            Assert.Equal("MA", Assert.Single(result.Failures).SubjectCode);
+            var failure = Assert.Single(result.Failures);
+            Assert.Equal("MA", failure.SubjectCode);
+            Assert.Contains("no section search pages", failure.Exception.Message);
             using var ctx = NewContext();
             Assert.Equal("10001", Assert.Single(ctx.Sections).Crn);
             // The failure started a fresh MyPurdue session for the next subject.
@@ -526,24 +528,17 @@ namespace PurdueIo.Tests
             {
                 SubjectsJson = SubjectsJson("CS", "MA", "EE"),
             };
-            handler.SectionSearchPagesByTermAndSubject[(SyncTerm, "CS")] = new()
-            {
-                [0] = Page(Section("10001")),
-            };
+            Serve(handler, Page(Section("10001")));
             // MA's campus reuses CS's campus name under a different code, so its SaveChanges
             // violates the unique index on Campus.Name after entities are already tracked.
             var clashingMeeting = Meeting();
             clashingMeeting.CampusCode = "WL2";
-            handler.SectionSearchPagesByTermAndSubject[(SyncTerm, "MA")] = new()
-            {
-                [0] = Page(Section("20001", courseNumber: "16100", title: "Calculus I",
-                    subject: "MA", meetings: [clashingMeeting])),
-            };
-            handler.SectionSearchPagesByTermAndSubject[(SyncTerm, "EE")] = new()
-            {
-                [0] = Page(Section("30001", courseNumber: "20100", title: "Linear Circuits",
-                    subject: "EE")),
-            };
+            handler.SectionSearchPagesFor(SyncTerm, "MA")[0] =
+                Page(Section("20001", courseNumber: "16100", title: "Calculus I",
+                    subject: "MA", meetings: [clashingMeeting]));
+            handler.SectionSearchPagesFor(SyncTerm, "EE")[0] =
+                Page(Section("30001", courseNumber: "20100", title: "Linear Circuits",
+                    subject: "EE"));
 
             var result = await SyncAsync(handler);
 
@@ -559,7 +554,7 @@ namespace PurdueIo.Tests
         [Fact]
         public async Task ConsecutiveFailuresAbortTheRun()
         {
-            // None of these subjects match the canned CS page, so every one fails.
+            // None of these subjects have canned section search pages, so every one fails.
             var subjects = Enumerable.Range(1, MAX_CONSECUTIVE_FAILURES + 2)
                 .Select(i => $"X{i}").ToArray();
             var handler = new FakeMyPurdueHandler { SubjectsJson = SubjectsJson(subjects) };
@@ -603,10 +598,8 @@ namespace PurdueIo.Tests
             Serve(handler, Page(Section("10001")));
             for (var i = 1; i <= MAX_CONSECUTIVE_FAILURES; i++)
             {
-                handler.SectionSearchPagesByTermAndSubject[(SyncTerm, $"G{i}")] = new()
-                {
-                    [0] = Page(Section($"1100{i}", subject: $"G{i}")),
-                };
+                handler.SectionSearchPagesFor(SyncTerm, $"G{i}")[0] =
+                    Page(Section($"1100{i}", subject: $"G{i}"));
             }
 
             var result = await SyncAsync(handler);

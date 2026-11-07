@@ -19,20 +19,33 @@ namespace PurdueIo.Tests
         // Recorded as (HTTP method, path + query, request body) for wiring assertions.
         public List<(string Method, string PathAndQuery, string Body)> Requests { get; } = [];
 
-        // Canned section search (searchResults/searchResults) pages keyed by the requested
-        // pageOffset, served for any term/subject without an entry in
-        // SectionSearchPagesByTermAndSubject. Individual tests replace entries to simulate
-        // bad or truncated responses.
-        public Dictionary<int, string> SectionSearchPages { get; } = new()
-        {
-            [0] = TestResources.ReadText(TestResources.SectionPage0),
-            [500] = TestResources.ReadText(TestResources.SectionPage500),
-        };
+        // Term and subject of the recorded section search served by default.
+        public const string RecordedTerm = "202720";
+        public const string RecordedSubject = "CS";
 
-        // Canned section search pages for specific term/subject searches, keyed by
-        // (txt_term, txt_subject) and then by pageOffset like SectionSearchPages.
+        // Canned section search (searchResults/searchResults) pages, keyed by
+        // (txt_term, txt_subject) and then by the requested pageOffset. Starts with the
+        // recorded 202720 CS search; a search for any term/subject not listed here gets a
+        // 404. Individual tests replace entries to simulate bad or truncated responses.
         public Dictionary<(string Term, string Subject), Dictionary<int, string>>
-            SectionSearchPagesByTermAndSubject { get; } = [];
+            SectionSearchPages { get; } = new()
+            {
+                [(RecordedTerm, RecordedSubject)] = new()
+                {
+                    [0] = TestResources.ReadText(TestResources.SectionPage0),
+                    [500] = TestResources.ReadText(TestResources.SectionPage500),
+                },
+            };
+
+        // The pages (by pageOffset) for one term/subject search, created empty if missing.
+        public Dictionary<int, string> SectionSearchPagesFor(string term, string subject)
+        {
+            if (!SectionSearchPages.TryGetValue((term, subject), out var pages))
+            {
+                SectionSearchPages[(term, subject)] = pages = [];
+            }
+            return pages;
+        }
 
         // fetchLinkedSections responses that take precedence over the recorded fixture,
         // keyed by queried CRN. Lets tests with synthetic sections define linked groups.
@@ -83,14 +96,17 @@ namespace PurdueIo.Tests
             if (path.EndsWith("/searchResults/searchResults"))
             {
                 var query = HttpUtility.ParseQueryString(request.RequestUri.Query);
+                var (term, subject) = (query["txt_term"], query["txt_subject"]);
                 var offset = int.Parse(query["pageOffset"]);
-                var pages = SectionSearchPagesByTermAndSubject.TryGetValue(
-                    (query["txt_term"], query["txt_subject"]), out var termSubjectPages)
-                        ? termSubjectPages
-                        : SectionSearchPages;
+                if (!SectionSearchPages.TryGetValue((term, subject), out var pages))
+                {
+                    return Error("FakeMyPurdueHandler has no section search pages for " +
+                        $"term {term}, subject {subject}");
+                }
                 return pages.TryGetValue(offset, out var page)
                     ? Json(page)
-                    : Error($"FakeMyPurdueHandler has no canned page for pageOffset={offset}");
+                    : Error("FakeMyPurdueHandler has no section search page for " +
+                        $"term {term}, subject {subject}, pageOffset={offset}");
             }
             if (path.EndsWith("/searchResults/fetchLinkedSections"))
             {

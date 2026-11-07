@@ -111,8 +111,9 @@ namespace PurdueIo.Tests
         // Replaces the handler's recorded pages with a single synthetic page.
         public static void Serve(FakeMyPurdueHandler handler, string page)
         {
-            handler.SectionSearchPages.Clear();
-            handler.SectionSearchPages[0] = page;
+            var pages = handler.SectionSearchPagesFor(SyncTerm, SyncSubject);
+            pages.Clear();
+            pages[0] = page;
         }
     }
 }

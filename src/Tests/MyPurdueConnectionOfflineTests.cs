@@ -76,7 +76,8 @@ namespace PurdueIo.Tests
         public async Task GetSectionsThrowsWhenSuccessIsFalse()
         {
             var (connection, handler) = CreateConnection();
-            handler.SectionSearchPages[0] = "{\"success\":false,\"totalCount\":0,\"data\":[]}";
+            handler.SectionSearchPagesFor(Term, Subject)[0] =
+                "{\"success\":false,\"totalCount\":0,\"data\":[]}";
 
             var exception = await Assert.ThrowsAsync<ApplicationException>(
                 () => connection.GetSectionsAsync(Term, Subject));
@@ -87,7 +88,7 @@ namespace PurdueIo.Tests
         public async Task GetSectionsThrowsOnWrongSubjectInResults()
         {
             var (connection, handler) = CreateConnection();
-            handler.SectionSearchPages[0] =
+            handler.SectionSearchPagesFor(Term, Subject)[0] =
                 "{\"success\":true,\"totalCount\":1,\"data\":[" +
                 "{\"subject\":\"EE\",\"courseReferenceNumber\":\"99999\"}]}";
 
@@ -102,7 +103,8 @@ namespace PurdueIo.Tests
         {
             var (connection, handler) = CreateConnection();
             // Page 0 delivers 500 of 589; page 500 comes back empty (truncated scrape).
-            handler.SectionSearchPages[500] = "{\"success\":true,\"totalCount\":589,\"data\":[]}";
+            handler.SectionSearchPagesFor(Term, Subject)[500] =
+                "{\"success\":true,\"totalCount\":589,\"data\":[]}";
 
             var exception = await Assert.ThrowsAsync<ApplicationException>(
                 () => connection.GetSectionsAsync(Term, Subject));
