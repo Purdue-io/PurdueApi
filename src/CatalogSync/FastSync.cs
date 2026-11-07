@@ -29,7 +29,11 @@ namespace PurdueIo.CatalogSync
 
         // A term or subject that failed to sync. SubjectCode is null when the whole term
         // failed (e.g. its subject list couldn't be fetched).
-        public record SyncFailure (string TermCode, string SubjectCode, Exception Exception);
+        public record SyncFailure (string TermCode, string SubjectCode, Exception Exception)
+        {
+            // e.g. "202720 CS", or "202720 (term)" for a whole-term failure.
+            public string Description => $"{TermCode} {SubjectCode ?? "(term)"}";
+        }
 
         public record SyncResult (IReadOnlyList<SyncFailure> Failures)
         {
@@ -40,8 +44,15 @@ namespace PurdueIo.CatalogSync
         // or the database is down rather than one subject being bad.
         public class SyncAbortedException : Exception
         {
-            public SyncAbortedException(string message, Exception innerException)
-                : base(message, innerException) { }
+            // Every failure recorded before the run was aborted, the last one included.
+            public IReadOnlyList<SyncFailure> Failures { get; }
+
+            public SyncAbortedException(string message, IReadOnlyList<SyncFailure> failures,
+                Exception innerException)
+                : base(message, innerException)
+            {
+                Failures = failures;
+            }
         }
 
         public enum TermSyncBehavior
@@ -228,8 +239,8 @@ namespace PurdueIo.CatalogSync
             else
             {
                 progress?.Invoke(new (1.0, $"Synchronized {termsToSync.Count} terms with " +
-                    $"{failures.Count} failure(s): " + string.Join(", ",
-                        failures.Select(f => $"{f.TermCode} {f.SubjectCode ?? "(term)"}"))));
+                    $"{failures.Count} failure(s): " +
+                    string.Join(", ", failures.Select(f => f.Description))));
             }
             return new SyncResult(failures.ToList());
         }
@@ -249,7 +260,7 @@ namespace PurdueIo.CatalogSync
             {
                 throw new SyncAbortedException(
                     $"Aborting sync after {consecutiveFailures} consecutive failures " +
-                    $"({failures.Count} total)", e);
+                    $"({failures.Count} total)", failures.ToList(), e);
             }
         }
 

@@ -565,9 +565,15 @@ namespace PurdueIo.Tests
             var handler = new FakeMyPurdueHandler { SubjectsJson = SubjectsJson(subjects) };
             Serve(handler, Page(Section("10001")));
 
-            await Assert.ThrowsAsync<SyncAbortedException>(() => SyncAsync(handler));
+            var aborted = await Assert.ThrowsAsync<SyncAbortedException>(
+                () => SyncAsync(handler));
 
             Assert.Equal(subjects.Take(MAX_CONSECUTIVE_FAILURES), SearchedSubjects(handler));
+            // The exception carries every failure so far, so the caller can report them.
+            Assert.Equal(
+                subjects.Take(MAX_CONSECUTIVE_FAILURES).Select(s => $"{SyncTerm} {s}"),
+                aborted.Failures.Select(f => f.Description));
+            Assert.Same(aborted.Failures[^1].Exception, aborted.InnerException);
         }
 
         [Fact]
