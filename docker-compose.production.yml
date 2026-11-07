@@ -39,7 +39,7 @@ services:
     networks:
       - purdueio-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/odata/Terms || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
