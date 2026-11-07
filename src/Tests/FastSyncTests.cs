@@ -614,23 +614,37 @@ namespace PurdueIo.Tests
         }
 
         [Fact]
-        public async Task EmptyScrapeCurrentlyDeletesSubjectSections()
+        public async Task EmptyScrapeKeepsExistingSectionsAndReportsFailure()
         {
             var handler = new FakeMyPurdueHandler();
             handler.SetSections(DefaultTerm, DefaultSubject, Section("10001"),
                 Section("10002", courseNumber: "25100", title: "Data Structures"));
             await SyncAsync(handler);
+            var before = Snapshot();
 
             // A "successful" empty response is indistinguishable from a subject with no
-            // sections, so everything for the subject is deleted. Review item #5 proposes
-            // a guard; flip this assertion when that lands.
+            // sections; deleting everything on its word is too risky.
             handler.SetSections(DefaultTerm, DefaultSubject);
+            var result = await SyncAllowingFailuresAsync(handler);
+
+            var failure = Assert.Single(result.Failures);
+            Assert.Equal((DefaultTerm, DefaultSubject), (failure.TermCode, failure.SubjectCode));
+            Assert.Contains("returned no sections, but 2 exist", failure.Exception.Message);
+            AssertSnapshotsEqual(before, Snapshot());
+        }
+
+        [Fact]
+        public async Task EmptyScrapeOfSubjectWithNoSectionsSucceeds()
+        {
+            // Nothing to lose, so an empty result is just an empty subject.
+            var handler = new FakeMyPurdueHandler();
+            handler.SetSections(DefaultTerm, DefaultSubject);
+
             await SyncAsync(handler);
 
             using var ctx = NewContext();
             Assert.Empty(ctx.Sections);
-            Assert.Empty(ctx.Classes);
-            Assert.Empty(ctx.Meetings);
+            Assert.Equal(DefaultSubject, Assert.Single(ctx.Subjects).Abbreviation);
         }
     }
 }

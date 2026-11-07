@@ -377,6 +377,17 @@ namespace PurdueIo.CatalogSync
             var scrapedSections = await connection.GetSectionsAsync(term.Code,
                 subject.Abbreviation);
 
+            // A "successful" empty response is indistinguishable from a subject with no
+            // sections, and acting on it would delete every section we have for the subject.
+            // Treat it as a failed sync instead: nothing is changed, and the run reports it.
+            if ((scrapedSections.Count == 0) && (existingCrns.Count > 0))
+            {
+                throw new ApplicationException(
+                    $"Search for {term.Code} {subject.Abbreviation} returned no sections, but " +
+                    $"{existingCrns.Count} exist; not deleting them. If the subject really has " +
+                    "no sections this term, remove them manually.");
+            }
+
             // Populate campus code <-> name map
             foreach (var t in scrapedSections.SelectMany(s => s.Meetings ?? [])
                 .Select(m => m.MeetingTime))
