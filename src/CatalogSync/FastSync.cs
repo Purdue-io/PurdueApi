@@ -324,13 +324,9 @@ namespace PurdueIo.CatalogSync
                 .Where(s => !scrapedCrns.Contains(s));
             foreach (var crnToRemove in crnsToRemove)
             {
-                var sectionToRemove = dbContext.Sections.FirstOrDefault(s =>
+                dbContext.Sections.RemoveRange(dbContext.Sections.Where(s =>
                     (s.Class.TermId == term.Id) &&
-                    (s.Crn == crnToRemove));
-                if (sectionToRemove != null)
-                {
-                    dbContext.Sections.Remove(sectionToRemove);
-                }
+                    (s.Crn == crnToRemove)));
             }
 
             dbContext.SaveChanges();
