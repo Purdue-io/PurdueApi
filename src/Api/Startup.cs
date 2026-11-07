@@ -54,6 +54,15 @@ namespace PurdueIo.Api
         // Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Apply pending migrations once at startup. The DbContext is
+            // registered as scoped, so this must not live in its constructor
+            // (that would run Migrate() on every request).
+            using (var scope = app.ApplicationServices.CreateScope())
+            {
+                scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
+                    .Database.Migrate();
+            }
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

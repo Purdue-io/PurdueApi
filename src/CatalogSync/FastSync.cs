@@ -48,7 +48,7 @@ namespace PurdueIo.CatalogSync
             Action<SyncProgress> progress = null)
         {
             await (new FastSync(connection, dbContext, logger)).InternalSynchronizeAsync(
-                TermSyncBehavior.SyncAllTerms, termCodes, progress: progress);
+                termSyncBehavior, termCodes, progress: progress);
         }
 
         public static async Task SynchronizeAsync(MyPurdueConnection connection,
@@ -324,7 +324,7 @@ namespace PurdueIo.CatalogSync
                 .Where(s => !scrapedCrns.Contains(s));
             foreach (var crnToRemove in crnsToRemove)
             {
-                var sectionToRemove = dbContext.Sections.SingleOrDefault(s =>
+                var sectionToRemove = dbContext.Sections.FirstOrDefault(s =>
                     (s.Class.TermId == term.Id) &&
                     (s.Crn == crnToRemove));
                 if (sectionToRemove != null)
@@ -452,7 +452,7 @@ namespace PurdueIo.CatalogSync
             }
             else
             {
-                campus = dbContext.Campuses.SingleOrDefault(c => (c.Code == campusCode));
+                campus = dbContext.Campuses.FirstOrDefault(c => (c.Code == campusCode));
                 if (campus != null)
                 {
                     // Sometimes the campus name will change despite having the same code
@@ -485,7 +485,7 @@ namespace PurdueIo.CatalogSync
                 number: courseNumber, title: courseTitle);
             if (!dbCachedCourses.TryGetValue(courseKey, out course))
             {
-                course = dbContext.Courses.SingleOrDefault(c =>
+                course = dbContext.Courses.FirstOrDefault(c =>
                     (c.SubjectId == subject.Id) &&
                     (c.Number == courseNumber) &&
                     (c.Title == courseTitle));
@@ -547,7 +547,7 @@ namespace PurdueIo.CatalogSync
             var startDate = meetingTimes.Select(t => ParseMyPurdueDate(t.StartDate)).Min();
             var endDate = meetingTimes.Select(t => ParseMyPurdueDate(t.EndDate)).Max();
 
-            var existingSection = dbSections.SingleOrDefault(s => s.Crn == section.Crn);
+            var existingSection = dbSections.FirstOrDefault(s => s.Crn == section.Crn);
             if (existingSection != null)
             {
                 existingSection.ClassId = classId;
@@ -688,7 +688,7 @@ namespace PurdueIo.CatalogSync
 
             var dbBuilding = dbContext.Buildings
                 .Include(b => b.Rooms)
-                .SingleOrDefault(b => b.CampusId == campus.Id && b.ShortCode == buildingCode);
+                .FirstOrDefault(b => b.CampusId == campus.Id && b.ShortCode == buildingCode);
 
             if (dbBuilding == null)
             {
@@ -723,7 +723,7 @@ namespace PurdueIo.CatalogSync
 
                 if (!dbCachedInstructors.TryGetValue(email, out var dbInstructor))
                 {
-                    dbInstructor = dbContext.Instructors.SingleOrDefault(i => i.Email == email);
+                    dbInstructor = dbContext.Instructors.FirstOrDefault(i => i.Email == email);
                     if (dbInstructor == null)
                     {
                         dbInstructor = new DatabaseInstructor
