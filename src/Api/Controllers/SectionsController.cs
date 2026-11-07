@@ -1,4 +1,3 @@
-using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -18,7 +17,7 @@ namespace PurdueIo.Api.Controllers
         [HttpGet]
         [EnableQuery(MaxExpansionDepth = EdmModelBuilder.MAX_EXPAND_DEPTH,
             MaxAnyAllExpressionDepth = EdmModelBuilder.MAX_EXPAND_DEPTH)]
-        public IActionResult Get(CancellationToken token)
+        public IActionResult Get()
         {
             return Ok(dbContext.Sections);
         }
