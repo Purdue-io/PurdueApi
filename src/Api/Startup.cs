@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -48,6 +49,16 @@ namespace PurdueIo.Api
 
             var edmModel = EdmModelBuilder.GetEdmModel();
             services.AddControllers().AddOData(opt => opt.AddRouteComponents("odata", edmModel));
+
+            // OData JSON is highly repetitive and compresses very well. These are public
+            // catalog responses with no secrets, so compressing over HTTPS is safe (BREACH
+            // needs a secret reflected alongside attacker-controlled input).
+            services.AddResponseCompression(opt =>
+            {
+                opt.EnableForHttps = true;
+                opt.Providers.Add<BrotliCompressionProvider>();
+                opt.Providers.Add<GzipCompressionProvider>();
+            });
         }
 
         // This method gets called by the runtime.
@@ -67,6 +78,9 @@ namespace PurdueIo.Api
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            // Must run before anything that writes a response body.
+            app.UseResponseCompression();
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
