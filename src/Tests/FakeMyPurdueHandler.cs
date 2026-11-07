@@ -32,6 +32,19 @@ namespace PurdueIo.Tests
         // running the real GroupLinkedSectionsAsync heuristic, keyed by the queried CRN.
         // Only those exact CRNs can be served: if the grouping heuristic ever queries
         // something else, that is a behavior change worth failing on.
+        // fetchLinkedSections responses that take precedence over the recorded fixture,
+        // keyed by queried CRN. Lets tests with synthetic sections define linked groups.
+        public Dictionary<string, string> LinkedSectionOverrides { get; } = [];
+
+        // Canned classSearch/getTerms response.
+        public string TermsJson { get; set; } =
+            "[{\"code\":\"202720\",\"description\":\"Spring 2027\"}]";
+
+        // Canned classSearch/get_subject response. MyPurdue prefixes the name with the
+        // code, which MyPurdueConnection strips.
+        public string SubjectsJson { get; set; } =
+            "[{\"code\":\"CS\",\"description\":\"CS-Computer Sciences\"}]";
+
         private Dictionary<string, string> linkedResponses;
         private Dictionary<string, string> LinkedResponses => linkedResponses ??=
             JsonSerializer
@@ -48,6 +61,14 @@ namespace PurdueIo.Tests
             Requests.Add((request.Method.Method, request.RequestUri.PathAndQuery, body));
 
             var path = request.RequestUri.AbsolutePath;
+            if (path.EndsWith("/classSearch/getTerms"))
+            {
+                return Json(TermsJson);
+            }
+            if (path.EndsWith("/classSearch/get_subject"))
+            {
+                return Json(SubjectsJson);
+            }
             if (path.EndsWith("/term/search") || path.EndsWith("/classSearch/resetDataForm"))
             {
                 // Session registration and search reset just have to succeed.
@@ -65,6 +86,10 @@ namespace PurdueIo.Tests
             {
                 var crn = HttpUtility.ParseQueryString(request.RequestUri.Query)
                     ["courseReferenceNumber"];
+                if (LinkedSectionOverrides.TryGetValue(crn, out var overridden))
+                {
+                    return Json(overridden);
+                }
                 return LinkedResponses.TryGetValue(crn, out var response)
                     ? Json(response)
                     : Error(

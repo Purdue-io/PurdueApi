@@ -31,6 +31,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Scraper\Scraper.csproj" />
     <ProjectReference Include="..\CatalogSync\CatalogSync.csproj" />
+    <!-- FastSync tests run the real SQLite migration against an in-memory database -->
+    <ProjectReference Include="..\Database.Migrations.Sqlite\Database.Migrations.Sqlite.csproj" />
   </ItemGroup>
 
 </Project>
