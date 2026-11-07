@@ -24,7 +24,7 @@
 
   <!-- Embedded Resources -->
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Pages\*.html" />
+    <EmbeddedResource Include="Resources\*.json" />
   </ItemGroup>
 
   <!-- References -->
