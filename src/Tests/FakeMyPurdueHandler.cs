@@ -8,7 +8,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using PurdueIo.Scraper.Connections.Models;
 
 namespace PurdueIo.Tests
 {
@@ -28,6 +27,17 @@ namespace PurdueIo.Tests
             [0] = TestResources.ReadText(TestResources.SectionPage0),
             [500] = TestResources.ReadText(TestResources.SectionPage500),
         };
+
+        // Verbatim fetchLinkedSections responses captured from the live service while
+        // running the real GroupLinkedSectionsAsync heuristic, keyed by the queried CRN.
+        // Only those exact CRNs can be served: if the grouping heuristic ever queries
+        // something else, that is a behavior change worth failing on.
+        private Dictionary<string, string> linkedResponses;
+        private Dictionary<string, string> LinkedResponses => linkedResponses ??=
+            JsonSerializer
+                .Deserialize<Dictionary<string, JsonElement>>(
+                    TestResources.ReadText(TestResources.LinkedSectionsFixture))
+                .ToDictionary(kv => kv.Key, kv => kv.Value.GetRawText());
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
@@ -55,34 +65,14 @@ namespace PurdueIo.Tests
             {
                 var crn = HttpUtility.ParseQueryString(request.RequestUri.Query)
                     ["courseReferenceNumber"];
-                return Json(BuildLinkedSectionsResponse(crn));
+                return LinkedResponses.TryGetValue(crn, out var response)
+                    ? Json(response)
+                    : Error(
+                        $"FakeMyPurdueHandler has no recorded fetchLinkedSections response " +
+                        $"for CRN {crn}. The grouping heuristic requested a section that " +
+                        "was never captured - re-record the linked-sections fixture.");
             }
             return Error($"FakeMyPurdueHandler received unexpected request: {path}");
-        }
-
-        private List<MyPurdueSection> allSections;
-        private List<MyPurdueSection> AllSections => allSections ??=
-            [.. TestResources.LoadSectionPage(TestResources.SectionPage0).Sections,
-             .. TestResources.LoadSectionPage(TestResources.SectionPage500).Sections];
-
-        // The real endpoint answers with the whole link group containing the queried
-        // CRN. Mimic that using the (subjectCourse, linkIdentifier) key that
-        // MyPurdueConnection.GroupLinkedSectionsAsync itself groups on.
-        private string BuildLinkedSectionsResponse(string crn)
-        {
-            var response = new MyPurdueLinkedSectionsResponse
-            {
-                SectionGroups = new List<ICollection<MyPurdueSection>>(),
-            };
-            var target = AllSections.FirstOrDefault(s => s.Crn == crn);
-            if (target != null && target.IsSectionLinked)
-            {
-                response.SectionGroups.Add(AllSections
-                    .Where(s => s.SubjectCourseNumber == target.SubjectCourseNumber
-                        && s.LinkIdentifier == target.LinkIdentifier)
-                    .ToList());
-            }
-            return JsonSerializer.Serialize(response);
         }
 
         private static HttpResponseMessage Json(string json) =>

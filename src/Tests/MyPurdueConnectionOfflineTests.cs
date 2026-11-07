@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -109,40 +110,84 @@ namespace PurdueIo.Tests
         }
 
         [Fact]
-        public async Task GroupLinkedSectionsGroupsLinkedSectionsByLinkIdentifier()
+        public async Task GroupLinkedSectionsReconstructsRecordedClassesExactly()
         {
             var (connection, handler) = CreateConnection();
             var sections = await connection.GetSectionsAsync(Term, Subject);
 
             var groups = await connection.GroupLinkedSectionsAsync(Term, sections);
 
-            // The fake must actually have served link lookups.
-            Assert.Contains(handler.Requests,
-                r => r.PathAndQuery.Contains("searchResults/fetchLinkedSections"));
+            // The replay must use exactly the recorded query set: the grouping
+            // heuristic (not per-CRN lookups) is what keeps this fast.
+            var recorded = TestResources.LoadLinkedSections();
+            var fetchRequests = handler.Requests
+                .Where(r => r.PathAndQuery.Contains("searchResults/fetchLinkedSections"))
+                .ToList();
+            Assert.Equal(recorded.Count, fetchRequests.Count);
 
-            var groupList = groups.ToList();
-
-            // Count conservation: every input section lands in exactly one group.
-            var grouped = groupList.SelectMany(g => g).ToList();
-            Assert.Equal(sections.Count, grouped.Count);
-            Assert.Equal(sections.Count, grouped.Select(s => s.Crn).Distinct().Count());
-
-            // Every linked section shares its group with all sections that share its
-            // (subjectCourse, linkIdentifier) key.
-            var groupIndexOf = grouped
-                .Select((s, i) => (s.Crn, GroupIndex: groupList.FindIndex(g => g.Any(x => x.Crn == s.Crn))))
-                .ToDictionary(e => e.Crn, e => e.GroupIndex);
-            var linkedKeyGroups = sections
-                .Where(s => s.IsSectionLinked)
-                .GroupBy(s => (s.SubjectCourseNumber, s.LinkIdentifier));
-            foreach (var keyGroup in linkedKeyGroups)
+            // Ground truth: connected components over every recorded class's members
+            // (the queried section counts as a member even when the response omits it),
+            // restricted to this search; unreferenced (unlinked) sections are singletons.
+            var parent = new Dictionary<string, string>();
+            string Find(string x)
             {
-                Assert.Single(keyGroup.Select(s => groupIndexOf[s.Crn]).Distinct());
+                if (!parent.TryGetValue(x, out var p))
+                {
+                    parent[x] = x;
+                    return x;
+                }
+                return p == x ? x : parent[x] = Find(p);
+            }
+            foreach (var (queriedCrn, response) in recorded)
+            {
+                Find(queriedCrn);
+                foreach (var classmate in response.SectionGroups.SelectMany(g => g))
+                {
+                    var (ra, rb) = (Find(queriedCrn), Find(classmate.Crn));
+                    if (ra != rb) parent[ra] = rb;
+                }
+            }
+            var expectedParts = new Dictionary<string, HashSet<string>>();
+            foreach (var crn in sections.Select(s => s.Crn))
+            {
+                if (!parent.ContainsKey(crn))
+                {
+                    expectedParts[crn] = [crn];
+                    continue;
+                }
+                var root = Find(crn);
+                if (!expectedParts.TryGetValue(root, out var part))
+                {
+                    expectedParts[root] = part = [];
+                }
+                part.Add(crn);
             }
 
-            // Unlinked sections stay singletons.
-            Assert.All(sections.Where(s => !s.IsSectionLinked), s =>
-                Assert.Single(groups.Single(g => g.Any(x => x.Crn == s.Crn))));
+            // The grouping algorithm must reproduce that partition exactly.
+            var expected = expectedParts.Values
+                .Select(p => string.Join("|", p.OrderBy(c => c))).OrderBy(k => k).ToList();
+            var actual = groups
+                .Select(g => string.Join("|", g.Select(s => s.Crn).OrderBy(c => c)))
+                .OrderBy(k => k).ToList();
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public async Task GroupLinkedSectionsJoinsLectureWithItsLabs()
+        {
+            var (connection, _) = CreateConnection();
+            var sections = await connection.GetSectionsAsync(Term, Subject);
+
+            var groups = await connection.GroupLinkedSectionsAsync(Term, sections);
+
+            // CRN 10787 is a CS 15900 laboratory (linkIdentifier AF). The real
+            // fetchLinkedSections response for CRN 10786 puts it in the same class as
+            // the lecture and other labs - something grouping on linkIdentifier alone
+            // could never discover, since every member of bucket AF is another lab.
+            var group = Assert.Single(groups, g => g.Any(s => s.Crn == "10787"));
+            var scheduleTypes = group.Select(s => s.SectionType).ToList();
+            Assert.Contains("Lecture", scheduleTypes);
+            Assert.Contains("Laboratory", scheduleTypes);
         }
     }
 }
