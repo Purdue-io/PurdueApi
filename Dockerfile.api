@@ -27,6 +27,10 @@ WORKDIR /app
 # Copy published application (includes wwwroot if present)
 COPY --from=build /app/publish .
 
+# curl is used by the container healthcheck (GET /health); .NET base images don't ship it
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Expose port 8080 (HTTP only for internal Docker network)
 EXPOSE 8080
 

@@ -46,6 +46,9 @@ namespace PurdueIo.Api
                 throw new ArgumentException("Invalid DB provider specified.");
             }
 
+            services.AddHealthChecks()
+                .AddCheck<DatabaseHealthCheck>("database");
+
             var edmModel = EdmModelBuilder.GetEdmModel();
             services.AddControllers().AddOData(opt => opt.AddRouteComponents("odata", edmModel));
         }
@@ -84,6 +87,9 @@ namespace PurdueIo.Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                // Container healthcheck: 200 "Healthy" when the database is reachable,
+                // 503 "Unhealthy" otherwise.
+                endpoints.MapHealthChecks("/health");
             });
         }
     }
