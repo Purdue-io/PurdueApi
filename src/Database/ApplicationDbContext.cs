@@ -46,9 +46,7 @@ namespace PurdueIo.Database
 
         public ApplicationDbContext([NotNullAttribute] DbContextOptions options) : 
             base(options)
-        {
-            Database.Migrate();
-        }
+        { }
 
         // Uncomment this override to add new migrations
         // protected override void OnConfiguring(DbContextOptionsBuilder options)

@@ -7,33 +7,37 @@ DB_PROVIDER="${DB_PROVIDER:-Npgsql}"
 DB_CONNECTION_STRING="${DB_CONNECTION_STRING:-Host=postgres;Port=5432;Database=purdueio;Username=purdueio;Password=purdueio}"
 SYNC_ALL_TERMS="${SYNC_ALL_TERMS:-false}"
 
-# Build command-line arguments
-ARGS="-d ${DB_PROVIDER} -c \"${DB_CONNECTION_STRING}\""
+# Build the command as an array so values containing special characters
+# (e.g. shell metacharacters in a connection string password) are passed
+# through verbatim and never re-parsed by the shell.
+CMD=(./CatalogSync -d "$DB_PROVIDER" -c "$DB_CONNECTION_STRING")
 
 if [ "${SYNC_ALL_TERMS}" = "true" ]; then
-    ARGS="${ARGS} -a"
+    CMD+=(-a)
 fi
 
 if [ -n "${SYNC_TERMS}" ]; then
-    ARGS="${ARGS} -t ${SYNC_TERMS}"
+    CMD+=(-t "${SYNC_TERMS}")
 fi
 
 if [ -n "${SYNC_SUBJECTS}" ]; then
-    ARGS="${ARGS} -s ${SYNC_SUBJECTS}"
+    CMD+=(-s "${SYNC_SUBJECTS}")
 fi
 
 # One-off sync mode (for testing/initialization)
 if [ "${RUN_ONCE}" = "true" ]; then
     echo "Running one-time sync..."
-    echo "Command: ./CatalogSync ${ARGS}"
-    eval "./CatalogSync ${ARGS}"
-    exit $?
+    echo "Command: ${CMD[*]}"
+    exec "${CMD[@]}"
 fi
 
-# Cron mode: Generate crontab and run supercronic
+# Cron mode: Generate crontab and run supercronic.
+# printf %q shell-quotes each argument so the crontab's shell reproduces
+# the argument boundaries exactly.
+CRON_CMD=$(printf '%q ' "${CMD[@]}")
 echo "Setting up scheduled sync with cron expression: ${SYNC_SCHEDULE}"
-echo "CatalogSync will run with arguments: ${ARGS}"
-echo "${SYNC_SCHEDULE} cd /app && ./CatalogSync ${ARGS}" > /app/crontab
+echo "CatalogSync will run with arguments: ${CRON_CMD}"
+echo "${SYNC_SCHEDULE} cd /app && ${CRON_CMD}" > /app/crontab
 
 echo "Starting supercronic..."
 exec supercronic /app/crontab
