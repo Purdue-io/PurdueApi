@@ -1,19 +1,20 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using PurdueIo.Scraper.Connections.Models;
 
 namespace PurdueIo.Tests
 {
-    // Builders for small, hand-written MyPurdue scrape data, serialized to the same JSON
-    // shape the live service returns. Used to drive FastSync through specific scenarios
-    // (removed sections, changed meetings, ...) that the recorded fixture can't express.
+    // Builders for small, hand-written MyPurdue section data, for driving FastSync through
+    // scenarios (removed sections, changed meetings, ...) the recorded fixture can't express.
+    // Serve them with FakeMyPurdueHandler.SetSections.
     public static class SyntheticSections
     {
-        public const string SyncTerm = "202720";
-        public const string SyncSubject = "CS";
-        public const string CampusCode = "PWL";
-        public const string CampusName = "West Lafayette";
+        // Synthetic sections default to the recorded term and subject, which a default
+        // FakeMyPurdueHandler already lists, so tests only configure what they vary.
+        public const string DefaultTerm = TestResources.RecordedTerm;
+        public const string DefaultSubject = TestResources.RecordedSubject;
+        public const string DefaultCampusCode = "PWL";
+        public const string DefaultCampusName = "West Lafayette";
 
         public static MyPurdueSection Section(string crn,
             string courseNumber = "18000",
@@ -24,17 +25,18 @@ namespace PurdueIo.Tests
             double? creditHourHigh = null,
             MyPurdueMeetingTime[] meetings = null,
             MyPurdueFaculty[] faculty = null,
-            string linkIdentifier = null) =>
+            string linkIdentifier = null,
+            string term = DefaultTerm,
+            string subject = DefaultSubject,
+            string campusName = DefaultCampusName) =>
             new()
             {
                 Id = long.Parse(crn),
-                TermCode = SyncTerm,
-                TermName = "Spring 2027",
+                TermCode = term,
                 Crn = crn,
                 CourseNumber = courseNumber,
-                SubjectCode = SyncSubject,
-                SubjectName = "Computer Sciences",
-                CampusName = CampusName,
+                SubjectCode = subject,
+                CampusName = campusName,
                 SectionType = type,
                 CourseTitle = title,
                 CreditHours = creditHours,
@@ -42,11 +44,11 @@ namespace PurdueIo.Tests
                 CreditHourHigh = creditHourHigh,
                 Faculty = (faculty ?? [Faculty("Ada Lovelace", "alovelace@purdue.edu")]).ToList(),
                 Meetings = (meetings ?? [Meeting()])
-                    .Select(t => new MyPurdueMeeting { Crn = crn, TermCode = SyncTerm, MeetingTime = t })
+                    .Select(t => new MyPurdueMeeting { Crn = crn, MeetingTime = t })
                     .ToList(),
                 IsSectionLinked = linkIdentifier != null,
                 LinkIdentifier = linkIdentifier,
-                SubjectCourseNumber = SyncSubject + courseNumber,
+                SubjectCourseNumber = subject + courseNumber,
             };
 
         // `days` uses Banner-style letters: U M T W R F S. Pass building: null for TBA.
@@ -57,7 +59,9 @@ namespace PurdueIo.Tests
             string room = "B151",
             string days = "MWF",
             string startDate = "01/11/2027",
-            string endDate = "05/01/2027") =>
+            string endDate = "05/01/2027",
+            string campusCode = DefaultCampusCode,
+            string campusName = DefaultCampusName) =>
             new()
             {
                 BeginTime = begin,
@@ -65,11 +69,10 @@ namespace PurdueIo.Tests
                 BuildingCode = building,
                 BuildingName = building == null ? null : $"{building} Building",
                 Room = building == null ? null : room,
-                CampusCode = CampusCode,
-                CampusName = CampusName,
+                CampusCode = campusCode,
+                CampusName = campusName,
                 StartDate = startDate,
                 EndDate = endDate,
-                TermCode = SyncTerm,
                 IsSunday = days.Contains('U'),
                 IsMonday = days.Contains('M'),
                 IsTuesday = days.Contains('T'),
@@ -80,13 +83,10 @@ namespace PurdueIo.Tests
             };
 
         public static MyPurdueFaculty Faculty(string name, string email) =>
-            new() { Name = name, Email = email, TermCode = SyncTerm };
+            new() { Name = name, Email = email };
 
-        // A complete searchResults page.
-        public static string Page(params MyPurdueSection[] sections) =>
-            Page(sections.Length, sections);
-
-        // A searchResults page that claims `totalCount` results (for truncation scenarios).
+        // One raw searchResults page claiming `totalCount` results. SetSections builds
+        // these for you; use this directly only to simulate inconsistent responses.
         public static string Page(int totalCount, params MyPurdueSection[] sections) =>
             JsonSerializer.Serialize(new MyPurdueSectionResponse
             {
@@ -94,19 +94,5 @@ namespace PurdueIo.Tests
                 TotalCount = totalCount,
                 Sections = sections.ToList(),
             });
-
-        // A fetchLinkedSections response placing `group` in a single class.
-        public static string LinkedResponse(params MyPurdueSection[] group) =>
-            JsonSerializer.Serialize(new MyPurdueLinkedSectionsResponse
-            {
-                SectionGroups = [group.ToList()],
-            });
-
-        // Replaces the handler's recorded pages with a single synthetic page.
-        public static void Serve(FakeMyPurdueHandler handler, string page)
-        {
-            handler.SearchPages.Clear();
-            handler.SearchPages[0] = page;
-        }
     }
 }

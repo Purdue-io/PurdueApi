@@ -34,8 +34,8 @@ namespace PurdueIo.Tests
             Assert.Contains(sections, s => s.IsSectionLinked);
             Assert.All(sections, s =>
             {
-                Assert.Equal("202720", s.TermCode);
-                Assert.Equal("CS", s.SubjectCode);
+                Assert.Equal(TestResources.RecordedTerm, s.TermCode);
+                Assert.Equal(TestResources.RecordedSubject, s.SubjectCode);
                 Assert.False(string.IsNullOrWhiteSpace(s.Crn));
                 Assert.False(string.IsNullOrWhiteSpace(s.CourseNumber));
                 Assert.False(string.IsNullOrWhiteSpace(s.CourseTitle));
@@ -50,11 +50,11 @@ namespace PurdueIo.Tests
                 .Sections.First();
 
             Assert.Equal(1281081L, first.Id);
-            Assert.Equal("202720", first.TermCode);
+            Assert.Equal(TestResources.RecordedTerm, first.TermCode);
             Assert.Equal("Spring 2027", first.TermName);
             Assert.Equal("10787", first.Crn);
             Assert.Equal("15900", first.CourseNumber);
-            Assert.Equal("CS", first.SubjectCode);
+            Assert.Equal(TestResources.RecordedSubject, first.SubjectCode);
             Assert.Equal("CS-Computer Sciences", first.SubjectName);
             Assert.Equal("Indianapolis and W Lafayette", first.CampusName);
             Assert.Equal("Laboratory", first.SectionType);
@@ -73,7 +73,7 @@ namespace PurdueIo.Tests
             var meeting = Assert.Single(first.Meetings);
             Assert.Equal("01", meeting.Category);
             Assert.Equal("10787", meeting.Crn);
-            Assert.Equal("202720", meeting.TermCode);
+            Assert.Equal(TestResources.RecordedTerm, meeting.TermCode);
             Assert.Empty(meeting.Faculty);
 
             var time = meeting.MeetingTime;

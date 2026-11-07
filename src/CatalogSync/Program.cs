@@ -6,6 +6,7 @@ using PurdueIo.Scraper;
 using PurdueIo.Scraper.Connections;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using static PurdueIo.CatalogSync.FastSync;
 
@@ -47,12 +48,22 @@ namespace PurdueIo.CatalogSync
         {
             (await Parser.Default.ParseArguments<Options>(args)
                 .WithParsedAsync(async options => await RunASync(options)))
-                .WithNotParsed(errors => errors.Output());
+                .WithNotParsed(errors =>
+                {
+                    errors.Output();
+                    // --help and --version are reported as "errors" but aren't failures.
+                    if (!errors.IsHelp() && !errors.IsVersion())
+                    {
+                        Environment.ExitCode = 1;
+                    }
+                });
         }
 
         static async Task RunASync(Options options)
         {
-            var loggerFactory = LoggerFactory.Create(b => 
+            // Disposing the factory flushes the console logger's background queue, so the
+            // last messages aren't lost when the run ends - including on an exception.
+            using var loggerFactory = LoggerFactory.Create(b =>
                 b.AddSimpleConsole(c => c.TimestampFormat = "hh:mm:ss.fff "));
 
             var logger = loggerFactory.CreateLogger<Program>();
@@ -97,9 +108,34 @@ namespace PurdueIo.CatalogSync
             }
             dbContext.Database.Migrate();
 
-            await FastSync.SynchronizeAsync(connection, dbContext,
-                loggerFactory.CreateLogger<FastSync>(), options.Terms, options.Subjects,
-                behavior, reportProgress);
+            SyncResult result;
+            try
+            {
+                result = await FastSync.SynchronizeAsync(connection, dbContext,
+                    loggerFactory.CreateLogger<FastSync>(), options.Terms, options.Subjects,
+                    behavior, reportProgress);
+            }
+            catch (SyncAbortedException e)
+            {
+                // Too many failures in a row (MyPurdue or the DB is likely down). Report what
+                // failed instead of crashing with an unhandled exception.
+                logger.LogCritical(e,
+                    "Sync aborted. {Count} failure(s) before stopping: {Failures}",
+                    e.Failures.Count, DescribeFailures(e.Failures));
+                Environment.ExitCode = 1;
+                return;
+            }
+
+            if (!result.Succeeded)
+            {
+                // Everything else was synced; exit non-zero so cron/CI still flag the run.
+                logger.LogError("Sync completed with {Count} failure(s): {Failures}",
+                    result.Failures.Count, DescribeFailures(result.Failures));
+                Environment.ExitCode = 1;
+            }
         }
+
+        static string DescribeFailures(IEnumerable<SyncFailure> failures) =>
+            string.Join(", ", failures.Select(f => f.Description));
     }
 }
