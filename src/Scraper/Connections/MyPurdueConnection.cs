@@ -14,7 +14,6 @@ namespace PurdueIo.Scraper.Connections
     public class MyPurdueConnection
     {
         private readonly ILogger<MyPurdueConnection> logger;
-        private readonly CookieContainer cookies = new();
         private readonly HttpClient httpClient;
         private const string BASE_URL =
             "https://apps.mypurdue.purdue.edu/StudentRegistrationSsb/ssb/";
@@ -26,16 +25,21 @@ namespace PurdueIo.Scraper.Connections
         private const string VIEW_ONLY_TAG = "(View Only)";
 
         public MyPurdueConnection(ILogger<MyPurdueConnection> logger)
+            : this(logger, new HttpClientHandler()
+                {
+                    CookieContainer = new CookieContainer(), // MyPurdue stores a lot of state
+                                                             // in cookies - we need to persist
+                                                             // them to avoid upsetting it
+                    AllowAutoRedirect = false, // We'll handle redirects by ourselves
+                })
+        { }
+
+        // Allows tests (and future proxy/retry support) to stand in for the real transport.
+        public MyPurdueConnection(ILogger<MyPurdueConnection> logger, HttpMessageHandler handler)
         {
             this.logger = logger;
 
-            var httpHandler = new HttpClientHandler()
-            {
-                CookieContainer = cookies, // MyPurdue stores a lot of state in cookies - we need
-                                           // to persist them to avoid upsetting it
-                AllowAutoRedirect = false, // We'll handle redirects by ourselves
-            };
-            httpClient = new HttpClient(httpHandler)
+            httpClient = new HttpClient(handler)
             {
                 BaseAddress = new Uri(BASE_URL)
             };
